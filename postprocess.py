@@ -9,6 +9,7 @@ BEND_NOTE_4, BEND_NOTE_5, BEND_NOTE_6, BEND_NOTE_7, TREM_BAR_1, TREM_BAR_2, TREM
 TREM_BAR_4, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_2, SLIDE_NOTE_3, SLIDE_NOTE_4, SLIDE_NOTE_5, SLIDE_NOTE_6,
 HAMMER, VIBRATO, HARMONIC_1, 
 TEMPERATURE, TEST_CRITERIA, PREDICTION_CRITERIA)
+from inference import multinomial_sample
 
 DEMAPPING_BEAT_DETYPE = {
     'Base---------------' : 1,
@@ -53,7 +54,9 @@ def decoder_greedy_search(decoder, dummy_in, embedding_layer, pos_enc, mask):
         next_token = torch.argmax(probabilities, dim=-1).unsqueeze(0)
     elif PREDICTION_CRITERIA == 3:
         next_token = torch.multinomial(probabilities, num_samples=1).unsqueeze(0)
-
+    elif PREDICTION_CRITERIA == 4:
+        next_token = multinomial_sample(probabilities, num_samples=1)
+    
     return next_token
 
 def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim):
