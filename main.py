@@ -152,7 +152,7 @@ if __name__ == '__main__':
 
         if cfg.MODE == 3:
             print("Loading saved file", cfg.SAVE)
-            checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth')
+            checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth', map_location=torch.device(DEVICE_TYPE))
             decoder.load_state_dict(checkpoint['model_state_dict'])
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             embedding_layer.load_state_dict(checkpoint['embedding_state_dict'])
@@ -213,7 +213,7 @@ if __name__ == '__main__':
         plot(lossplot, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '.png')
 
     if cfg.MODE in (1, 2):
-        checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth')
+        checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth', map_location=torch.device(DEVICE_TYPE))
         decoder.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         embedding_layer.load_state_dict(checkpoint['embedding_state_dict'])
