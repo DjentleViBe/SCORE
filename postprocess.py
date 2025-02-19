@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 import guitarpro as gp
 import math
+import numpy as np
 from config import (BACKUP, MAX_SEQ_LENGTH, EOS, BOS, BARRE_NOTE, MEASURE, BEND_NOTE_1, BEND_NOTE_2, BEND_NOTE_3,
 BEND_NOTE_4, BEND_NOTE_5, BEND_NOTE_6, BEND_NOTE_7, TREM_BAR_1, TREM_BAR_2, TREM_BAR_3,
 TREM_BAR_4, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_2, SLIDE_NOTE_3, SLIDE_NOTE_4, SLIDE_NOTE_5, SLIDE_NOTE_6,
@@ -39,6 +40,25 @@ def plot(lossplot, filename):
 
     return 0
 
+def plotbar(counts, filename):
+    plt.figure(figsize=(10, 6))
+    labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    bincounts = np.bincount(counts, minlength=12)[1:]
+    bars = plt.bar(labels, bincounts, color='skyblue', edgecolor='black')
+    plt.xlabel('Notes', fontsize=12)
+    plt.ylabel('Occurrences', fontsize=12)
+    plt.title('Occurrences of Notes', fontsize=14)
+    #plt.xticks(range(1, 13))
+
+    for bar in bars:
+        yval = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, int(yval), ha='center', va='bottom')
+
+    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.savefig(filename, dpi = 200)
+
+    return 0
+
 def decoder_greedy_search(decoder, dummy_in, embedding_layer, pos_enc, mask):
     embeddings = embedding_layer(dummy_in)
     output_eval = decoder(embeddings + pos_enc, mask)
@@ -55,7 +75,7 @@ def decoder_greedy_search(decoder, dummy_in, embedding_layer, pos_enc, mask):
     elif PREDICTION_CRITERIA == 3:
         next_token = torch.multinomial(probabilities, num_samples=1).unsqueeze(0)
     elif PREDICTION_CRITERIA == 4:
-        next_token = multinomial_sample(probabilities, num_samples=1)
+        next_token = multinomial_sample(probabilities, num_samples=40)
     
     return next_token
 

@@ -5,7 +5,7 @@
 # 1 : eval
 # 2 : both 
 # 3 : load from file
-MODE                =   1
+MODE                =   0
 BACKUP              =   "dec_only_notes_35"
 SAVE                =   "dec_only_notes_35D"
 START_ID            =   9397
@@ -39,7 +39,7 @@ LEARNING_RATE   =   0.00005
 PATCH           =   1
 STRIDE          =   1
 TRAINING        =   ["PerNote"]
-BATCH           =   655
+BATCH           =   665
 CONVERGENCE     =   0.0005
 TEMPERATURE     =   1.0
 

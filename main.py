@@ -7,8 +7,8 @@ import numpy as np
 import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
-from postprocess import plot, decoder_inference, makegpro, writegpro
-from encoding import tokenizer_1
+from postprocess import plot, plotbar, decoder_inference, makegpro, writegpro
+from encoding import tokenizer_1, note_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
 import config as cfg
@@ -41,9 +41,10 @@ if __name__ == '__main__':
         create_dir('./RESULTS/' + cfg.BACKUP)
         shutil.copy("./config.py", "./RESULTS/" + cfg.BACKUP + "/" + cfg.BACKUP + ".py")
         training_src_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
-
+        training_note_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         GPROFOLDER = './gprofiles/'
         L = 0
+        N = 0
         for f in cfg.TRAINING:
             for filename in os.listdir(GPROFOLDER + f):
                 file_path = os.path.join(GPROFOLDER + f, filename)
@@ -65,6 +66,8 @@ if __name__ == '__main__':
                                                                         note.string,
                                                                         note.beat.duration,
                                                                         note.effect.palmMute + 1)
+                                    training_note_encoder_1[N] = note_prob(note.value, note.string)
+                                    N += 1
                                     L += 1
                                     if note_index != 0:
                                         training_src_encoder_1[L] = cfg.BARRE_NOTE
@@ -141,7 +144,9 @@ if __name__ == '__main__':
         del training_tgt_decoder_1
         print("Source")
         print(f"{training_tgt_notes}")
-
+        # plot notes
+        training_note_encoder_1 = training_note_encoder_1[training_note_encoder_1 != 0]
+        plotbar(training_note_encoder_1, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_probability.png')
         ITERATION = 0
         criterion = torch.nn.MSELoss()
         lossplot = []
