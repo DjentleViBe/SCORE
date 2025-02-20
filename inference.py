@@ -16,7 +16,7 @@ def multinomial_sample(probabilities, num_samples):
     plt.suptitle("Cumulative probability")
     plt.xlabel("Tokens")
     plt.ylabel("Probability")
-    plt.show()
+    # plt.show()
 
     samples = []
 
