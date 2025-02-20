@@ -43,8 +43,7 @@ def plot(lossplot, filename):
 def plotbar(counts, filename):
     plt.figure(figsize=(10, 6))
     labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-    bincounts = np.bincount(counts, minlength=12)[1:]
-    bars = plt.bar(labels, bincounts, color='skyblue', edgecolor='black')
+    bars = plt.bar(labels, counts, color='skyblue', edgecolor='black')
     plt.xlabel('Notes', fontsize=12)
     plt.ylabel('Occurrences', fontsize=12)
     plt.title('Occurrences of Notes', fontsize=14)
