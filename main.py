@@ -146,7 +146,9 @@ if __name__ == '__main__':
         print(f"{training_tgt_notes}")
         # plot notes
         training_note_encoder_1 = training_note_encoder_1[training_note_encoder_1 != 0]
-        plotbar(training_note_encoder_1, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_probability.png')
+        bincounts = np.bincount(training_note_encoder_1, minlength=12)[1:]
+        plotbar(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.png')
+        del training_note_encoder_1
         ITERATION = 0
         criterion = torch.nn.MSELoss()
         lossplot = []
@@ -242,7 +244,7 @@ if __name__ == '__main__':
         song.tracks[0].strings[4].value = 39
         song.tracks[0].strings[5].value = 32
         song_collect = []
-
+        song_notes = []
         while m < cfg.TEST_TRIES:
             noteval = []
             notetypeval = []
@@ -258,9 +260,13 @@ if __name__ == '__main__':
                 stringnum.append(string)
                 beatval.append(beat)
                 palmval.append(palm)
+                song_notes.append(note_prob(note, string))
             song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
             song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
             m += 1
             print("")
-        writegpro(cfg.SAVE, song)
+            writegpro(cfg.SAVE, song)
+        bincounts = np.bincount(song_notes, minlength=12)[1:]
+        plotbar(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobability.png')
+        
     print("Finished")
