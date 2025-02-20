@@ -51,23 +51,23 @@ def tokenizer_1(note, string, duration, n_val):
     return encoding
 
 def note_prob(note, string):
-    # tuning
-    # 6: D# 
-    # 5: A#
-    # 4: D#
-    # 3: G#
-    # 2: C#
-    # 1: F
+    # tuning baritone_2
+    # 6: G# 
+    # 5: D#
+    # 4: G#
+    # 3: C#
+    # 2: F#
+    # 1: A#
     # Notes = C C# D D# E F F# G G# A A# B
     if string == 1:
-        return (note + 6) % 12 + 1
-    elif  string == 2:
-        return (note + 2) % 12 + 1
-    elif  string == 3:
-        return (note + 9) % 12 + 1
-    elif  string == 4:
-        return (note + 4) % 12 + 1
-    elif  string == 5:
         return (note + 11) % 12 + 1
-    else :
+    elif  string == 2:
+        return (note + 7) % 12 + 1
+    elif  string == 3:
+        return (note + 2) % 12 + 1
+    elif  string == 4:
+        return (note + 9) % 12 + 1
+    elif  string == 5:
         return (note + 4) % 12 + 1
+    else :
+        return (note + 9) % 12 + 1
