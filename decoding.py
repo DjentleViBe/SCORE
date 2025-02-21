@@ -20,6 +20,21 @@ DEMAPPING_BEAT_TYPE = {
     14:  'Dotted - 11_Tuplets',
 }
 
+def demapping_beat_num(beat):
+    """returns beat type num"""
+    if beat >= 71:
+        return beat - 70
+    elif 71 > beat >= 57:
+        return beat - 56
+    elif 57 > beat >= 43:
+        return beat - 42
+    elif 43 > beat >= 29:
+        return beat - 28
+    elif 29 > beat >= 15:
+        return beat - 14
+    else:
+        return beat + 1
+
 def demapping_beat(beat):
     """returns beat type"""
     beat_type = ''
@@ -95,4 +110,4 @@ def detokenizer_1(dummy):
         print(f"Beat : {beat_type} String : {string_num} Note : {note_val} PalmMute : {palm_mute}")
 
 
-    return note_val, note_type, string_num, dummy // 322, palm_mute
+    return note_val, note_type, string_num, dummy // 322, palm_mute, demapping_beat_num(dummy // 322)

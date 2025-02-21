@@ -41,41 +41,41 @@ def plot(lossplot, filename):
 
     return 0
 
-def plotbar(counts, filename):
+def plotbar(labels, title, counts, filename):
     plt.figure(figsize=(10, 6))
-    labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
     bars = plt.bar(labels, counts, color='skyblue', edgecolor='black')
-    plt.xlabel('Notes', fontsize=12)
+    # plt.xlabel('Notes', fontsize=12)
     plt.ylabel('Occurrences', fontsize=12)
-    plt.title('Occurrences of Notes', fontsize=14)
+    plt.title(title, fontsize=14)
     #plt.xticks(range(1, 13))
+    plt.xticks(rotation=45) 
 
     for bar in bars:
         yval = bar.get_height()
         plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, int(yval), ha='center', va='bottom')
 
     plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.tight_layout()
     plt.savefig(filename, dpi = 200)
 
     return 0
 
-def plotbar_dual(counts1, counts2, KLD, filename, label1='Training', label2='Inference'):
+def plotbar_dual(labels, counts1, counts2, KLD, filename, label1='Training', label2='Inference'):
     plt.figure(figsize=(12, 6))
-    labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
     x = np.arange(len(labels))  # label positions
     width = 0.4  # width of the bars
 
     # Primary axis
     fig, ax1 = plt.subplots(figsize=(12, 6))
     bars1 = ax1.bar(x - width/2, counts1, width, label=label1, color='skyblue', edgecolor='black')
-    ax1.set_xlabel('Notes', fontsize=12)
+    # ax1.set_xlabel('Notes', fontsize=12)
     ax1.set_ylabel(f'Training', fontsize=12)
     ax1.tick_params(axis='y')
     ax1.set_xticks(x)
     ax1.set_xticklabels(labels)
-    fig.suptitle('Occurrences of Notes', fontsize=18)      # Title for the Axes
+    fig.suptitle('Occurrences', fontsize=18)      # Title for the Axes
     ax1.set_title('KL_Divergence = ' + str(round(KLD, 4)), fontsize = 14)      # Subtitle for the entire figure
-
+    plt.xticks(rotation=45)
     # Annotate primary bars
     for bar in bars1:
         yval = bar.get_height()
@@ -471,5 +471,6 @@ def KLDivergence(train, eval):
         Q.append(q_val / Q_tot)
 
     for item1, item2 in zip(P, Q):
-        D.append(item1 * np.log(item1 / (item2 + eps)))
+        if item1 > 0:
+            D.append(item1 * np.log(item1 / (item2 + eps)))
     return sum(D)

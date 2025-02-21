@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
 from postprocess import plot, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, readbincount, KLDivergence
-from encoding import tokenizer_1, note_prob
+from encoding import tokenizer_1, note_prob, beat_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
 import config as cfg
@@ -22,6 +22,24 @@ if __name__ == '__main__':
         DEVICE_TYPE     =   "mps"
     else:
         DEVICE_TYPE     =   "cuda"
+    
+    labelsnotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    labelsbeats = ['Base',
+    'Triplet',
+    'Quintuplet',
+    'Sextuplet',
+    'Septuplet',
+    '9_Tuplets',
+    '11_Tuplets',
+    'D - Base',
+    'D - Triplet',
+    'D - Quintuplet',
+    'D - Sextuplet',
+    'D - Septuplet',
+    'D - 9_Tuplets',
+    'D - 11_Tuplets']
+    
+
     ################################
     NUM_PATCH = ((cfg.MAX_SEQ_LENGTH - cfg.PATCH)//cfg.STRIDE) + 1
     device = torch.device(DEVICE_TYPE)
@@ -42,6 +60,7 @@ if __name__ == '__main__':
         shutil.copy("./config.py", "./RESULTS/" + cfg.BACKUP + "/" + cfg.BACKUP + ".py")
         training_src_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         training_note_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
+        training_beat_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         GPROFOLDER = './gprofiles/'
         L = 0
         N = 0
@@ -67,6 +86,7 @@ if __name__ == '__main__':
                                                                         note.beat.duration,
                                                                         note.effect.palmMute + 1)
                                     training_note_encoder_1[N] = note_prob(note.value, note.string)
+                                    training_beat_encoder_1[N] = beat_prob(note.beat.duration)
                                     N += 1
                                     L += 1
                                     if note_index != 0:
@@ -146,10 +166,18 @@ if __name__ == '__main__':
         print(f"{training_tgt_notes}")
         # plot notes
         training_note_encoder_1 = training_note_encoder_1[training_note_encoder_1 != 0]
+        training_beat_encoder_1 = training_beat_encoder_1[training_beat_encoder_1 != 0]
         bincounts = np.bincount(training_note_encoder_1, minlength=12)[1:]
+        bincountsbeats = np.bincount(training_beat_encoder_1, minlength=14)[1:]
+
         writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
-        plotbar(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.png')
+        plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.png')
         del training_note_encoder_1
+
+        writebincount(bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
+        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.png')
+        del training_beat_encoder_1
+
         ITERATION = 0
         criterion = torch.nn.MSELoss()
         lossplot = []
@@ -246,6 +274,8 @@ if __name__ == '__main__':
         song.tracks[0].strings[5].value = 32
         song_collect = []
         song_notes = []
+        song_beats = []
+
         while m < cfg.TEST_TRIES:
             noteval = []
             notetypeval = []
@@ -255,13 +285,14 @@ if __name__ == '__main__':
 
             for ind, dummy in enumerate(dummy_in[m]):
                 print(f"{ind + 1:02}", end=' ')
-                note, notetype, string, beat, palm = detokenizer_1(dummy)
+                note, notetype, string, beat, palm, beatnum = detokenizer_1(dummy)
                 noteval.append(note)
                 notetypeval.append(notetype)
                 stringnum.append(string)
                 beatval.append(beat)
                 palmval.append(palm)
                 song_notes.append(note_prob(note, string))
+                song_beats.append(beatnum)
             song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
             song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
             m += 1
@@ -269,11 +300,18 @@ if __name__ == '__main__':
             writegpro(cfg.SAVE, song)
         song_notes = [value for value in song_notes if value != 100]
         bincounts_inf = np.bincount(song_notes, minlength=12)[1:]
+        bincountsbeats_inf = np.bincount(song_beats, minlength=14)
         writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobability.png')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
-        plotbar(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobability.png')
+        bincountsbeats_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
+        plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobabilitynotes.png')
+        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobabilitybeats.png')
         
     KLD = KLDivergence(bincounts_train, bincounts_inf)
-    plotbar_dual(bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobability.png')
+    plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobabilitynotes.png')
     
+    KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
+    plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobabilitybeats.png')
+    
+
     print("Finished")

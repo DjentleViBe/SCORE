@@ -2,6 +2,7 @@
 # Note
 # C0 = 0 in GPro
 from config import EOS
+from decoding import demapping_beat_num
 
 MAPPING_BEAT = {
     # pure : base, triplet, quintuplet, sextuplet, septuplet, 9 tuplets, 11-tuplets (1-7)
@@ -50,6 +51,26 @@ def tokenizer_1(note, string, duration, n_val):
         beatvalue += 8
     encoding = note_formula + beatvalue * 322
     return encoding
+
+def beat_prob(duration):
+    beatvalue = MAPPING_BEAT.get(duration.value)
+    if duration.tuplet.enters == 3:
+        beatvalue += 1
+    if duration.tuplet.enters == 5:
+        beatvalue += 2
+    if duration.tuplet.enters == 6:
+        beatvalue += 3
+    if duration.tuplet.enters == 7:
+        beatvalue += 4
+    if duration.tuplet.enters == 9:
+        beatvalue += 5
+    if duration.tuplet.enters == 11:
+        beatvalue += 6
+    if duration.isDotted:
+        beatvalue += 8
+
+    
+    return demapping_beat_num(beatvalue) + 1
 
 def note_prob(note, string):
     # tuning baritone_2
