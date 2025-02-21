@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
-from postprocess import plot, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, readbincount, KLDivergence
+from postprocess import combinepng, plot, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, readbincount, KLDivergence
 from encoding import tokenizer_1, note_prob, beat_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
@@ -307,11 +307,14 @@ if __name__ == '__main__':
         plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobabilitynotes.png')
         plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobabilitybeats.png')
         
-    KLD = KLDivergence(bincounts_train, bincounts_inf)
-    plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobabilitynotes.png')
-    
-    KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
-    plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobabilitybeats.png')
-    
+        KLD = KLDivergence(bincounts_train, bincounts_inf)
+        plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobabilitynotes.png')
+        
+        KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
+        plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobabilitybeats.png')
+        
+        combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobabilitynotes.png',
+                   './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobabilitybeats.png',
+                   './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobability.png')
 
     print("Finished")
