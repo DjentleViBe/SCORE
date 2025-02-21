@@ -1,6 +1,7 @@
 """Encoding gpro files"""
 # Note
 # C0 = 0 in GPro
+from config import EOS
 
 MAPPING_BEAT = {
     # pure : base, triplet, quintuplet, sextuplet, septuplet, 9 tuplets, 11-tuplets (1-7)
@@ -59,15 +60,18 @@ def note_prob(note, string):
     # 2: F#
     # 1: A#
     # Notes = C C# D D# E F F# G G# A A# B
-    if string == 1:
-        return (note + 11) % 12 + 1
-    elif  string == 2:
-        return (note + 7) % 12 + 1
-    elif  string == 3:
-        return (note + 2) % 12 + 1
-    elif  string == 4:
-        return (note + 9) % 12 + 1
-    elif  string == 5:
-        return (note + 4) % 12 + 1
-    else :
-        return (note + 9) % 12 + 1
+    if note > EOS:
+        return 100
+    else:
+        if string == 1:
+            return (note + 11) % 12 + 1
+        elif  string == 2:
+            return (note + 7) % 12 + 1
+        elif  string == 3:
+            return (note + 2) % 12 + 1
+        elif  string == 4:
+            return (note + 9) % 12 + 1
+        elif  string == 5:
+            return (note + 4) % 12 + 1
+        else :
+            return (note + 9) % 12 + 1

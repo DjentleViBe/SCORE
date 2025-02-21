@@ -267,6 +267,7 @@ if __name__ == '__main__':
             m += 1
             print("")
             writegpro(cfg.SAVE, song)
+        song_notes = [value for value in song_notes if value != 100]
         bincounts_inf = np.bincount(song_notes, minlength=12)[1:]
         writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobability.png')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
