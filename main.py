@@ -167,8 +167,8 @@ if __name__ == '__main__':
         # plot notes
         training_note_encoder_1 = training_note_encoder_1[training_note_encoder_1 != 0]
         training_beat_encoder_1 = training_beat_encoder_1[training_beat_encoder_1 != 0]
-        bincounts = np.bincount(training_note_encoder_1, minlength=12)[1:]
-        bincountsbeats = np.bincount(training_beat_encoder_1, minlength=14)[1:]
+        bincounts = np.bincount(training_note_encoder_1, minlength=13)[1:]
+        bincountsbeats = np.bincount(training_beat_encoder_1, minlength=15)[1:]
 
         writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.png')
@@ -299,8 +299,8 @@ if __name__ == '__main__':
             print("")
             writegpro(cfg.SAVE, song)
         song_notes = [value for value in song_notes if value != 100]
-        bincounts_inf = np.bincount(song_notes, minlength=12)[1:]
-        bincountsbeats_inf = np.bincount(song_beats, minlength=14)
+        bincounts_inf = np.bincount(song_notes, minlength=13)[1:]
+        bincountsbeats_inf = np.bincount(song_beats, minlength=15)[1:]
         writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobability.png')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         bincountsbeats_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')

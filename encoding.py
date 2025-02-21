@@ -53,7 +53,7 @@ def tokenizer_1(note, string, duration, n_val):
     return encoding
 
 def beat_prob(duration):
-    beatvalue = MAPPING_BEAT.get(duration.value)
+    beatvalue = 1
     if duration.tuplet.enters == 3:
         beatvalue += 1
     if duration.tuplet.enters == 5:
@@ -67,10 +67,9 @@ def beat_prob(duration):
     if duration.tuplet.enters == 11:
         beatvalue += 6
     if duration.isDotted:
-        beatvalue += 8
-
+        beatvalue += 7
     
-    return demapping_beat_num(beatvalue) + 1
+    return beatvalue
 
 def note_prob(note, string):
     # tuning baritone_2
