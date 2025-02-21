@@ -59,9 +59,8 @@ def plotbar(counts, filename):
 
     return 0
 
-def plotbar_dual(counts1, counts2, filename, label1='Training', label2='Inference'):
+def plotbar_dual(counts1, counts2, KLD, filename, label1='Training', label2='Inference'):
     plt.figure(figsize=(12, 6))
-    
     labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
     x = np.arange(len(labels))  # label positions
     width = 0.4  # width of the bars
@@ -74,7 +73,8 @@ def plotbar_dual(counts1, counts2, filename, label1='Training', label2='Inferenc
     ax1.tick_params(axis='y')
     ax1.set_xticks(x)
     ax1.set_xticklabels(labels)
-    ax1.set_title('Occurrences of Notes', fontsize=14)
+    fig.suptitle('Occurrences of Notes', fontsize=18)      # Title for the Axes
+    ax1.set_title('KL_Divergence = ' + str(round(KLD, 4)), fontsize = 14)      # Subtitle for the entire figure
 
     # Annotate primary bars
     for bar in bars1:
@@ -455,3 +455,21 @@ def readbincount(filename):
             counts.append(count)
     
     return counts
+
+def KLDivergence(train, eval):
+    N_tot = sum(train)
+    Q_tot = sum(eval)
+    P = []
+    Q = []
+    D = []
+    eps = 1E-10
+
+    for p_val in train:
+        P.append(p_val / N_tot)
+
+    for q_val in eval:
+        Q.append(q_val / Q_tot)
+
+    for item1, item2 in zip(P, Q):
+        D.append(item1 * np.log(item1 / (item2 + eps)))
+    return sum(D)

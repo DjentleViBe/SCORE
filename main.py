@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
-from postprocess import plot, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, readbincount
+from postprocess import plot, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, readbincount, KLDivergence
 from encoding import tokenizer_1, note_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
@@ -272,5 +272,8 @@ if __name__ == '__main__':
         writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobability.png')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         plotbar(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobability.png')
-        plotbar_dual(bincounts_train, bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobability.png')
+        
+    KLD = KLDivergence(bincounts_train, bincounts_inf)
+    plotbar_dual(bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobability.png')
+    
     print("Finished")
