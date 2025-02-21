@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import guitarpro as gp
 import math
 import numpy as np
+from matplotlib.patches import Patch
 from config import (BACKUP, MAX_SEQ_LENGTH, EOS, BOS, BARRE_NOTE, MEASURE, BEND_NOTE_1, BEND_NOTE_2, BEND_NOTE_3,
 BEND_NOTE_4, BEND_NOTE_5, BEND_NOTE_6, BEND_NOTE_7, TREM_BAR_1, TREM_BAR_2, TREM_BAR_3,
 TREM_BAR_4, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_2, SLIDE_NOTE_3, SLIDE_NOTE_4, SLIDE_NOTE_5, SLIDE_NOTE_6,
@@ -55,6 +56,56 @@ def plotbar(counts, filename):
 
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.savefig(filename, dpi = 200)
+
+    return 0
+
+def plotbar_dual(counts1, counts2, filename, label1='Training', label2='Inference'):
+    plt.figure(figsize=(12, 6))
+    
+    labels = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+    x = np.arange(len(labels))  # label positions
+    width = 0.4  # width of the bars
+
+    # Primary axis
+    fig, ax1 = plt.subplots(figsize=(12, 6))
+    bars1 = ax1.bar(x - width/2, counts1, width, label=label1, color='skyblue', edgecolor='black')
+    ax1.set_xlabel('Notes', fontsize=12)
+    ax1.set_ylabel(f'Training', fontsize=12)
+    ax1.tick_params(axis='y')
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(labels)
+    ax1.set_title('Occurrences of Notes', fontsize=14)
+
+    # Annotate primary bars
+    for bar in bars1:
+        yval = bar.get_height()
+        ax1.text(bar.get_x() + bar.get_width()/2, yval, int(yval), ha='center', va='bottom', fontsize=9)
+
+    # Secondary axis
+    ax2 = ax1.twinx()
+    bars2 = ax2.bar(x + width/2, counts2, width, label=label2, color='salmon', edgecolor='black')
+    ax2.set_ylabel(f'Inference', fontsize=12)
+    ax2.tick_params(axis='y')
+
+    # Annotate secondary bars
+    for bar in bars2:
+        yval = bar.get_height()
+        ax2.text(bar.get_x() + bar.get_width()/2, yval, int(yval), ha='center', va='bottom', fontsize=9)
+
+    # Combine legends
+    labels = [label1, label2]
+    legend_patches = [
+        Patch(facecolor='skyblue', edgecolor='black', label=label1),
+        Patch(facecolor='salmon', edgecolor='black', label=label2)
+    ]
+    ax1.legend(handles=legend_patches, loc='upper right')
+
+    # Grid on primary axis
+    ax1.grid(axis='y', linestyle='--', alpha=0.7)
+
+    plt.tight_layout()
+    plt.savefig(filename, dpi=200)
+    plt.close()
 
     return 0
 
@@ -386,3 +437,21 @@ def writegpro(filename, song):
     # Save the song to a Guitar Pro file
     with open("./RESULTS/" + "/" + BACKUP + "/" + filename + ".gp5", 'wb') as file:
         gp.write(song, file)
+
+def writebincount(counts, filename):
+    # Write to a text file
+    with open(filename, 'w') as file:
+        for idx, count in enumerate(counts):
+            file.write(f"Value {idx}: {count} occurrences\n")
+    
+def readbincount(filename):
+    # Read the counts from the text file
+    counts = []
+    with open(filename, 'r') as file:
+        for line in file:
+            # Extract the count from each line
+            parts = line.strip().split(':')
+            count = int(parts[1].split()[0])  # Get the integer count
+            counts.append(count)
+    
+    return counts

@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
-from postprocess import plot, plotbar, decoder_inference, makegpro, writegpro
+from postprocess import plot, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, readbincount
 from encoding import tokenizer_1, note_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
@@ -147,6 +147,7 @@ if __name__ == '__main__':
         # plot notes
         training_note_encoder_1 = training_note_encoder_1[training_note_encoder_1 != 0]
         bincounts = np.bincount(training_note_encoder_1, minlength=12)[1:]
+        writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         plotbar(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.png')
         del training_note_encoder_1
         ITERATION = 0
@@ -266,7 +267,9 @@ if __name__ == '__main__':
             m += 1
             print("")
             writegpro(cfg.SAVE, song)
-        bincounts = np.bincount(song_notes, minlength=12)[1:]
-        plotbar(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobability.png')
-        
+        bincounts_inf = np.bincount(song_notes, minlength=12)[1:]
+        writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobability.png')
+        bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
+        plotbar(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_inferenceprobability.png')
+        plotbar_dual(bincounts_train, bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_compareprobability.png')
     print("Finished")
