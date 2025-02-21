@@ -30,10 +30,11 @@ DEMAPPING_BEAT_DETYPE = {
     'Dotted - 11_Tuplets' : 14,
 }
 
-def plot(lossplot, filename):
+def plot(lossplot, text, filename):
     "Plots data and saves figure"
     plt.plot(lossplot)
     plt.suptitle('SupervisedRiffGen')
+    plt.title('Loss = ' + str(round(text, 4)))
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.yscale('log')
@@ -57,6 +58,8 @@ def plotbar(labels, title, counts, filename):
     plt.grid(axis='y', linestyle='--', alpha=0.7)
     plt.tight_layout()
     plt.savefig(filename, dpi = 200)
+
+    plt.close()
 
     return 0
 
