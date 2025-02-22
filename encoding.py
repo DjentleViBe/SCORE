@@ -48,7 +48,7 @@ def tokenizer_1(note, string, duration, n_val):
     if duration.tuplet.enters == 11:
         beatvalue += 6
     if duration.isDotted:
-        beatvalue += 8
+        beatvalue += 7
     encoding = note_formula + beatvalue * 322
     return encoding
 
