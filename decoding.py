@@ -33,7 +33,7 @@ def demapping_beat_num(beat):
     elif 29 > beat >= 15:
         return beat - 14
     else:
-        return beat + 1
+        return beat
 
 def demapping_beat(beat):
     """returns beat type"""
@@ -54,7 +54,7 @@ def demapping_beat(beat):
         beat_type += DEMAPPING_BEAT_TYPE.get(beat - 14)
         return beat_type
     else:
-        beat_type += DEMAPPING_BEAT_TYPE.get(beat + 1)
+        beat_type += DEMAPPING_BEAT_TYPE.get(beat)
         return beat_type
 
 def detokenizer_1(dummy):
@@ -95,7 +95,7 @@ def detokenizer_1(dummy):
         note_val = dummy
     else:
         palm_mute = False
-        beat_type = demapping_beat(dummy // 322)
+        beat_type = demapping_beat(max(1, dummy // 322))
         note_type = dummy % 322
         if note_type > 161:
             # Palm mute
