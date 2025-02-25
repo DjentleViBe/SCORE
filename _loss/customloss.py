@@ -1,9 +1,10 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import config as cfg
 
 class RepetitionPenaltyLossForSpecificTokens(nn.Module):
-    def __init__(self, label_smoothing=0.1, repetition_penalty_weight=1.0, ngram_size=3, penalize_tokens=None):
+    def __init__(self, label_smoothing=0.0, repetition_penalty_weight=1.0, ngram_size=3, penalize_tokens=None):
         super(RepetitionPenaltyLossForSpecificTokens, self).__init__()
         self.ce_loss = nn.CrossEntropyLoss(label_smoothing=label_smoothing, ignore_index=0)  # Assuming 0 is pad_token_id
         self.repetition_penalty_weight = repetition_penalty_weight
@@ -16,8 +17,8 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
             logits: (batch_size, seq_len, vocab_size)
             targets: (batch_size, seq_len)
         """
-        batch_size, seq_len, vocab_size = logits.size()
-        logits_flat = logits.view(-1, vocab_size)
+        batch_size, seq_len, _ = logits.size()
+        logits_flat = logits.view(-1, cfg.VOCAB_SIZE)
         targets_flat = targets.view(-1)
 
         ce_loss = self.ce_loss(logits_flat, targets_flat)
