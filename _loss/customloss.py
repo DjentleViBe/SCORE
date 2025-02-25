@@ -30,7 +30,7 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
 
 
         total_loss = ce_loss + self.repetition_penalty_weight * repetition_loss
-        return total_loss
+        return total_loss, ce_loss, repetition_loss
 
     def compute_repetition_penalty(self, generated_tokens):
         """
