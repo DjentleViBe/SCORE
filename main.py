@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
-from postprocess import combinepng, plot, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, readbincount, KLDivergence
+from postprocess import combinepng, plot, plot_multiple, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, readbincount, KLDivergence
 from encoding import tokenizer_1, note_prob, beat_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
@@ -182,6 +182,8 @@ if __name__ == '__main__':
         ITERATION = 0
         #criterion = torch.nn.MSELoss()
         lossplot = []
+        ce_lossplot = []
+        rep_lossplot =[]
         #loss_fn = nn.CrossEntropyLoss()
         penalize_tokens = [cfg.BARRE_NOTE, cfg.BEND_NOTE_1, cfg.BEND_NOTE_2, cfg.BEND_NOTE_3, cfg.BEND_NOTE_4, cfg.BEND_NOTE_5, cfg.BEND_NOTE_6, cfg.BEND_NOTE_7,
                            cfg.TREM_BAR_1, cfg.TREM_BAR_2, cfg.TREM_BAR_3, cfg.TREM_BAR_4, cfg.TREM_BAR_5,
@@ -221,7 +223,7 @@ if __name__ == '__main__':
 
             target = target.view(-1)
 
-            loss = criterion(logits, target)
+            loss, ce_loss, rep_loss = criterion(logits, target)
 
             print(f"{ITERATION + 1} : {loss.item()}")
             loss.backward()
@@ -231,6 +233,8 @@ if __name__ == '__main__':
 
             ITERATION += 1
             lossplot.append(loss.item())
+            ce_lossplot.append(ce_loss.item())
+            rep_lossplot.append(rep_loss.item())
 
             if loss.item() < cfg.CONVERGENCE:
                 print("Convergence criteria reached!")
@@ -249,7 +253,7 @@ if __name__ == '__main__':
         
         with open('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP + '.csv', mode='a', newline='') as lossfile:
             writer = csv.writer(lossfile)
-            writer.writerows([[value] for value in lossplot])
+            writer.writerows(zip(lossplot,ce_lossplot, rep_lossplot))
         checkpoint = {
         'model_state_dict': decoder.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
@@ -258,7 +262,7 @@ if __name__ == '__main__':
         'loss': loss     # Optionally save the loss value
         }
         torch.save(checkpoint, './RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth')
-        plot(lossplot, loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.png')
+        plot_multiple([lossplot, ce_lossplot, rep_lossplot], ["total loss", "Main loss", "Repetition loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.png')
 
     if cfg.MODE in (1, 2):
         checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth', map_location=torch.device(DEVICE_TYPE))
