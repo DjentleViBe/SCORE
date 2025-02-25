@@ -30,6 +30,19 @@ DEMAPPING_BEAT_DETYPE = {
     'Dotted - 11_Tuplets' : 14,
 }
 
+def plot_multiple(plot_collect, labels, text, filename):
+    "Plots data and saves figure"
+    plt.suptitle('SupervisedRiffGen')
+    plt.title('Loss = ' + str(round(text, 4)))
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.yscale('log')
+    for i in range(0, len(plot_collect)):
+        plt.plot(plot_collect[i], label=labels[i])
+    plt.legend()
+    plt.savefig(filename, dpi = 200)
+
+    return 0
 def plot(lossplot, text, filename):
     "Plots data and saves figure"
     plt.plot(lossplot)
