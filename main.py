@@ -14,6 +14,7 @@ from _decoder.decoder import DecoderAPE
 import config as cfg
 from testing import inference
 import guitarpro as gp
+from _loss.customloss import RepetitionPenaltyLossForSpecificTokens
 np.set_printoptions(threshold=sys.maxsize)
 
 if __name__ == '__main__':
@@ -179,9 +180,20 @@ if __name__ == '__main__':
         del training_beat_encoder_1
 
         ITERATION = 0
-        criterion = torch.nn.MSELoss()
+        #criterion = torch.nn.MSELoss()
         lossplot = []
-        loss_fn = nn.CrossEntropyLoss(label_smoothing=0.1)
+        #loss_fn = nn.CrossEntropyLoss()
+        penalize_tokens = [cfg.BARRE_NOTE, cfg.BEND_NOTE_1, cfg.BEND_NOTE_2, cfg.BEND_NOTE_3, cfg.BEND_NOTE_4, cfg.BEND_NOTE_5, cfg.BEND_NOTE_6, cfg.BEND_NOTE_7,
+                           cfg.TREM_BAR_1, cfg.TREM_BAR_2, cfg.TREM_BAR_3, cfg.TREM_BAR_4, cfg.TREM_BAR_5,
+                           cfg.DEAD_NOTE, cfg.SLIDE_NOTE_1, cfg.SLIDE_NOTE_2, cfg.SLIDE_NOTE_3, cfg.SLIDE_NOTE_4, cfg.SLIDE_NOTE_5, cfg.SLIDE_NOTE_6, 
+                           cfg.BOS, cfg.VIBRATO, cfg.HAMMER, cfg.HARMONIC_1]
+        criterion = RepetitionPenaltyLossForSpecificTokens(
+            label_smoothing=0.0, 
+            repetition_penalty_weight=1.5, 
+            ngram_size=1, 
+            penalize_tokens=penalize_tokens
+        )
+
 
         token_ids = torch.tensor(training_src_encoder_1).to(device)
         target = torch.from_numpy(training_tgt_notes).to(device)
@@ -203,13 +215,13 @@ if __name__ == '__main__':
 
             logits = decoder(input_embeddings, mask)
             # Flatten logits to (batch_size * seq_length, d_vocab)
-            logits = logits.view(-1, cfg.VOCAB_SIZE)
+            # logits = logits.view(-1, cfg.VOCAB_SIZE)
             
             # scaled_logits = logits / cfg.TEMPERATURE
 
             target = target.view(-1)
 
-            loss = loss_fn(logits, target)
+            loss = criterion(logits, target)
 
             print(f"{ITERATION + 1} : {loss.item()}")
             loss.backward()
