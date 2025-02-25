@@ -181,7 +181,7 @@ if __name__ == '__main__':
         ITERATION = 0
         criterion = torch.nn.MSELoss()
         lossplot = []
-        loss_fn = nn.CrossEntropyLoss()
+        loss_fn = nn.CrossEntropyLoss(label_smoothing=0.1)
 
         token_ids = torch.tensor(training_src_encoder_1).to(device)
         target = torch.from_numpy(training_tgt_notes).to(device)
