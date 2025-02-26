@@ -18,15 +18,20 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
             targets: (batch_size, seq_len)
         """
         batch_size, seq_len, _ = logits.size()
-        logits_flat = logits.view(-1, cfg.VOCAB_SIZE)
+        
         targets_flat = targets.view(-1)
-
-        ce_loss = self.ce_loss(logits_flat, targets_flat)
 
         with torch.no_grad():
             generated_tokens = torch.argmax(logits, dim=-1)  # (batch_size, seq_len)
 
-        repetition_loss = self.compute_repetition_penalty(generated_tokens)
+        # Compute repetition penalty on logits before softmax
+        repetition_penalty = self.compute_repetition_penalty(logits)  # Now using logits directly
+        logits = logits - self.repetition_penalty_weight * repetition_penalty  # Apply penalty BEFORE softmax
+
+        logits_flat = logits.view(-1, cfg.VOCAB_SIZE)
+        ce_loss = self.ce_loss(logits_flat, targets_flat)
+        # Compute repetition loss as a separate term
+        repetition_loss = repetition_penalty.mean()  # Take mean over batch
 
 
         total_loss = ce_loss + self.repetition_penalty_weight * repetition_loss
