@@ -27,7 +27,8 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
             generated_tokens = torch.argmax(logits, dim=-1)  # (batch_size, seq_len)
 
         repetition_loss = self.compute_repetition_penalty(generated_tokens)
-
+        repetition_loss = repetition_loss * torch.exp(-ce_loss)
+        
 
         total_loss = ce_loss + self.repetition_penalty_weight * repetition_loss
         return total_loss, ce_loss, repetition_loss
