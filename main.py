@@ -205,7 +205,7 @@ if __name__ == '__main__':
             # Flatten logits to (batch_size * seq_length, d_vocab)
             logits = logits.view(-1, cfg.VOCAB_SIZE)
             
-            # scaled_logits = logits / cfg.TEMPERATURE
+            scaled_logits = logits / cfg.TEMPERATURE
 
             target = target.view(-1)
 
