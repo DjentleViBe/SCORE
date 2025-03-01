@@ -110,4 +110,4 @@ def detokenizer_1(dummy):
         print(f"Beat : {beat_type} String : {string_num} Note : {note_val} PalmMute : {palm_mute}")
 
 
-    return note_val, note_type, string_num, dummy // 322, palm_mute, demapping_beat_num(dummy // 322)
+    return note_val, note_type, string_num, dummy // 322, palm_mute, demapping_beat_num((dummy if dummy < EOS - 1 else 322) // 322)
