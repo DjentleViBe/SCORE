@@ -514,21 +514,24 @@ def KLDivergence(train, eval):
     return sum(D)
 
 from PIL import Image
-def combinepng(image1, image2, filename):
+def combinepng(image1, image2, image3, filename):
 
     # Load PNG images
     img1 = Image.open(image1)
     img2 = Image.open(image2)
+    img3 = Image.open(image3)
 
     # Ensure both images have the same mode (e.g., RGBA) for transparency
     img1 = img1.convert("RGBA")
     img2 = img2.convert("RGBA")
+    img3 = img3.convert("RGBA")
     width = max(img1.width, img2.width)
-    height = img1.height + img2.height
+    height = img1.height + img2.height + img3.height
     combined_vertical = Image.new("RGBA", (width, height))
 
     combined_vertical.paste(img1, (0, 0))
     combined_vertical.paste(img2, (0, img1.height))
+    combined_vertical.paste(img3, (0, img1.height + img2.height))
 
     combined_vertical.save(filename)
     print("Combined image saved vertically!")

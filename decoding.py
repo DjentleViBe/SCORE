@@ -23,17 +23,17 @@ DEMAPPING_BEAT_TYPE = {
 def demapping_beat_num(beat):
     """returns beat type num"""
     if beat >= 71:
-        return beat - 70
+        return beat - 70, 1
     elif 71 > beat >= 57:
-        return beat - 56
+        return beat - 56, 2
     elif 57 > beat >= 43:
-        return beat - 42
+        return beat - 42, 4
     elif 43 > beat >= 29:
-        return beat - 28
+        return beat - 28, 8
     elif 29 > beat >= 15:
-        return beat - 14
+        return beat - 14, 16
     else:
-        return beat
+        return beat, 32
 
 def demapping_beat(beat):
     """returns beat type"""

@@ -38,7 +38,9 @@ if __name__ == '__main__':
     'D - Septuplet',
     'D - 9_Tuplets',
     'D - 11_Tuplets']
-    
+
+    labelsbeats_detail = ['whole', 'half', 'quarter', '8th', '16th', '32nd']
+    values_of_interest = [1, 2, 4, 8, 16, 32]
 
     ################################
     NUM_PATCH = ((cfg.MAX_SEQ_LENGTH - cfg.PATCH)//cfg.STRIDE) + 1
@@ -61,6 +63,7 @@ if __name__ == '__main__':
         training_src_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         training_note_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         training_beat_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
+        training_beatdetail_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         GPROFOLDER = './gprofiles/'
         L = 0
         N = 0
@@ -87,6 +90,7 @@ if __name__ == '__main__':
                                                                         note.effect.palmMute + 1)
                                     training_note_encoder_1[N] = note_prob(note.value, note.string)
                                     training_beat_encoder_1[N] = beat_prob(note.beat.duration)
+                                    training_beatdetail_encoder_1[N] = note.beat.duration.value
                                     N += 1
                                     L += 1
                                     if note_index != 0:
@@ -167,8 +171,10 @@ if __name__ == '__main__':
         # plot notes
         training_note_encoder_1 = training_note_encoder_1[training_note_encoder_1 != 0]
         training_beat_encoder_1 = training_beat_encoder_1[training_beat_encoder_1 != 0]
+        training_beatdetail_encoder_1 = training_beatdetail_encoder_1[training_beatdetail_encoder_1 != 0]
         bincounts = np.bincount(training_note_encoder_1, minlength=13)[1:]
         bincountsbeats = np.bincount(training_beat_encoder_1, minlength=15)[1:]
+        bincountsbeatsdetail = np.bincount(training_beatdetail_encoder_1, minlength=33)[values_of_interest]
 
         writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.png')
@@ -177,6 +183,10 @@ if __name__ == '__main__':
         writebincount(bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
         plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.png')
         del training_beat_encoder_1
+
+        writebincount(bincountsbeatsdetail, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatdetailprobability.txt')
+        plotbar(labelsbeats_detail, 'Occurance of Beats Detail', bincountsbeatsdetail, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatdetailprobability.png')
+        del training_beatdetail_encoder_1
 
         ITERATION = 0
         criterion = torch.nn.MSELoss()
@@ -275,6 +285,7 @@ if __name__ == '__main__':
         song_collect = []
         song_notes = []
         song_beats = []
+        song_beats_detail = []
 
         while m < cfg.TEST_TRIES:
             noteval = []
@@ -292,7 +303,8 @@ if __name__ == '__main__':
                 beatval.append(beat)
                 palmval.append(palm)
                 song_notes.append(note_prob(note, string))
-                song_beats.append(beatnum)
+                song_beats.append(beatnum[0])
+                song_beats_detail.append(beatnum[1])
             song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
             song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
             m += 1
@@ -301,11 +313,14 @@ if __name__ == '__main__':
         song_notes = [value for value in song_notes if value != 100]
         bincounts_inf = np.bincount(song_notes, minlength=13)[1:]
         bincountsbeats_inf = np.bincount(song_beats, minlength=15)[1:]
+        bincountsbeatsdetail_inf = np.bincount(song_beats_detail, minlength=33)[values_of_interest]
         writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobability.png')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         bincountsbeats_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
+        bincountsbeatsdetail_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatdetailprobability.txt')
         plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitynotes.png')
         plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeats.png')
+        plotbar(labelsbeats_detail, 'Occurance of Beats details', bincountsbeatsdetail_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeatsdetails.png')
         
         KLD = KLDivergence(bincounts_train, bincounts_inf)
         plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.png')
@@ -313,8 +328,12 @@ if __name__ == '__main__':
         KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
         plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.png')
         
+        KLD = KLDivergence(bincountsbeatsdetail_train, bincountsbeatsdetail_inf)
+        plotbar_dual(labelsbeats_detail, bincountsbeatsdetail_train, bincountsbeatsdetail_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeatsdetail.png')
+        
         combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.png',
                    './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.png',
+                   './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeatsdetail.png',
                    './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobability.png')
 
     print("Finished")
