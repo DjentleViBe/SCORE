@@ -125,7 +125,7 @@ def plotbar_dual(labels, counts1, counts2, KLD, filename, label1='Training', lab
 
     return 0
 
-def decoder_greedy_search(decoder, dummy_in, embedding_layer, pos_enc, mask):
+def decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask):
     embeddings = embedding_layer(dummy_in)
     output_eval = decoder(embeddings + pos_enc, mask)
 
@@ -163,7 +163,7 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
             # For each beam, perform a step in the beam search
             for i, beam in enumerate(beam_sequences):
                 # Perform decoding step (greedy or other search method)
-                next_token = decoder_greedy_search(decoder, beam, embedding_layer, pos_enc, mask)
+                next_token = decoder_search(decoder, beam, embedding_layer, pos_enc, mask)
 
                 # Extend each beam with the top k candidates
                 for bw in range(beam_width):
@@ -184,7 +184,7 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
     else:
         if TEST_CRITERIA != 4:
             for e_val in range (2, seq_lim):
-                next_token = decoder_greedy_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
+                next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
                 # generated_sequence = dummy_in
                 dummy_in[0][e_val] = next_token
         else:
@@ -192,7 +192,7 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
             trial = 0
             temperature_var = TEMPERATURE
             while e_val < seq_lim:
-                next_token = decoder_greedy_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
+                next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
 
                 if e_val != 2:
                     if next_token > BOS and dummy_in[0][e_val - 1] < BOS:
