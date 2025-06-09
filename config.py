@@ -5,9 +5,9 @@
 # 1 : eval
 # 2 : both 
 # 3 : load from file
-MODE                =   0
-BACKUP              =   "dec_only_notes_35"
-SAVE                =   "dec_only_notes_35D"
+MODE                =   1
+BACKUP              =   "dec_only_notes_37"
+SAVE                =   "dec_only_notes_37B"
 START_ID            =   9397
 BOS_TRUE            =   1
 EOS_TRUE            =   0
@@ -17,15 +17,15 @@ TEST_CRITERIA       =   2
 # 2 - n bars of generation, n = TEST_TRIES
 # 3 - Same as above + last note of every bar is fed to firt note of next bar
 # 4 - Same as above + loop until no repeatitive notes > BOS 
-TEST_TRIES          =   1
+TEST_TRIES          =   5
 # 1 - Greedy Search
-# 2 - Beam Seaarch
+# 2 - Beam Search
 # 3 - Multinomial Sampling
 # 4 - Multinomial Sampling - manual
-PREDICTION_CRITERIA =   4
+PREDICTION_CRITERIA =   3
 ########## Params ##############
 EPOCHS          =   3000
-SAVE_EVERY      =   100
+SAVE_EVERY      =   500
 VOCAB_SIZE      =   26430
 FFN_HIDDEN      =   2048
 MAX_SEQ_LENGTH  =   9
@@ -38,8 +38,8 @@ SCHEDULER_SIZE  =   30
 LEARNING_RATE   =   0.00005
 PATCH           =   1
 STRIDE          =   1
-TRAINING        =   ["PerNote"]
-BATCH           =   665
+TRAINING        =   ["CB"]
+BATCH           =   1221
 CONVERGENCE     =   0.0005
 TEMPERATURE     =   1.0
 
