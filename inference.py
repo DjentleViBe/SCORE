@@ -14,10 +14,10 @@ def multinomial_sample(probabilities, num_samples):
         cumulative_sum += p.item()
         cumulative_probabilities.append(cumulative_sum)
 
-    plt.plot(cumulative_probabilities, color = 'k')
-    plt.suptitle("Cumulative probability")
-    plt.xlabel("Tokens")
-    plt.ylabel("Probability")
+    #plt.plot(cumulative_probabilities, color = 'k')
+    #plt.suptitle("Cumulative probability")
+    #plt.xlabel("Tokens")
+    #plt.ylabel("Probability")
     # plt.show()
 
     samples = []
