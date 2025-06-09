@@ -16,10 +16,12 @@ from testing import inference
 import guitarpro as gp
 from _loss.customloss import RepetitionPenaltyLossForSpecificTokens
 np.set_printoptions(threshold=sys.maxsize)
+import platform
 
 if __name__ == '__main__':
 
-    if os.name == 'posix':
+    os_type = platform.system()
+    if os_type == 'Darwin':
         DEVICE_TYPE     =   "mps"
     else:
         DEVICE_TYPE     =   "cuda"
@@ -208,6 +210,8 @@ if __name__ == '__main__':
             embedding_layer.load_state_dict(checkpoint['embedding_state_dict'])
             ITERATION = checkpoint['epoch']
         print(cfg.EPOCHS)
+        inputs = torch.zeros((cfg.BATCH, cfg.MAX_SEQ_LENGTH), dtype=torch.long).to(device)
+        inputs[:, 0] = cfg.START_ID
         while ITERATION <= cfg.EPOCHS:
             decoder.train()
 
@@ -222,8 +226,7 @@ if __name__ == '__main__':
             # scaled_logits = logits / cfg.TEMPERATURE
 
             target = target.view(-1)
-
-            loss, ce_loss, rep_loss = criterion(logits, target)
+            loss, ce_loss, rep_loss = criterion(logits, target, decoder, inputs, embedding_layer, pos_enc)
 
             print(f"{ITERATION + 1} : {loss.item()}")
             loss.backward()
