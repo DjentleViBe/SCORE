@@ -152,65 +152,66 @@ def decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask):
 
 def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim):
     """Transformer Decoder"""
-    if PREDICTION_CRITERIA == 2:
-        seq_lim = dummy_in.size(1)  # Sequence length limit
-        beam_sequences = [dummy_in.clone()]  # Initialize beam with dummy input
-        beam_scores = [0.0]  # Initialize scores with 0
-        beam_width = 3
-        dummy_in_collect = []
-        for e_val in range (2, seq_lim):
-            all_candidates = []
-            # For each beam, perform a step in the beam search
-            for i, beam in enumerate(beam_sequences):
-                # Perform decoding step (greedy or other search method)
-                next_token = decoder_search(decoder, beam, embedding_layer, pos_enc, mask)
-
-                # Extend each beam with the top k candidates
-                for bw in range(beam_width):
-                    new_beam = beam.clone()  # Copy the current beam
-                    new_beam[0][e_val] = next_token[0][bw]  # Update the token for this position
-                    new_score = beam_scores[i] + next_token[0][bw].log()  # Update the score (log probability)
-                    all_candidates.append((new_beam, new_score))
-
-            # Sort all candidates by score and select the top k
-            ordered_candidates = sorted(all_candidates, key=lambda x: x[1], reverse=True)
-            beam_sequences = [candidate[0] for candidate in ordered_candidates[:beam_width]]
-            beam_scores = [candidate[1] for candidate in ordered_candidates[:beam_width]]
-
-            # Collect beams for the current step
-            dummy_in_collect = [beam_sequences[bw] for bw in range(beam_width)]
-        best_beam_index = torch.argmax(torch.tensor(beam_scores))
-        dummy_in = beam_sequences[best_beam_index]
-    else:
-        if TEST_CRITERIA != 4:
+    with torch.no_grad():
+        if PREDICTION_CRITERIA == 2:
+            seq_lim = dummy_in.size(1)  # Sequence length limit
+            beam_sequences = [dummy_in.clone()]  # Initialize beam with dummy input
+            beam_scores = [0.0]  # Initialize scores with 0
+            beam_width = 3
+            dummy_in_collect = []
             for e_val in range (2, seq_lim):
-                next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
-                # generated_sequence = dummy_in
-                dummy_in[0][e_val] = next_token
-        else:
-            e_val = 2
-            trial = 0
-            temperature_var = TEMPERATURE
-            while e_val < seq_lim:
-                next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
+                all_candidates = []
+                # For each beam, perform a step in the beam search
+                for i, beam in enumerate(beam_sequences):
+                    # Perform decoding step (greedy or other search method)
+                    next_token = decoder_search(decoder, beam, embedding_layer, pos_enc, mask)
 
-                if e_val != 2:
-                    if next_token > BOS and dummy_in[0][e_val - 1] < BOS:
-                        dummy_in[0][e_val] = next_token
-                        e_val +=1
-                    elif next_token < BOS:
-                        dummy_in[0][e_val] = next_token
-                        e_val +=1
-                    else:
-                        temperature_var /= 2
-                        print("Trial -->", e_val, trial, next_token.cpu()[0][0], dummy_in.cpu()[0][e_val - 1])
-                        trial += 1
-                else:
+                    # Extend each beam with the top k candidates
+                    for bw in range(beam_width):
+                        new_beam = beam.clone()  # Copy the current beam
+                        new_beam[0][e_val] = next_token[0][bw]  # Update the token for this position
+                        new_score = beam_scores[i] + next_token[0][bw].log()  # Update the score (log probability)
+                        all_candidates.append((new_beam, new_score))
+
+                # Sort all candidates by score and select the top k
+                ordered_candidates = sorted(all_candidates, key=lambda x: x[1], reverse=True)
+                beam_sequences = [candidate[0] for candidate in ordered_candidates[:beam_width]]
+                beam_scores = [candidate[1] for candidate in ordered_candidates[:beam_width]]
+
+                # Collect beams for the current step
+                dummy_in_collect = [beam_sequences[bw] for bw in range(beam_width)]
+            best_beam_index = torch.argmax(torch.tensor(beam_scores))
+            dummy_in = beam_sequences[best_beam_index]
+        else:
+            if TEST_CRITERIA != 4:
+                for e_val in range (2, seq_lim):
+                    next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
                     # generated_sequence = dummy_in
                     dummy_in[0][e_val] = next_token
-                    e_val += 1
+            else:
+                e_val = 2
+                trial = 0
+                temperature_var = TEMPERATURE
+                while e_val < seq_lim:
+                    next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
 
-    print(dummy_in)
+                    if e_val != 2:
+                        if next_token > BOS and dummy_in[0][e_val - 1] < BOS:
+                            dummy_in[0][e_val] = next_token
+                            e_val +=1
+                        elif next_token < BOS:
+                            dummy_in[0][e_val] = next_token
+                            e_val +=1
+                        else:
+                            temperature_var /= 2
+                            print("Trial -->", e_val, trial, next_token.cpu()[0][0], dummy_in.cpu()[0][e_val - 1])
+                            trial += 1
+                    else:
+                        # generated_sequence = dummy_in
+                        dummy_in[0][e_val] = next_token
+                        e_val += 1
+
+        print(dummy_in)
     return dummy_in
 
 def getnotetype(notetype):
