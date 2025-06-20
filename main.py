@@ -17,9 +17,10 @@ import guitarpro as gp
 from _loss.customloss import RepetitionPenaltyLossForSpecificTokens
 np.set_printoptions(threshold=sys.maxsize)
 import platform
+from torch.utils.data import DataLoader, TensorDataset
 
 if __name__ == '__main__':
-
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
     os_type = platform.system()
     if os_type == 'Darwin':
         DEVICE_TYPE     =   "mps"
@@ -61,9 +62,9 @@ if __name__ == '__main__':
         create_dir('./RESULTS/')
         create_dir('./RESULTS/' + cfg.BACKUP)
         shutil.copy("./config.py", "./RESULTS/" + cfg.BACKUP + "/" + cfg.BACKUP + ".py")
-        training_src_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
-        training_note_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
-        training_beat_encoder_1 = np.zeros((cfg.BATCH * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
+        training_src_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
+        training_note_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
+        training_beat_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         GPROFOLDER = './gprofiles/'
         L = 0
         N = 0
@@ -161,9 +162,9 @@ if __name__ == '__main__':
                                 training_src_encoder_1[L] = cfg.EOS
                                 L += 1
         training_tgt_decoder_1 = training_src_encoder_1.copy().astype(np.int64)
-        training_src_encoder_1 = training_src_encoder_1.reshape(cfg.BATCH, cfg.MAX_SEQ_LENGTH)
+        training_src_encoder_1 = training_src_encoder_1.reshape(cfg.NUM_SEQUENCE, cfg.MAX_SEQ_LENGTH)
         training_tgt_notes = np.roll(training_tgt_decoder_1, shift=-1)
-        training_tgt_notes = training_tgt_notes.reshape(cfg.BATCH, cfg.MAX_SEQ_LENGTH)
+        training_tgt_notes = training_tgt_notes.reshape(cfg.NUM_SEQUENCE, cfg.MAX_SEQ_LENGTH)
         del training_tgt_decoder_1
         print("Source")
         print(f"{training_tgt_notes}")
@@ -186,6 +187,7 @@ if __name__ == '__main__':
         lossplot = []
         ce_lossplot = []
         rep_lossplot =[]
+        val_loss = []
         #loss_fn = nn.CrossEntropyLoss()
         penalize_tokens = [cfg.BARRE_NOTE, cfg.BEND_NOTE_1, cfg.BEND_NOTE_2, cfg.BEND_NOTE_3, cfg.BEND_NOTE_4, cfg.BEND_NOTE_5, cfg.BEND_NOTE_6, cfg.BEND_NOTE_7,
                            cfg.TREM_BAR_1, cfg.TREM_BAR_2, cfg.TREM_BAR_3, cfg.TREM_BAR_4, cfg.TREM_BAR_5,
@@ -198,9 +200,12 @@ if __name__ == '__main__':
             penalize_tokens=penalize_tokens
         )
 
+        token_ids = torch.tensor(training_src_encoder_1)
+        target = torch.from_numpy(training_tgt_notes)
 
-        token_ids = torch.tensor(training_src_encoder_1).to(device)
-        target = torch.from_numpy(training_tgt_notes).to(device)
+        # Wrap your full data into a TensorDataset
+        dataset = TensorDataset(token_ids, target)
+        loader = DataLoader(dataset, batch_size=cfg.BATCH, shuffle=True)
 
         if cfg.MODE == 3:
             print("Loading saved file", cfg.SAVE)
@@ -210,36 +215,56 @@ if __name__ == '__main__':
             embedding_layer.load_state_dict(checkpoint['embedding_state_dict'])
             ITERATION = checkpoint['epoch']
         print(cfg.EPOCHS)
-        inputs = torch.zeros((cfg.BATCH, cfg.MAX_SEQ_LENGTH), dtype=torch.long).to(device)
+        inputs = torch.zeros((cfg.NUM_SEQUENCE, cfg.MAX_SEQ_LENGTH), dtype=torch.long).to(device)
         inputs[:, 0] = cfg.START_ID
         while ITERATION <= cfg.EPOCHS:
             decoder.train()
+            epoch_loss = 0.0  # track epoch loss
+            batch_count = 0
+            for batch_token_ids, batch_target in loader:
+                batch_token_ids = batch_token_ids.to(device)
+                batch_target = batch_target.to(device)
+                # Prepare `inputs` tensor (e.g., for teacher forcing or decoder input)
+                inputs = torch.zeros((batch_token_ids.size(0), cfg.MAX_SEQ_LENGTH), dtype=torch.long).to(device)
+                inputs[:, 0] = cfg.START_ID
+        
+                optimizer.zero_grad()
+                # Embeddings
+                embeddings = embedding_layer(batch_token_ids)
+                input_embeddings = embeddings + pos_enc[:batch_token_ids.size(1)]
 
-            optimizer.zero_grad()
-            embeddings = embedding_layer(token_ids)
-            input_embeddings = embeddings + pos_enc
+                # Forward
+                logits = decoder(input_embeddings, mask)
 
-            logits = decoder(input_embeddings, mask)
-            # Flatten logits to (batch_size * seq_length, d_vocab)
-            # logits = logits.view(-1, cfg.VOCAB_SIZE)
+                # Flatten target
+                batch_target = batch_target.view(-1)
+
+                # Compute loss
+                loss, ce_loss, rep_loss = criterion(
+                    logits, batch_target, decoder, inputs, embedding_layer, pos_enc
+                )
+
+                loss.backward()
+                optimizer.step()
+                if cfg.SCHEDULER == 1:
+                    scheduler.step()
+
+                # Log and accumulate loss
+                epoch_loss += loss.item()
+                batch_count += 1
+                # print("batch count : ", batch_count)
             
-            # scaled_logits = logits / cfg.TEMPERATURE
-
-            target = target.view(-1)
-            loss, ce_loss, rep_loss = criterion(logits, target, decoder, inputs, embedding_layer, pos_enc)
-
+            avg_loss = epoch_loss / batch_count
+            decoder.eval()
+            dummy_in = inference(device, decoder, embedding_layer, pos_enc, mask)
+            
             print(f"{ITERATION + 1} : {loss.item()}")
-            loss.backward()
-            optimizer.step()
-            if cfg.SCHEDULER == 1:
-                scheduler.step()
-
             ITERATION += 1
             lossplot.append(loss.item())
             ce_lossplot.append(ce_loss.item())
             rep_lossplot.append(rep_loss.item())
 
-            if loss.item() < cfg.CONVERGENCE:
+            if avg_loss < cfg.CONVERGENCE:
                 print("Convergence criteria reached!")
                 break
 
