@@ -30,12 +30,12 @@ def generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, s
     key_caches = None
     value_caches = None
 
-    for step in range(inputs.size(1), seq_len):
+    for step in range(1, seq_len):
         # Embed the last generated token(s)
         input_embeds = embedding_layer(generated_tokens[:, step-1:step])  # (batch, 1, d_model)
         # Add positional encoding if needed (adjust shape accordingly)
         if pos_enc is not None:
-            pos_embed = pos_enc(step - 1).unsqueeze(0).expand(batch_size, 1, -1)  # (batch, 1, d_model)
+            pos_embed = pos_enc[step - 1].unsqueeze(0).unsqueeze(1).expand(batch_size, 1, -1)
             input_embeds = input_embeds + pos_embed
 
         # Run decoder for one step with cache
