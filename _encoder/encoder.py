@@ -65,7 +65,7 @@ class MultiHeadAttentionAPE(nn.Module):
         # Return relative positional encoding with an extra batch dimension
         return relative_pos_enc.unsqueeze(0)  # Shape: (1, seq_length, seq_length) 
 
-    def forward(self, x_val, mask=None):
+    def forward(self, x_val, mask=None, key_cache=None, value_cache=None):
         """Forward layer
         """
         # 30 x 10 x 32
@@ -80,19 +80,26 @@ class MultiHeadAttentionAPE(nn.Module):
         # batch x head x seq x (3 * (embed / head))
         q_val, k_val, v_val = qkv.chunk(3, dim = -1)
 
-        # Compute relative positional encodings
-        relative_positions = self.relative_position_encoding(sequence_length, self.relative_positional_encoding.num_embeddings // 2 + 1, self.device)
+         # Concatenate caches if present
+        if key_cache is not None and value_cache is not None:
+            k_val = torch.cat([key_cache, k_val], dim=2)  # concat on seq_len dimension
+            v_val = torch.cat([value_cache, v_val], dim=2)
+        
+         # Update cache with current keys and values
+        key_cache_updated = k_val
+        value_cache_updated = v_val
 
-         # Get the relative positional embeddings using the relative position matrix
-        rel_pos_enc = self.relative_positional_encoding(relative_positions)  # Shape: (1, seq_length, seq_length, head_dim)
+        # Compute relative positional encodings for the combined length
+        total_seq_len = k_val.size(2)  # cached_seq_len + current seq_len
+        relative_positions = self.relative_position_encoding(total_seq_len, self.relative_positional_encoding.num_embeddings // 2 + 1, self.device)
+        rel_pos_enc = self.relative_positional_encoding(relative_positions)  # (1, total_seq_len, total_seq_len, head_dim)
 
-        # 30 x 8 x 10 x 32, 30 x 8 x 10 x 10
         values, _ = scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc)
-        # 30 x 10 x 32
+
         values = values.reshape(batch_size, sequence_length, self.num_heads * self.head_dim)
-        # 30 x 10 x 1
-        values = self.linear_layer(values)
-        return values
+        output = self.linear_layer(values)
+
+        return output, key_cache_updated, value_cache_updated
 
 class LayerNormalization(nn.Module):
     """Layer normalisation

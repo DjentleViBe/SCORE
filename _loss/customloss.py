@@ -10,7 +10,7 @@ import sys
 np.set_printoptions(threshold=sys.maxsize)
 import torch.nn.functional as F
 
-def generate_sampled_sequence(decoder, input_seq, embedding_layer, pos_enc, mask, seq_len, temperature=1.0):
+def generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, seq_len, temperature=1.0):
     """
     Generate a sequence by sampling tokens multinomially from the decoder output at each step.
     Args:
@@ -21,20 +21,40 @@ def generate_sampled_sequence(decoder, input_seq, embedding_layer, pos_enc, mask
     Returns:
         sampled_seq: (batch_size, seq_len) tensor of sampled token indices
     """
-    batch_size = input_seq.size(0)
-    sampled_seq = input_seq.clone()
+    batch_size = inputs.size(0)
+    device = inputs.device
+    
+    generated_tokens = inputs.clone()
+    
+    # Initialize KV caches as lists of None for each layer
+    key_caches = None
+    value_caches = None
 
-    for t in range(seq_len, seq_len):
-        embeddings = embedding_layer(sampled_seq)
-        output = decoder(embeddings + pos_enc, mask)
-        logits = output[:, t-1, :]  # logits for the last generated token
-        scaled_logits = logits / temperature
-        probs = torch.softmax(scaled_logits, dim=-1)
-        
-        next_token = multinomial_sample_2(probs, num_samples = 40)
-        sampled_seq[:, t] = next_token
+    for step in range(inputs.size(1), seq_len):
+        # Embed the last generated token(s)
+        input_embeds = embedding_layer(generated_tokens[:, step-1:step])  # (batch, 1, d_model)
+        # Add positional encoding if needed (adjust shape accordingly)
+        if pos_enc is not None:
+            pos_embed = pos_enc(step - 1).unsqueeze(0).expand(batch_size, 1, -1)  # (batch, 1, d_model)
+            input_embeds = input_embeds + pos_embed
 
-    return sampled_seq
+        # Run decoder for one step with cache
+        logits, key_caches, value_caches = decoder(
+            input_embeds,
+            decoder_mask=None,  # or appropriate mask for decoding step
+            key_caches=key_caches,
+            value_caches=value_caches
+        )  # logits shape: (batch, 1, vocab_size)
+
+        logits = logits[:, -1, :] / temperature
+        probs = torch.softmax(logits, dim=-1)
+
+        # Sample or greedy (here sampling)
+        next_tokens = torch.multinomial(probs, num_samples=1)  # (batch, 1)
+
+        generated_tokens = torch.cat([generated_tokens, next_tokens], dim=1)
+
+    return generated_tokens
 
 class RepetitionPenaltyLossForSpecificTokens(nn.Module):
     def __init__(self, label_smoothing=0.0, repetition_penalty_weight=1.0, ngram_size=1, penalize_tokens=None):
@@ -50,8 +70,9 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
             logits: (batch_size, seq_len, vocab_size)
             targets: (batch_size, seq_len)
         """
-        batch_size, seq_len, _ = logits.size()
-        logits_flat = logits.view(-1, cfg.VOCAB_SIZE)
+        # batch_size, seq_len, _ = logits.size()
+        logits, _, _ = logits  # unpack the tuple
+        logits_flat = logits.view(-1, logits.size(-1))
         targets_flat = targets.view(-1)
 
         ce_loss = self.ce_loss(logits_flat, targets_flat)

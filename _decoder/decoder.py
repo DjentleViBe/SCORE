@@ -19,11 +19,11 @@ class DecoderLayerAPE(nn.Module):
         self.dropout3 = nn.Dropout(p=drop_prob)
         
 
-    def forward(self, y_val, decoder_mask):
+    def forward(self, y_val, decoder_mask, key_cache=None, value_cache=None):
         """Forward prop
         """
         _y = y_val.clone()
-        y_val = self.self_attention(y_val, mask=decoder_mask)
+        y_val, key_cache, value_cache  = self.self_attention(y_val, mask=decoder_mask)
         y_val = self.dropout1(y_val)
         y_val = self.layer_norm1(y_val + _y)
 
@@ -33,18 +33,25 @@ class DecoderLayerAPE(nn.Module):
         y_val = self.dropout3(y_val)
         y_val = self.layer_norm3(y_val + _y)
         
-        return y_val
+        return y_val, key_cache, value_cache
 
 class SequentialDecoder(nn.Sequential):
     """To pass more than one parameter in sequential
     """
-    def forward(self, *inputs):
-        """forward pass for custom seq decoder
-        """
-        yseq, mask = inputs
-        for module in self._modules.values():
-            yseq = module(yseq, mask)
-        return yseq
+    def forward(self, yseq, mask, key_caches=None, value_caches=None):
+        # key_caches, value_caches: list of caches for each layer or None
+        if key_caches is None:
+            key_caches = [None] * len(self._modules)
+        if value_caches is None:
+            value_caches = [None] * len(self._modules)
+
+        new_key_caches = []
+        new_value_caches = []
+        for idx, module in enumerate(self._modules.values()):
+            yseq, key_cache, value_cache = module(yseq, mask, key_caches[idx], value_caches[idx])
+            new_key_caches.append(key_cache)
+            new_value_caches.append(value_cache)
+        return yseq, new_key_caches, new_value_caches
 
 class DecoderAPE(nn.Module):
     """Main decoder class
@@ -55,9 +62,9 @@ class DecoderAPE(nn.Module):
                                       for _ in range(num_layers)])
         self.linear_layer = nn.Linear(d_model, d_vocab)
 
-    def forward(self, y_val, decoder_mask):
+    def forward(self, y_val, decoder_mask, key_caches=None, value_caches=None):
         """Forward layer
         """
-        x_val = self.layers(y_val, decoder_mask)
+        x_val, key_caches, value_caches = self.layers(y_val, decoder_mask, key_caches, value_caches)
         x_val = self.linear_layer(x_val)
-        return x_val
+        return x_val, key_caches, value_caches
