@@ -4,6 +4,11 @@ import torch.nn.functional as F
 import config as cfg
 from collections import Counter
 from postprocess import decoder_search
+from inference import multinomial_sample_2
+import numpy as np
+import sys
+np.set_printoptions(threshold=sys.maxsize)
+import torch.nn.functional as F
 
 def generate_sampled_sequence(decoder, input_seq, embedding_layer, pos_enc, mask, seq_len, temperature=1.0):
     """
@@ -19,20 +24,20 @@ def generate_sampled_sequence(decoder, input_seq, embedding_layer, pos_enc, mask
     batch_size = input_seq.size(0)
     sampled_seq = input_seq.clone()
 
-    for t in range(input_seq.size(1), seq_len):
+    for t in range(seq_len, seq_len):
         embeddings = embedding_layer(sampled_seq)
         output = decoder(embeddings + pos_enc, mask)
         logits = output[:, t-1, :]  # logits for the last generated token
         scaled_logits = logits / temperature
         probs = torch.softmax(scaled_logits, dim=-1)
         
-        next_token = torch.multinomial(probs, num_samples=1).squeeze(1)  # (batch_size,)
+        next_token = multinomial_sample_2(probs, num_samples = 40)
         sampled_seq[:, t] = next_token
-    
+
     return sampled_seq
 
 class RepetitionPenaltyLossForSpecificTokens(nn.Module):
-    def __init__(self, label_smoothing=0.0, repetition_penalty_weight=1.0, ngram_size=3, penalize_tokens=None):
+    def __init__(self, label_smoothing=0.0, repetition_penalty_weight=1.0, ngram_size=1, penalize_tokens=None):
         super(RepetitionPenaltyLossForSpecificTokens, self).__init__()
         self.ce_loss = nn.CrossEntropyLoss(label_smoothing=label_smoothing, ignore_index=0)  # Assuming 0 is pad_token_id
         self.repetition_penalty_weight = repetition_penalty_weight
@@ -52,12 +57,8 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         ce_loss = self.ce_loss(logits_flat, targets_flat)
 
         with torch.no_grad():
-            #generated_tokens = torch.argmax(logits, dim=-1)  # (batch_size, seq_len)
             sampled_tokens = generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, seq_len=logits.size(1), temperature=cfg.TEMPERATURE)
-
-
         repetition_loss = self.compute_repetition_penalty(sampled_tokens)
-
         total_loss = ce_loss + self.repetition_penalty_weight * repetition_loss
         return total_loss, ce_loss, repetition_loss
 
@@ -68,7 +69,6 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         """
         batch_penalty = 0.0
         total_ngrams_count = 0  # Total ngrams in batch
-
         for seq in generated_tokens:
             seq_list = seq.tolist()
             ngrams = [tuple(seq_list[i:i+self.ngram_size]) for i in range(len(seq_list) - self.ngram_size + 1)]
