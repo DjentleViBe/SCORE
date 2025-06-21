@@ -238,6 +238,7 @@ if __name__ == '__main__':
             epoch_loss = 0.0  # track epoch loss
             batch_count = 0
             for batch_token_ids, batch_target in loader:
+                # print(batch_count, end = " ")
                 batch_token_ids = batch_token_ids.to(device)
                 batch_target = batch_target.to(device)
                 # Prepare `inputs` tensor (e.g., for teacher forcing or decoder input)
@@ -306,7 +307,7 @@ if __name__ == '__main__':
         'loss': loss     # Optionally save the loss value
         }
         torch.save(checkpoint, './RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth')
-        plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot], ["total loss", "Main loss", "Repetition loss", "Validation_loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.png')
+        plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot], ["Total loss", "Training loss", "Repetition loss", "Validation_loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.png')
 
     if cfg.MODE in (1, 2):
         checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth', map_location=torch.device(DEVICE_TYPE))
