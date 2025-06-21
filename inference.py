@@ -34,3 +34,7 @@ def multinomial_sample(probabilities, num_samples):
     # Choose one sample from the list of samples
     chosen_sample = random.choice(samples)
     return chosen_sample
+
+
+def multinomial_sample_2(probs, num_samples):
+    return torch.multinomial(probs, num_samples=num_samples, replacement=True)[0]
