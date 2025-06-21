@@ -53,7 +53,7 @@ if __name__ == '__main__':
                          cfg.NUM_HEADS, cfg.DROP_PROB, cfg.NUM_LAYERS).to(device)
     optimizer = torch.optim.AdamW(decoder.parameters(), lr = cfg.LEARNING_RATE)
     if cfg.SCHEDULER == 1:
-        scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = cfg.SCHEDULER_SIZE, gamma=0.1)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', patience=5, factor=0.5)
     embedding_layer = nn.Embedding(num_embeddings = cfg.VOCAB_SIZE,
                                         embedding_dim = cfg.D_MODEL).to(device)
     pos_enc = get_positional_encoding(cfg.MAX_SEQ_LENGTH, cfg.D_MODEL).to(device)
@@ -263,8 +263,6 @@ if __name__ == '__main__':
 
                 loss.backward()
                 optimizer.step()
-                if cfg.SCHEDULER == 1:
-                    scheduler.step()
 
                 # Log and accumulate loss
                 epoch_loss += loss.item()
@@ -273,7 +271,8 @@ if __name__ == '__main__':
             
             avg_loss = epoch_loss / batch_count
             val_loss = validation(loader_val, device, optimizer, embedding_layer, decoder, mask, criterion, pos_enc)
-            
+            if cfg.SCHEDULER == 1:
+                    scheduler.step(val_loss)
             print(f"{ITERATION + 1} : main :{round(loss.item(), 4)}, ce :{round(ce_loss.item(), 4)}, rep :{round(rep_loss.item(), 4)}, validation :{round(val_loss, 4)}")
             ITERATION += 1
             lossplot.append(loss.item())
