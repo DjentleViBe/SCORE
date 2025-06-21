@@ -18,6 +18,8 @@ from _loss.customloss import RepetitionPenaltyLossForSpecificTokens
 np.set_printoptions(threshold=sys.maxsize)
 import platform
 from torch.utils.data import DataLoader, TensorDataset
+from sklearn.model_selection import train_test_split
+from validation import validation
 
 if __name__ == '__main__':
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -161,10 +163,26 @@ if __name__ == '__main__':
                             if cfg.EOS_TRUE:
                                 training_src_encoder_1[L] = cfg.EOS
                                 L += 1
+        # Set aside 10% for validation
+        
         training_tgt_decoder_1 = training_src_encoder_1.copy().astype(np.int64)
         training_src_encoder_1 = training_src_encoder_1.reshape(cfg.NUM_SEQUENCE, cfg.MAX_SEQ_LENGTH)
         training_tgt_notes = np.roll(training_tgt_decoder_1, shift=-1)
         training_tgt_notes = training_tgt_notes.reshape(cfg.NUM_SEQUENCE, cfg.MAX_SEQ_LENGTH)
+
+        train_src, val_src, train_tgt, val_tgt = train_test_split(
+            training_src_encoder_1,
+            training_tgt_notes,
+            test_size=0.1,
+            random_state=42  # for reproducibility
+        )
+
+        train_src_tensor = torch.tensor(train_src, dtype=torch.long)
+        train_tgt_tensor = torch.tensor(train_tgt, dtype=torch.long)
+        val_src_tensor = torch.tensor(val_src, dtype=torch.long)
+        val_tgt_tensor = torch.tensor(val_tgt, dtype=torch.long)
+
+
         del training_tgt_decoder_1
         print("Source")
         print(f"{training_tgt_notes}")
@@ -183,12 +201,10 @@ if __name__ == '__main__':
         del training_beat_encoder_1
 
         ITERATION = 0
-        #criterion = torch.nn.MSELoss()
         lossplot = []
         ce_lossplot = []
         rep_lossplot =[]
-        val_loss = []
-        #loss_fn = nn.CrossEntropyLoss()
+        val_lossplot = []
         penalize_tokens = [cfg.BARRE_NOTE, cfg.BEND_NOTE_1, cfg.BEND_NOTE_2, cfg.BEND_NOTE_3, cfg.BEND_NOTE_4, cfg.BEND_NOTE_5, cfg.BEND_NOTE_6, cfg.BEND_NOTE_7,
                            cfg.TREM_BAR_1, cfg.TREM_BAR_2, cfg.TREM_BAR_3, cfg.TREM_BAR_4, cfg.TREM_BAR_5,
                            cfg.DEAD_NOTE, cfg.SLIDE_NOTE_1, cfg.SLIDE_NOTE_2, cfg.SLIDE_NOTE_3, cfg.SLIDE_NOTE_4, cfg.SLIDE_NOTE_5, cfg.SLIDE_NOTE_6, 
@@ -200,12 +216,12 @@ if __name__ == '__main__':
             penalize_tokens=penalize_tokens
         )
 
-        token_ids = torch.tensor(training_src_encoder_1)
-        target = torch.from_numpy(training_tgt_notes)
-
         # Wrap your full data into a TensorDataset
-        dataset = TensorDataset(token_ids, target)
+        dataset = TensorDataset(train_src_tensor, train_tgt_tensor)
         loader = DataLoader(dataset, batch_size=cfg.BATCH, shuffle=True)
+
+        dataset_val = TensorDataset(val_src_tensor, val_tgt_tensor)
+        loader_val = DataLoader(dataset_val, batch_size=cfg.BATCH, shuffle=True)
 
         if cfg.MODE == 3:
             print("Loading saved file", cfg.SAVE)
@@ -255,14 +271,14 @@ if __name__ == '__main__':
                 # print("batch count : ", batch_count)
             
             avg_loss = epoch_loss / batch_count
-            decoder.eval()
-            dummy_in = inference(device, decoder, embedding_layer, pos_enc, mask)
+            val_loss = validation(loader_val, device, optimizer, embedding_layer, decoder, mask, criterion, pos_enc)
             
-            print(f"{ITERATION + 1} : {loss.item()}")
+            print(f"{ITERATION + 1} : main :{round(loss.item(), 4)}, ce :{round(ce_loss.item(), 4)}, rep :{round(rep_loss.item(), 4)}, validation :{round(val_loss, 4)}")
             ITERATION += 1
             lossplot.append(loss.item())
             ce_lossplot.append(ce_loss.item())
             rep_lossplot.append(rep_loss.item())
+            val_lossplot.append(val_loss)
 
             if avg_loss < cfg.CONVERGENCE:
                 print("Convergence criteria reached!")
@@ -281,7 +297,7 @@ if __name__ == '__main__':
         
         with open('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP + '.csv', mode='a', newline='') as lossfile:
             writer = csv.writer(lossfile)
-            writer.writerows(zip(lossplot,ce_lossplot, rep_lossplot))
+            writer.writerows(zip(lossplot, ce_lossplot, rep_lossplot, val_lossplot))
         checkpoint = {
         'model_state_dict': decoder.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
@@ -290,7 +306,7 @@ if __name__ == '__main__':
         'loss': loss     # Optionally save the loss value
         }
         torch.save(checkpoint, './RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth')
-        plot_multiple([lossplot, ce_lossplot, rep_lossplot], ["total loss", "Main loss", "Repetition loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.png')
+        plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot], ["total loss", "Main loss", "Repetition loss", "Validation_loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.png')
 
     if cfg.MODE in (1, 2):
         checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth', map_location=torch.device(DEVICE_TYPE))
