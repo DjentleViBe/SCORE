@@ -48,6 +48,7 @@ if __name__ == '__main__':
     
 
     ################################
+    END_SEQ = False
     NUM_PATCH = ((cfg.MAX_SEQ_LENGTH - cfg.PATCH)//cfg.STRIDE) + 1
     device = torch.device(DEVICE_TYPE)
     decoder = DecoderAPE(device, cfg.D_MODEL, cfg.VOCAB_SIZE, cfg.FFN_HIDDEN, cfg.MAX_SEQ_LENGTH,
@@ -89,94 +90,95 @@ if __name__ == '__main__':
                     for track in song.tracks:
                         # Map values to Genaral MIDI.
                         for measure in track.measures:
-                            # training_src_encoder_1[L] = cfg.BOS
-                            # L += 1
                             L = 0
-                            for beat in measure.voices[0].beats:
-                                for note_index, note in enumerate(beat.notes):
-                                    if L > cfg.MAX_SEQ_LENGTH - 1:
+                            if not END_SEQ:
+                                for beat in measure.voices[0].beats:
+                                    for note_index, note in enumerate(beat.notes):
+                                        if L > cfg.MAX_SEQ_LENGTH - 1:
+                                            break
+                                        
+                                        training_src_encoder_1[num_s][L] = tokenizer_1(note.value,
+                                                                            note.string,
+                                                                            note.beat.duration,
+                                                                            note.effect.palmMute + 1)
+                                        
+                                        training_note_encoder_1[N] = note_prob(note.value, note.string)
+                                        training_beat_encoder_1[N] = beat_prob(note.beat.duration)
+                                        N += 1
+                                        L = min(L + 1, L_MAX)
+                                        if note_index != 0:
+                                            training_src_encoder_1[num_s][L] = cfg.BARRE_NOTE
+                                            L = min(L + 1, L_MAX)
+
+                                        if note.effect.isBend > 0:
+                                            if note.effect.bend.type.value == 1:
+                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_1
+                                            elif note.effect.bend.type.value == 2:
+                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_2
+                                            elif note.effect.bend.type.value == 3:
+                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_3
+                                            elif note.effect.bend.type.value == 4:
+                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_4
+                                            elif note.effect.bend.type.value == 5:
+                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_5
+                                            elif note.effect.bend.type.value == 6:
+                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_6
+                                            elif note.effect.bend.type.value == 7:
+                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_7
+                                            L = min(L + 1, L_MAX)
+                                        
+                                        if note.type.name == 'dead':
+                                            training_src_encoder_1[num_s][L] = cfg.DEAD_NOTE
+                                            L = min(L + 1, L_MAX)
+
+                                        if beat.effect.isTremoloBar is True:
+                                            if beat.effect.tremoloBar.type.value == 1:
+                                                training_src_encoder_1[num_s][L] = cfg.TREM_BAR_1
+                                            elif beat.effect.tremoloBar.type.value == 2:
+                                                training_src_encoder_1[num_s][L] = cfg.TREM_BAR_2
+                                            elif beat.effect.tremoloBar.type.value == 3:
+                                                training_src_encoder_1[num_s][L] = cfg.TREM_BAR_3
+                                            elif beat.effect.tremoloBar.type.value == 4:
+                                                training_src_encoder_1[num_s][L] = cfg.TREM_BAR_4
+                                            elif beat.effect.tremoloBar.type.value == 5:
+                                                training_src_encoder_1[num_s][L] = cfg.TREM_BAR_5
+                                            L = min(L + 1, L_MAX)
+
+                                        if note.effect.slides:
+                                            if note.effect.slides[0].name == 'legatoSlideTo':
+                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_1
+                                            elif note.effect.slides[0].name == 'shiftSlideTo':
+                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_2
+                                            elif note.effect.slides[0].name == 'intoFromBelow':
+                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_3
+                                            elif note.effect.slides[0].name == 'intoFromAbove':
+                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_4
+                                            elif note.effect.slides[0].name == 'outDownwards':
+                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_5
+                                            elif note.effect.slides[0].name == 'outUpwards':
+                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_6
+                                            L = min(L + 1, L_MAX)
+                                        
+                                        if note.effect.hammer == True:
+                                            training_src_encoder_1[num_s][L] = cfg.HAMMER
+                                            L = min(L + 1, L_MAX)
+
+                                        if note.effect.vibrato == True:
+                                            training_src_encoder_1[num_s][L] = cfg.VIBRATO
+                                            L = min(L + 1, L_MAX)
+
+                                        if note.effect.isHarmonic == True:
+                                            training_src_encoder_1[num_s][L] = cfg.HARMONIC_1
+                                            L = min(L + 1, L_MAX)
+                                        
+                                                            
+                                if cfg.EOS_TRUE:
+                                    training_src_encoder_1[num_s][L] = cfg.EOS
+                                    # L = min(L + 1, L_MAX)
+                                    num_s += 1
+                                    if num_s == cfg.NUM_SEQUENCE:
+                                        END_SEQ = True
                                         break
-                                    training_src_encoder_1[num_s][L] = tokenizer_1(note.value,
-                                                                        note.string,
-                                                                        note.beat.duration,
-                                                                        note.effect.palmMute + 1)
-                                    
-                                    training_note_encoder_1[N] = note_prob(note.value, note.string)
-                                    training_beat_encoder_1[N] = beat_prob(note.beat.duration)
-                                    N += 1
-                                    L = min(L + 1, L_MAX)
-                                    if note_index != 0:
-                                        training_src_encoder_1[num_s][L] = cfg.BARRE_NOTE
-                                        L = min(L + 1, L_MAX)
-
-                                    if note.effect.isBend > 0:
-                                        if note.effect.bend.type.value == 1:
-                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_1
-                                        elif note.effect.bend.type.value == 2:
-                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_2
-                                        elif note.effect.bend.type.value == 3:
-                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_3
-                                        elif note.effect.bend.type.value == 4:
-                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_4
-                                        elif note.effect.bend.type.value == 5:
-                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_5
-                                        elif note.effect.bend.type.value == 6:
-                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_6
-                                        elif note.effect.bend.type.value == 7:
-                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_7
-                                        L = min(L + 1, L_MAX)
-                                    
-                                    if note.type.name == 'dead':
-                                        training_src_encoder_1[num_s][L] = cfg.DEAD_NOTE
-                                        L = min(L + 1, L_MAX)
-
-                                    if beat.effect.isTremoloBar is True:
-                                        if beat.effect.tremoloBar.type.value == 1:
-                                            training_src_encoder_1[num_s][L] = cfg.TREM_BAR_1
-                                        elif beat.effect.tremoloBar.type.value == 2:
-                                            training_src_encoder_1[num_s][L] = cfg.TREM_BAR_2
-                                        elif beat.effect.tremoloBar.type.value == 3:
-                                            training_src_encoder_1[num_s][L] = cfg.TREM_BAR_3
-                                        elif beat.effect.tremoloBar.type.value == 4:
-                                            training_src_encoder_1[num_s][L] = cfg.TREM_BAR_4
-                                        elif beat.effect.tremoloBar.type.value == 5:
-                                            training_src_encoder_1[num_s][L] = cfg.TREM_BAR_5
-                                        L = min(L + 1, L_MAX)
-
-                                    if note.effect.slides:
-                                        if note.effect.slides[0].name == 'legatoSlideTo':
-                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_1
-                                        elif note.effect.slides[0].name == 'shiftSlideTo':
-                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_2
-                                        elif note.effect.slides[0].name == 'intoFromBelow':
-                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_3
-                                        elif note.effect.slides[0].name == 'intoFromAbove':
-                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_4
-                                        elif note.effect.slides[0].name == 'outDownwards':
-                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_5
-                                        elif note.effect.slides[0].name == 'outUpwards':
-                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_6
-                                        L = min(L + 1, L_MAX)
-                                    
-                                    if note.effect.hammer == True:
-                                        training_src_encoder_1[num_s][L] = cfg.HAMMER
-                                        L = min(L + 1, L_MAX)
-
-                                    if note.effect.vibrato == True:
-                                        training_src_encoder_1[num_s][L] = cfg.VIBRATO
-                                        L = min(L + 1, L_MAX)
-
-                                    if note.effect.isHarmonic == True:
-                                        training_src_encoder_1[num_s][L] = cfg.HARMONIC_1
-                                        L = min(L + 1, L_MAX)
-                                    
-                                                        
-                            if cfg.EOS_TRUE:
-                                training_src_encoder_1[num_s][L] = cfg.EOS
-                                # L = min(L + 1, L_MAX)
-                                num_s += 1
-                                if num_s == cfg.NUM_SEQUENCE:
-                                    break
         
         training_tgt_decoder_1 = training_src_encoder_1.copy().astype(np.int64)
         training_tgt_notes = np.roll(training_tgt_decoder_1, shift=-1)
