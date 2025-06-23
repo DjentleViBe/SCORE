@@ -6,8 +6,8 @@
 # 2 : both 
 # 3 : load from file
 MODE                =   0
-BACKUP              =   "dec_only_notes_48"
-SAVE                =   "dec_only_notes_48A"
+BACKUP              =   "dec_only_notes_CB_Small"
+SAVE                =   "dec_only_notes_CB_Small_A"
 START_ID            =   9437
 BOS_TRUE            =   1
 EOS_TRUE            =   1
@@ -40,10 +40,10 @@ SMOOTHING       =   0.1
 PATCH           =   1
 STRIDE          =   1
 TRAINING        =   ["CB"]
-NUM_SEQUENCE    =   6208
+NUM_SEQUENCE    =   3104
 CONVERGENCE     =   0.0005
 TEMPERATURE     =   1.0
-BATCH           =   32
+BATCH           =   16
 
 EOS             =   26405
 BOS             =   26406
