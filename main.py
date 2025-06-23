@@ -20,6 +20,7 @@ import platform
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from validation import validation
+from masking import create_combined_mask
 
 if __name__ == '__main__':
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -57,8 +58,10 @@ if __name__ == '__main__':
     embedding_layer = nn.Embedding(num_embeddings = cfg.VOCAB_SIZE,
                                         embedding_dim = cfg.D_MODEL).to(device)
     pos_enc = get_positional_encoding(cfg.MAX_SEQ_LENGTH, cfg.D_MODEL).to(device)
-    mask = torch.full([NUM_PATCH, NUM_PATCH], float('-inf'))
-    mask = torch.triu(mask, diagonal = 1).to(device)
+    casualmask = torch.full([NUM_PATCH, NUM_PATCH], float('-inf'))
+    casualmask = torch.triu(casualmask, diagonal = 1).to(device)
+    casual_mask_expanded = casualmask.unsqueeze(0).unsqueeze(0)  # (1,1,L,L)
+    casual_mask_expanded = casual_mask_expanded.expand(cfg.BATCH, cfg.NUM_HEADS, cfg.MAX_SEQ_LENGTH, cfg.MAX_SEQ_LENGTH)
 
     if cfg.MODE in (0, 2, 3):
         create_dir('./RESULTS/')
@@ -69,7 +72,10 @@ if __name__ == '__main__':
         training_beat_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         GPROFOLDER = './gprofiles/'
         L = 0
+        L_MAX = cfg.MAX_SEQ_LENGTH - 1
         N = 0
+        training_src_encoder_1 = training_src_encoder_1.reshape(cfg.NUM_SEQUENCE, cfg.MAX_SEQ_LENGTH)
+        num_s = 0
         for f in cfg.TRAINING:
             for filename in os.listdir(GPROFOLDER + f):
                 file_path = os.path.join(GPROFOLDER + f, filename)
@@ -83,93 +89,105 @@ if __name__ == '__main__':
                     for track in song.tracks:
                         # Map values to Genaral MIDI.
                         for measure in track.measures:
-                            training_src_encoder_1[L] = cfg.BOS
-                            L += 1
+                            # training_src_encoder_1[L] = cfg.BOS
+                            # L += 1
+                            L = 0
                             for beat in measure.voices[0].beats:
                                 for note_index, note in enumerate(beat.notes):
-                                    training_src_encoder_1[L] = tokenizer_1(note.value,
+                                    if L > cfg.MAX_SEQ_LENGTH - 1:
+                                        break
+                                    training_src_encoder_1[num_s][L] = tokenizer_1(note.value,
                                                                         note.string,
                                                                         note.beat.duration,
                                                                         note.effect.palmMute + 1)
+                                    
                                     training_note_encoder_1[N] = note_prob(note.value, note.string)
                                     training_beat_encoder_1[N] = beat_prob(note.beat.duration)
                                     N += 1
-                                    L += 1
+                                    L = min(L + 1, L_MAX)
                                     if note_index != 0:
-                                        training_src_encoder_1[L] = cfg.BARRE_NOTE
-                                        L += 1
+                                        training_src_encoder_1[num_s][L] = cfg.BARRE_NOTE
+                                        L = min(L + 1, L_MAX)
 
                                     if note.effect.isBend > 0:
                                         if note.effect.bend.type.value == 1:
-                                            training_src_encoder_1[L] = cfg.BEND_NOTE_1
+                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_1
                                         elif note.effect.bend.type.value == 2:
-                                            training_src_encoder_1[L] = cfg.BEND_NOTE_2
+                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_2
                                         elif note.effect.bend.type.value == 3:
-                                            training_src_encoder_1[L] = cfg.BEND_NOTE_3
+                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_3
                                         elif note.effect.bend.type.value == 4:
-                                            training_src_encoder_1[L] = cfg.BEND_NOTE_4
+                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_4
                                         elif note.effect.bend.type.value == 5:
-                                            training_src_encoder_1[L] = cfg.BEND_NOTE_5
+                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_5
                                         elif note.effect.bend.type.value == 6:
-                                            training_src_encoder_1[L] = cfg.BEND_NOTE_6
+                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_6
                                         elif note.effect.bend.type.value == 7:
-                                            training_src_encoder_1[L] = cfg.BEND_NOTE_7
-                                        L += 1
+                                            training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_7
+                                        L = min(L + 1, L_MAX)
                                     
                                     if note.type.name == 'dead':
-                                        training_src_encoder_1[L] = cfg.DEAD_NOTE
-                                        L += 1
+                                        training_src_encoder_1[num_s][L] = cfg.DEAD_NOTE
+                                        L = min(L + 1, L_MAX)
 
                                     if beat.effect.isTremoloBar is True:
                                         if beat.effect.tremoloBar.type.value == 1:
-                                            training_src_encoder_1[L] = cfg.TREM_BAR_1
+                                            training_src_encoder_1[num_s][L] = cfg.TREM_BAR_1
                                         elif beat.effect.tremoloBar.type.value == 2:
-                                            training_src_encoder_1[L] = cfg.TREM_BAR_2
+                                            training_src_encoder_1[num_s][L] = cfg.TREM_BAR_2
                                         elif beat.effect.tremoloBar.type.value == 3:
-                                            training_src_encoder_1[L] = cfg.TREM_BAR_3
+                                            training_src_encoder_1[num_s][L] = cfg.TREM_BAR_3
                                         elif beat.effect.tremoloBar.type.value == 4:
-                                            training_src_encoder_1[L] = cfg.TREM_BAR_4
+                                            training_src_encoder_1[num_s][L] = cfg.TREM_BAR_4
                                         elif beat.effect.tremoloBar.type.value == 5:
-                                            training_src_encoder_1[L] = cfg.TREM_BAR_5
-                                        L += 1
+                                            training_src_encoder_1[num_s][L] = cfg.TREM_BAR_5
+                                        L = min(L + 1, L_MAX)
 
                                     if note.effect.slides:
                                         if note.effect.slides[0].name == 'legatoSlideTo':
-                                            training_src_encoder_1[L] = cfg.SLIDE_NOTE_1
+                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_1
                                         elif note.effect.slides[0].name == 'shiftSlideTo':
-                                            training_src_encoder_1[L] = cfg.SLIDE_NOTE_2
+                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_2
                                         elif note.effect.slides[0].name == 'intoFromBelow':
-                                            training_src_encoder_1[L] = cfg.SLIDE_NOTE_3
+                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_3
                                         elif note.effect.slides[0].name == 'intoFromAbove':
-                                            training_src_encoder_1[L] = cfg.SLIDE_NOTE_4
+                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_4
                                         elif note.effect.slides[0].name == 'outDownwards':
-                                            training_src_encoder_1[L] = cfg.SLIDE_NOTE_5
+                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_5
                                         elif note.effect.slides[0].name == 'outUpwards':
-                                            training_src_encoder_1[L] = cfg.SLIDE_NOTE_6
-                                        L += 1
+                                            training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_6
+                                        L = min(L + 1, L_MAX)
                                     
                                     if note.effect.hammer == True:
-                                        training_src_encoder_1[L] = cfg.HAMMER
-                                        L += 1
+                                        training_src_encoder_1[num_s][L] = cfg.HAMMER
+                                        L = min(L + 1, L_MAX)
 
                                     if note.effect.vibrato == True:
-                                        training_src_encoder_1[L] = cfg.VIBRATO
-                                        L += 1
+                                        training_src_encoder_1[num_s][L] = cfg.VIBRATO
+                                        L = min(L + 1, L_MAX)
 
                                     if note.effect.isHarmonic == True:
-                                        training_src_encoder_1[L] = cfg.HARMONIC_1
-                                        L += 1
+                                        training_src_encoder_1[num_s][L] = cfg.HARMONIC_1
+                                        L = min(L + 1, L_MAX)
+                                    
                                                         
                             if cfg.EOS_TRUE:
-                                training_src_encoder_1[L] = cfg.EOS
-                                L += 1
-        # Set aside 10% for validation
+                                training_src_encoder_1[num_s][L] = cfg.EOS
+                                # L = min(L + 1, L_MAX)
+                                num_s += 1
+                                if num_s == cfg.NUM_SEQUENCE:
+                                    break
         
         training_tgt_decoder_1 = training_src_encoder_1.copy().astype(np.int64)
-        training_src_encoder_1 = training_src_encoder_1.reshape(cfg.NUM_SEQUENCE, cfg.MAX_SEQ_LENGTH)
         training_tgt_notes = np.roll(training_tgt_decoder_1, shift=-1)
-        training_tgt_notes = training_tgt_notes.reshape(cfg.NUM_SEQUENCE, cfg.MAX_SEQ_LENGTH)
-
+        training_tgt_notes = np.zeros_like(training_tgt_decoder_1)
+        training_tgt_notes[:, :-1] = training_tgt_decoder_1[:, 1:]
+        training_tgt_notes[:, -1] = 0  # pad token
+        training_src_encoder_1 = torch.tensor(training_src_encoder_1)
+        full_pad_mask = (training_src_encoder_1 == 0).unsqueeze(1).unsqueeze(2)  # bool mask
+        full_pad_mask = full_pad_mask.expand(cfg.NUM_SEQUENCE, 1, cfg.MAX_SEQ_LENGTH, cfg.MAX_SEQ_LENGTH)
+        full_pad_mask = full_pad_mask.to(dtype=torch.float32) * float('-1e9')  # use -1e9 instead of -inf
+        full_pad_mask = full_pad_mask.to(device)
         train_src, val_src, train_tgt, val_tgt = train_test_split(
             training_src_encoder_1,
             training_tgt_notes,
@@ -210,7 +228,7 @@ if __name__ == '__main__':
                            cfg.DEAD_NOTE, cfg.SLIDE_NOTE_1, cfg.SLIDE_NOTE_2, cfg.SLIDE_NOTE_3, cfg.SLIDE_NOTE_4, cfg.SLIDE_NOTE_5, cfg.SLIDE_NOTE_6, 
                            cfg.BOS, cfg.VIBRATO, cfg.HAMMER, cfg.HARMONIC_1]
         criterion = RepetitionPenaltyLossForSpecificTokens(
-            label_smoothing=0.0, 
+            label_smoothing=cfg.SMOOTHING, 
             repetition_penalty_weight=1.5, 
             ngram_size=1, 
             penalize_tokens=penalize_tokens
@@ -218,7 +236,7 @@ if __name__ == '__main__':
 
         # Wrap your full data into a TensorDataset
         dataset = TensorDataset(train_src_tensor, train_tgt_tensor)
-        loader = DataLoader(dataset, batch_size=cfg.BATCH, shuffle=True)
+        loader = DataLoader(dataset, batch_size=cfg.BATCH, shuffle=True, drop_last=True)
 
         dataset_val = TensorDataset(val_src_tensor, val_tgt_tensor)
         loader_val = DataLoader(dataset_val, batch_size=cfg.BATCH, shuffle=True)
@@ -231,20 +249,20 @@ if __name__ == '__main__':
             embedding_layer.load_state_dict(checkpoint['embedding_state_dict'])
             ITERATION = checkpoint['epoch']
         print(cfg.EPOCHS)
-        inputs = torch.zeros((cfg.NUM_SEQUENCE, cfg.MAX_SEQ_LENGTH), dtype=torch.long).to(device)
-        inputs[:, 0] = cfg.START_ID
         while ITERATION <= cfg.EPOCHS:
             decoder.train()
             epoch_loss = 0.0  # track epoch loss
             batch_count = 0
-            for batch_token_ids, batch_target in loader:
+            for batch_idx, (batch_token_ids, batch_target) in enumerate(loader):
                 # print(batch_count, end = " ")
                 batch_token_ids = batch_token_ids.to(device)
                 batch_target = batch_target.to(device)
+                start = batch_idx * cfg.BATCH
+                end = start + batch_token_ids.size(0)  # actual batch size
                 # Prepare `inputs` tensor (e.g., for teacher forcing or decoder input)
-                inputs = torch.zeros((batch_token_ids.size(0), cfg.MAX_SEQ_LENGTH), dtype=torch.long).to(device)
-                inputs[:, 0] = cfg.START_ID
-        
+                pad_mask = full_pad_mask[start:end] 
+                mask = casual_mask_expanded + pad_mask
+
                 optimizer.zero_grad()
                 # Embeddings
                 embeddings = embedding_layer(batch_token_ids)
@@ -257,9 +275,7 @@ if __name__ == '__main__':
                 batch_target = batch_target.view(-1)
 
                 # Compute loss
-                loss, ce_loss, rep_loss = criterion(
-                    logits, batch_target, decoder, inputs, embedding_layer, pos_enc
-                )
+                loss, ce_loss, rep_loss = criterion(logits, batch_target)
 
                 loss.backward()
                 optimizer.step()
@@ -270,7 +286,7 @@ if __name__ == '__main__':
                 # print("batch count : ", batch_count)
             
             avg_loss = epoch_loss / batch_count
-            val_loss = validation(loader_val, device, optimizer, embedding_layer, decoder, mask, criterion, pos_enc)
+            val_loss = validation(loader_val, device, optimizer, embedding_layer, decoder, criterion, pos_enc)
             if cfg.SCHEDULER == 1:
                     scheduler.step(val_loss)
             print(f"{ITERATION + 1} : main :{round(loss.item(), 4)}, ce :{round(ce_loss.item(), 4)}, rep :{round(rep_loss.item(), 4)}, validation :{round(val_loss, 4)}")

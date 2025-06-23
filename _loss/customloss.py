@@ -56,6 +56,38 @@ def generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, s
 
     return generated_tokens
 
+def soft_repetition_penalty(logits, temperature=1.0):
+    """
+    logits: (batch_size, seq_len, vocab_size)
+    Penalize high probability on tokens that already appeared earlier in the sequence.
+    """
+    probs = torch.softmax(logits / temperature, dim=-1)  # (B, T, V)
+    batch_size, seq_len, vocab_size = probs.size()
+
+    # Compute cumulative sum of probs along time dimension excluding current step
+    # We'll use cumsum to get sum of all previous probs at each time step:
+    cumsum_probs = probs.cumsum(dim=1)  # (B, T, V)
+
+    # For each step t, previous sum = cumsum_probs at t-1
+    # Pad a zero vector at the start for indexing convenience
+    zero_pad = torch.zeros((batch_size, 1, vocab_size), device=probs.device, dtype=probs.dtype)
+    prev_cumsum = torch.cat([zero_pad, cumsum_probs[:, :-1, :]], dim=1)  # (B, T, V)
+
+    # Compute average previous probs at each time step t:
+    counts = torch.arange(seq_len, device=probs.device).unsqueeze(0).unsqueeze(-1)  # (1, T, 1)
+    counts = counts.clamp(min=1)  # avoid division by zero at t=0 (will be ignored anyway)
+    avg_prev_prob = prev_cumsum / counts  # (B, T, V)
+
+    # Dot product between current probs and avg previous probs for each time step:
+    repeat_scores = (probs * avg_prev_prob).sum(dim=-1)  # (B, T)
+
+    # Ignore the first time step since it has no previous tokens
+    repeat_scores = repeat_scores[:, 1:]  # (B, T-1)
+
+    penalty = repeat_scores.mean()
+
+    return penalty
+
 class RepetitionPenaltyLossForSpecificTokens(nn.Module):
     def __init__(self, label_smoothing=0.0, repetition_penalty_weight=1.0, ngram_size=1, penalize_tokens=None):
         super(RepetitionPenaltyLossForSpecificTokens, self).__init__()
@@ -64,7 +96,7 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         self.ngram_size = ngram_size
         self.penalize_tokens = penalize_tokens if penalize_tokens else []
 
-    def forward(self, logits, targets, decoder=None, inputs=None, embedding_layer=None, pos_enc=None, mask=None):
+    def forward(self, logits, targets):
         """
         Args:
             logits: (batch_size, seq_len, vocab_size)
@@ -77,9 +109,10 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
 
         ce_loss = self.ce_loss(logits_flat, targets_flat)
 
-        with torch.no_grad():
-            sampled_tokens = generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, seq_len=logits.size(1), temperature=cfg.TEMPERATURE)
-        repetition_loss = self.compute_repetition_penalty(sampled_tokens)
+        #with torch.no_grad():
+        #    sampled_tokens = generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, seq_len=logits.size(1), temperature=cfg.TEMPERATURE)
+        #repetition_loss = self.compute_repetition_penalty(sampled_tokens)
+        repetition_loss = soft_repetition_penalty(logits, temperature=cfg.TEMPERATURE)
         total_loss = ce_loss + self.repetition_penalty_weight * repetition_loss
         return total_loss, ce_loss, repetition_loss
 

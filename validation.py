@@ -1,7 +1,8 @@
 import torch
 import config as cfg
+from masking import create_combined_mask
 
-def validation(loader, device, optimizer, embedding_layer, decoder, mask, criterion, pos_enc):
+def validation(loader, device, optimizer, embedding_layer, decoder, criterion, pos_enc):
     decoder.eval()
 
     epoch_loss = 0.0
@@ -10,10 +11,8 @@ def validation(loader, device, optimizer, embedding_layer, decoder, mask, criter
         for batch_token_ids, batch_target in loader:
             batch_token_ids = batch_token_ids.to(device)
             batch_target = batch_target.to(device)
-            # Prepare `inputs` tensor (e.g., for teacher forcing or decoder input)
-            inputs = torch.zeros((batch_token_ids.size(0), cfg.MAX_SEQ_LENGTH), dtype=torch.long).to(device)
-            inputs[:, 0] = cfg.START_ID
-
+            mask = create_combined_mask(batch_token_ids, device, seq_length=cfg.MAX_SEQ_LENGTH, num_heads=cfg.NUM_HEADS)
+                
             optimizer.zero_grad()
             # Embeddings
             embeddings = embedding_layer(batch_token_ids)
@@ -27,8 +26,7 @@ def validation(loader, device, optimizer, embedding_layer, decoder, mask, criter
 
             # Compute loss
             loss, ce_loss, rep_loss = criterion(
-                logits, batch_target, decoder, inputs, embedding_layer, pos_enc
-            )
+                logits, batch_target)
             epoch_loss += loss.item()
             batch_count += 1
         avg_loss = epoch_loss / batch_count
