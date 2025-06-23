@@ -184,10 +184,17 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
             dummy_in = beam_sequences[best_beam_index]
         else:
             if TEST_CRITERIA != 4:
-                for e_val in range (2, seq_lim):
+                dummy_in[0][1:] = EOS
+                for e_val in range (1, seq_lim):
                     next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
+                    # print(next_token)
                     # generated_sequence = dummy_in
-                    dummy_in[0][e_val] = next_token
+                    if next_token == EOS:
+                        # dummy_in[0][e_val] = 0
+                        print("End detected")
+                        break
+                    else:
+                        dummy_in[0][e_val] = next_token
             else:
                 e_val = 2
                 trial = 0
@@ -232,7 +239,7 @@ def getnotetype(notetype):
 def adjustmeasure(beat_collect):
     """calculate the total measure length"""
     measure_length = 0
-    for b, beat_val in enumerate(beat_collect[1:]):
+    for b, beat_val in enumerate(beat_collect):
         measure_length += 4 / getnotetype(beat_val)[0]
     return math.ceil(measure_length)
 

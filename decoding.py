@@ -1,7 +1,7 @@
 """Decoding results"""
 from config import EOS, BOS, BARRE_NOTE, BEND_NOTE_1, BEND_NOTE_7, \
                     TREM_BAR_1, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_6, \
-                    HAMMER, VIBRATO, HARMONIC_1
+                    HAMMER, VIBRATO, HARMONIC_1, VERBOSE
 
 DEMAPPING_BEAT_TYPE = {
     1:   'Base---------------',
@@ -64,34 +64,44 @@ def detokenizer_1(dummy):
     string_num = 0
     palm_mute = False
     if dummy == EOS:
-        print(f"-------EOS-------")
+        if VERBOSE == 1:
+            print(f"-------EOS-------")
         note_val = EOS
     elif dummy == BOS:
-        print(f"-------BOS-------")
+        if VERBOSE == 1:
+            print(f"-------BOS-------")
         note_val = BOS
     elif dummy == BARRE_NOTE:
-        print("--------Barred Note--------")
+        if VERBOSE == 1:
+            print("--------Barred Note--------")
         note_val = BARRE_NOTE
     elif BEND_NOTE_7 >= dummy >= BEND_NOTE_1:
-        print("-------Accent_Bend----------")
+        if VERBOSE == 1:
+            print("-------Accent_Bend----------")
         note_val = dummy
     elif TREM_BAR_5 >= dummy >= TREM_BAR_1:
-        print("-------Accent_Trem----------")
+        if VERBOSE == 1:
+            print("-------Accent_Trem----------")
         note_val = dummy
     elif SLIDE_NOTE_6 >= dummy >= SLIDE_NOTE_1:
-        print("-------Accent_Slide----------")
+        if VERBOSE == 1:
+            print("-------Accent_Slide----------")
         note_val = dummy
     elif dummy == DEAD_NOTE:
-        print("-------Dead note----------")
+        if VERBOSE == 1:
+            print("-------Dead note----------")
         note_val = dummy
     elif dummy == HAMMER:
-        print("-------Hammer----------")
+        if VERBOSE == 1:
+            print("-------Hammer----------")
         note_val = dummy
     elif dummy == VIBRATO:
-        print("-------Vibrato----------")
+        if VERBOSE == 1:
+            print("-------Vibrato----------")
         note_val = dummy
     elif dummy == HARMONIC_1:
-        print("-------Harmonic----------")
+        if VERBOSE == 1:
+            print("-------Harmonic----------")
         note_val = dummy
     else:
         palm_mute = False
@@ -107,7 +117,8 @@ def detokenizer_1(dummy):
             string_num = note_type // 23 + 1
             note_val = note_type % string_num
 
-        print(f"Beat : {beat_type} String : {string_num} Note : {note_val} PalmMute : {palm_mute}")
+        if VERBOSE == 1:
+            print(f"Beat : {beat_type} String : {string_num} Note : {note_val} PalmMute : {palm_mute}")
 
 
     return note_val, note_type, string_num, dummy // 322, palm_mute, demapping_beat_num((dummy if dummy < EOS - 1 else 322) // 322)

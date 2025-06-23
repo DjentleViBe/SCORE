@@ -9,7 +9,7 @@ def inference(device, decoder, embedding_layer, pos_enc, mask):
     """Run inference"""
     dummy_np = np.full((1, cfg.MAX_SEQ_LENGTH), cfg.EOS, dtype = 'int32')
     if cfg.BOS_TRUE == 0:
-        dummy_np[0, 1] = cfg.START_ID
+        dummy_np[0, 0] = cfg.START_ID
     else:
         dummy_np[0, 0] = cfg.BOS
         dummy_np[0, 1] = cfg.START_ID
@@ -49,7 +49,7 @@ def inference(device, decoder, embedding_layer, pos_enc, mask):
                 print("0 detected")
             else:
                 if dummy_out[t][-1] < BOS:
-                    dummy_in[0, 1] = dummy_out[t][-1]
+                    dummy_in[0][0] = dummy_out[t][-1]
                 t += 1
 
     return dummy_out

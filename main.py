@@ -334,8 +334,7 @@ if __name__ == '__main__':
         print(f"Loss : ', {checkpoint['loss'].item()}")
         print(f"Epochs : ', {checkpoint['epoch']}")
         decoder.eval()
-
-        dummy_in = inference(device, decoder, embedding_layer, pos_enc, mask)
+        dummy_in = inference(device, decoder, embedding_layer, pos_enc, casualmask)
 
         m = 0
         song = gp.models.Song()
@@ -362,7 +361,8 @@ if __name__ == '__main__':
             palmval = []
 
             for ind, dummy in enumerate(dummy_in[m]):
-                print(f"{ind + 1:02}", end=' ')
+                if cfg.VERBOSE == 1:
+                    print(f"{ind + 1:02}", end=' ')
                 note, notetype, string, beat, palm, beatnum = detokenizer_1(dummy)
                 noteval.append(note)
                 notetypeval.append(notetype)
