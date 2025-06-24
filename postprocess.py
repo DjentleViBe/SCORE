@@ -312,14 +312,6 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     song.tracks[0].measures[0].hasTimeSignature  = True 
     song.tracks[0].measures[0].timeSignature.numerator = min(32, adjustmeasure(beatval))
     song.tracks[0].measures[0].timeSignature.denominator.value = 4
-    song.tracks[0].strings[0].value = 39
-    song.tracks[0].strings[1].value = 46
-    song.tracks[0].strings[2].value = 51
-    song.tracks[0].strings[3].value = 56
-    song.tracks[0].strings[4].value = 60
-    song.tracks[0].strings[5].value = 65
-
-
     voice = song.tracks[0].measures[0].voices[0]
 
     k_val = 0

@@ -405,6 +405,12 @@ if __name__ == '__main__':
                 song_beats.append(beatnum)
             song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
             song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
+            song.tracks[0].strings[0].value = 53
+            song.tracks[0].strings[1].value = 48
+            song.tracks[0].strings[2].value = 44
+            song.tracks[0].strings[3].value = 39
+            song.tracks[0].strings[4].value = 34
+            song.tracks[0].strings[5].value = 27
             m += 1
             print("")
             writegpro(cfg.SAVE, song)
