@@ -25,17 +25,17 @@ MAPPING_BEAT = {
 
 def tokenizer_1(note, string, duration, n_val):
     """Tokenizer type 1"""
-    # 7 strings, 23 notes per string, + Palm_Mute
-    # 161 * 2 total notes / beat
+    # 6 strings, 23 notes per string, + Palm_Mute
+    # 138 * 2 total notes / beat
     # Note formula = n * 23 * String + note, n = 2 if Palm_Mute, else n = 1
     # String formula = (Note % 23) - 1
     # 82 total beats
-    # 161 * 2 * 82 = 26404 unique combinations
-    # 1 - 322 =  base note
-    # 323 - 644 = triplet
+    # 138 * 2 * 82 = 23184 unique combinations
+    # 1 - 276 =  base note
+    # 277 - 552 = triplet
     # .....
-    # Unique combination formula = Note formula + (m * 322), m = mapping_beat number
-    note_formula = (note + 1) + (string - 1) * 23 + (7 * 23) * (n_val - 1)
+    # Unique combination formula = Note formula + (m * 276), m = mapping_beat number
+    note_formula = (note + 1) + (string - 1) * 23 + (6 * 23) * (n_val - 1)
     beatvalue = MAPPING_BEAT.get(duration.value)
     if duration.tuplet.enters == 3:
         beatvalue += 1
@@ -51,7 +51,7 @@ def tokenizer_1(note, string, duration, n_val):
         beatvalue += 6
     if duration.isDotted:
         beatvalue += 7
-    encoding = note_formula + beatvalue * 322
+    encoding = note_formula + beatvalue * 276
     return encoding
 
 def beat_prob(duration):

@@ -223,7 +223,7 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
 
 def getnotetype(notetype):
     """Return note type"""
-    if 0 <= notetype <= 14:
+    if 1 <= notetype <= 14:
         return 32, notetype
     elif 15 <= notetype <= 28:
         return 16, notetype - 14
@@ -235,13 +235,17 @@ def getnotetype(notetype):
         return 2, notetype - 54
     elif 69 <= notetype <= 82:
         return 1, notetype - 68
+    else:
+        return 1000, 0
 
 def adjustmeasure(beat_collect):
     """calculate the total measure length"""
-    measure_length = 0
+    total_quarters = 0.0
     for b, beat_val in enumerate(beat_collect):
-        measure_length += 4 / getnotetype(beat_val)[0]
-    return math.ceil(measure_length)
+        note_denominator, _ = getnotetype(beat_val)   # e.g. 4 for quarter, 8 for eighth, etc.
+        total_quarters += 4.0 / note_denominator
+    print(math.ceil(total_quarters))
+    return math.ceil(total_quarters)
 
 def makegpro(titlename, noteval, stringnum, beatval, palmval):
     """Generate gpro file"""
@@ -303,8 +307,10 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     song.tempo = 120  # Set the tempo
     song.tracks[0].name = "Guitar"
     song.tracks[0].channel.instrument = 30
-    
-    song.tracks[0].measures[0].timeSignature.numerator = adjustmeasure(beatval)
+
+    song.tracks[0].measures[0].hasTimeSignature  = True 
+    song.tracks[0].measures[0].timeSignature.numerator = min(32, adjustmeasure(beatval))
+    song.tracks[0].measures[0].timeSignature.denominator.value = 4
     song.tracks[0].strings[0].value = 58
     song.tracks[0].strings[1].value = 53
     song.tracks[0].strings[2].value = 49

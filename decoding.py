@@ -105,11 +105,11 @@ def detokenizer_1(dummy):
         note_val = dummy
     else:
         palm_mute = False
-        beat_type = demapping_beat(max(1, dummy // 322))
-        note_type = dummy % 322
-        if note_type > 161:
+        beat_type = demapping_beat(max(1, dummy // 276))
+        note_type = dummy % 276
+        if note_type > 138:
             # Palm mute
-            note_type -= 161
+            note_type -= 138
             palm_mute = True
             string_num = (note_type) // 23 + 1
             note_val = (note_type) % string_num
@@ -121,4 +121,4 @@ def detokenizer_1(dummy):
             print(f"Beat : {beat_type} String : {string_num} Note : {note_val} PalmMute : {palm_mute}")
 
 
-    return note_val, note_type, string_num, dummy // 322, palm_mute, demapping_beat_num((dummy if dummy < EOS - 1 else 322) // 322)
+    return note_val, note_type, string_num, dummy // 276, palm_mute, demapping_beat_num((dummy if dummy < EOS - 1 else 276) // 276)
