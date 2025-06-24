@@ -45,7 +45,11 @@ if __name__ == '__main__':
     'D - Septuplet',
     'D - 9_Tuplets',
     'D - 11_Tuplets']
-    
+    labelsaccents = ['BARRE_NOTE', 'BEND_NOTE_1', 'BEND_NOTE_2', 'BEND_NOTE_3', 'BEND_NOTE_4', 'BEND_NOTE_5', 'BEND_NOTE_6', 'BEND_NOTE_7', 
+                     'TREM_BAR_1', 'TREM_BAR_2', 'TREM_BAR_3', 'TREM_BAR_4', 'TREM_BAR_5', 'DEAD_NOTE',
+                     'SLIDE_NOTE_1', 'SLIDE_NOTE_2', 'SLIDE_NOTE_3', 'SLIDE_NOTE_4', 'SLIDE_NOTE_5', 'SLIDE_NOTE_6',
+                     'HAMMER', 'VIBRATO', 'HARMONIC_1']
+    accents_collect = np.zeros((23), dtype='int32')
 
     ################################
     END_SEQ = False
@@ -108,67 +112,90 @@ if __name__ == '__main__':
                                         L = min(L + 1, L_MAX)
                                         if note_index != 0:
                                             training_src_encoder_1[num_s][L] = cfg.BARRE_NOTE
+                                            accents_collect[0] += 1
                                             L = min(L + 1, L_MAX)
 
                                         if note.effect.isBend > 0:
                                             if note.effect.bend.type.value == 1:
                                                 training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_1
+                                                accents_collect[1] += 1
                                             elif note.effect.bend.type.value == 2:
                                                 training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_2
+                                                accents_collect[2] += 1
                                             elif note.effect.bend.type.value == 3:
                                                 training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_3
+                                                accents_collect[3] += 1
                                             elif note.effect.bend.type.value == 4:
                                                 training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_4
+                                                accents_collect[4] += 1
                                             elif note.effect.bend.type.value == 5:
                                                 training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_5
+                                                accents_collect[5] += 1
                                             elif note.effect.bend.type.value == 6:
                                                 training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_6
+                                                accents_collect[6] += 1
                                             elif note.effect.bend.type.value == 7:
                                                 training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_7
+                                                accents_collect[7] += 1
                                             L = min(L + 1, L_MAX)
                                         
                                         if note.type.name == 'dead':
                                             training_src_encoder_1[num_s][L] = cfg.DEAD_NOTE
+                                            accents_collect[13] += 1
                                             L = min(L + 1, L_MAX)
 
                                         if beat.effect.isTremoloBar is True:
                                             if beat.effect.tremoloBar.type.value == 1:
                                                 training_src_encoder_1[num_s][L] = cfg.TREM_BAR_1
+                                                accents_collect[8] += 1
                                             elif beat.effect.tremoloBar.type.value == 2:
                                                 training_src_encoder_1[num_s][L] = cfg.TREM_BAR_2
+                                                accents_collect[9] += 1
                                             elif beat.effect.tremoloBar.type.value == 3:
                                                 training_src_encoder_1[num_s][L] = cfg.TREM_BAR_3
+                                                accents_collect[10] += 1
                                             elif beat.effect.tremoloBar.type.value == 4:
                                                 training_src_encoder_1[num_s][L] = cfg.TREM_BAR_4
+                                                accents_collect[11] += 1
                                             elif beat.effect.tremoloBar.type.value == 5:
                                                 training_src_encoder_1[num_s][L] = cfg.TREM_BAR_5
+                                                accents_collect[12] += 1
                                             L = min(L + 1, L_MAX)
 
                                         if note.effect.slides:
                                             if note.effect.slides[0].name == 'legatoSlideTo':
                                                 training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_1
+                                                accents_collect[14] += 1
                                             elif note.effect.slides[0].name == 'shiftSlideTo':
                                                 training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_2
+                                                accents_collect[15] += 1
                                             elif note.effect.slides[0].name == 'intoFromBelow':
                                                 training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_3
+                                                accents_collect[16] += 1
                                             elif note.effect.slides[0].name == 'intoFromAbove':
                                                 training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_4
+                                                accents_collect[17] += 1
                                             elif note.effect.slides[0].name == 'outDownwards':
                                                 training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_5
+                                                accents_collect[18] += 1
                                             elif note.effect.slides[0].name == 'outUpwards':
                                                 training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_6
+                                                accents_collect[19] += 1
                                             L = min(L + 1, L_MAX)
                                         
                                         if note.effect.hammer == True:
                                             training_src_encoder_1[num_s][L] = cfg.HAMMER
+                                            accents_collect[20] += 1
                                             L = min(L + 1, L_MAX)
 
                                         if note.effect.vibrato == True:
                                             training_src_encoder_1[num_s][L] = cfg.VIBRATO
+                                            accents_collect[21] += 1
                                             L = min(L + 1, L_MAX)
 
                                         if note.effect.isHarmonic == True:
                                             training_src_encoder_1[num_s][L] = cfg.HARMONIC_1
+                                            accents_collect[22] += 1
                                             L = min(L + 1, L_MAX)
                                         
                                                             
@@ -211,6 +238,7 @@ if __name__ == '__main__':
         training_beat_encoder_1 = training_beat_encoder_1[training_beat_encoder_1 != 0]
         bincounts = np.bincount(training_note_encoder_1, minlength=13)[1:]
         bincountsbeats = np.bincount(training_beat_encoder_1, minlength=15)[1:]
+        bincountsaccents = np.bincount(accents_collect, minlength=23)[1:]
 
         writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.png')
@@ -220,19 +248,23 @@ if __name__ == '__main__':
         plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.png')
         del training_beat_encoder_1
 
+        writebincount(accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
+        plotbar(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.png')
+        del accents_collect
+
         ITERATION = 0
         lossplot = []
         ce_lossplot = []
         rep_lossplot =[]
         val_lossplot = []
-        penalize_tokens = [cfg.BARRE_NOTE, cfg.BEND_NOTE_1, cfg.BEND_NOTE_2, cfg.BEND_NOTE_3, cfg.BEND_NOTE_4, cfg.BEND_NOTE_5, cfg.BEND_NOTE_6, cfg.BEND_NOTE_7,
+        penalize_tokens = [cfg.BEND_NOTE_1, cfg.BEND_NOTE_2, cfg.BEND_NOTE_3, cfg.BEND_NOTE_4, cfg.BEND_NOTE_5, cfg.BEND_NOTE_6, cfg.BEND_NOTE_7,
                            cfg.TREM_BAR_1, cfg.TREM_BAR_2, cfg.TREM_BAR_3, cfg.TREM_BAR_4, cfg.TREM_BAR_5,
                            cfg.DEAD_NOTE, cfg.SLIDE_NOTE_1, cfg.SLIDE_NOTE_2, cfg.SLIDE_NOTE_3, cfg.SLIDE_NOTE_4, cfg.SLIDE_NOTE_5, cfg.SLIDE_NOTE_6, 
                            cfg.BOS, cfg.VIBRATO, cfg.HAMMER, cfg.HARMONIC_1]
         criterion = RepetitionPenaltyLossForSpecificTokens(
             label_smoothing=cfg.SMOOTHING, 
             repetition_penalty_weight=1.5, 
-            ngram_size=1, 
+            ngram_size=3, 
             penalize_tokens=penalize_tokens
         )
 

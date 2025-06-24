@@ -11,7 +11,7 @@ BEND_NOTE_4, BEND_NOTE_5, BEND_NOTE_6, BEND_NOTE_7, TREM_BAR_1, TREM_BAR_2, TREM
 TREM_BAR_4, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_2, SLIDE_NOTE_3, SLIDE_NOTE_4, SLIDE_NOTE_5, SLIDE_NOTE_6,
 HAMMER, VIBRATO, HARMONIC_1, 
 TEMPERATURE, TEST_CRITERIA, PREDICTION_CRITERIA)
-from inference import multinomial_sample, multinomial_sample_2
+from inference import multinomial_sample, multinomial_sample_2, create_causal_mask
 
 DEMAPPING_BEAT_DETYPE = {
     'Base---------------' : 1,
@@ -125,9 +125,11 @@ def plotbar_dual(labels, counts1, counts2, KLD, filename, label1='Training', lab
 
     return 0
 
-def decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask):
-    embeddings = embedding_layer(dummy_in)
-    output_eval, _, _ = decoder(embeddings + pos_enc, mask)
+def decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask, e_val):
+    embeddings = embedding_layer(dummy_in[:, :e_val])
+    pos_enc = pos_enc.unsqueeze(0)
+    positional = pos_enc[:, :e_val, :]
+    output_eval, _, _ = decoder(embeddings + positional, mask)
 
     next_token_logits = output_eval[:, -1, :]
     scaled_logits = next_token_logits / TEMPERATURE
@@ -150,7 +152,7 @@ def decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask):
     
     return next_token
 
-def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim):
+def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim, device):
     """Transformer Decoder"""
     with torch.no_grad():
         if PREDICTION_CRITERIA == 2:
@@ -186,11 +188,10 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
             if TEST_CRITERIA != 4:
                 dummy_in[0][1:] = EOS
                 for e_val in range (1, seq_lim):
-                    next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
-                    # print(next_token)
+                    casualmask = create_causal_mask(e_val, device)
+                    next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, casualmask, e_val)
                     # generated_sequence = dummy_in
                     if next_token == EOS:
-                        # dummy_in[0][e_val] = 0
                         print("End detected")
                         break
                     else:
@@ -311,12 +312,12 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     song.tracks[0].measures[0].hasTimeSignature  = True 
     song.tracks[0].measures[0].timeSignature.numerator = min(32, adjustmeasure(beatval))
     song.tracks[0].measures[0].timeSignature.denominator.value = 4
-    song.tracks[0].strings[0].value = 58
-    song.tracks[0].strings[1].value = 53
-    song.tracks[0].strings[2].value = 49
-    song.tracks[0].strings[3].value = 44
-    song.tracks[0].strings[4].value = 39
-    song.tracks[0].strings[5].value = 32
+    song.tracks[0].strings[0].value = 39
+    song.tracks[0].strings[1].value = 46
+    song.tracks[0].strings[2].value = 51
+    song.tracks[0].strings[3].value = 56
+    song.tracks[0].strings[4].value = 60
+    song.tracks[0].strings[5].value = 65
 
 
     voice = song.tracks[0].measures[0].voices[0]
@@ -325,6 +326,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     l_val = 0
     beat_collect = []
     note_collect = []
+    
     for n, note in enumerate(noteval):
 
         if note == EOS:
@@ -334,8 +336,8 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             # print("-----BOS-----")
             continue
         elif note == BARRE_NOTE:
-            if l_val != 0:
-                l_val -= 1
+            if k_val != 0:
+                k_val -= 1
         elif note == DEAD_NOTE:
             dead_beat.notes[0].value = note_collect[l_val - 1].value
             dead_beat.notes[0].string = note_collect[l_val - 1].string
@@ -360,7 +362,6 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             harmonic_1_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
             voice.beats[l_val - 1] = harmonic_1_beat
             continue
-            # print("-----Barred Note-----")
         elif TREM_BAR_1 <= note <= TREM_BAR_5:
             beat_collect[l_val - 1].effect.isBend = True
             

@@ -3,6 +3,7 @@ import random
 import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
+import config as cfg
 
 def multinomial_sample(probabilities, num_samples):
     """Multinomial sampling"""
@@ -38,3 +39,11 @@ def multinomial_sample(probabilities, num_samples):
 
 def multinomial_sample_2(probs, num_samples):
     return torch.multinomial(probs, num_samples=num_samples, replacement=True)[0]
+
+
+def create_causal_mask(seq_len, device):
+    mask = torch.full((seq_len, seq_len), float('-inf'), device=device)
+    mask = torch.triu(mask, diagonal=1)
+    mask.unsqueeze(0).unsqueeze(0) 
+    mask = mask.expand(1, cfg.NUM_HEADS, seq_len, seq_len) 
+    return mask

@@ -3,7 +3,7 @@ import config as cfg
 from postprocess import decoder_inference
 import torch
 import numpy as np
-from config import BOS
+from config import EOS
 
 def inference(device, decoder, embedding_layer, pos_enc, mask):
     """Run inference"""
@@ -17,13 +17,13 @@ def inference(device, decoder, embedding_layer, pos_enc, mask):
 
     if cfg.TEST_CRITERIA == 0:
         dummy_out = decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask,
-                                     cfg.MAX_SEQ_LENGTH).cpu().numpy()
+                                     cfg.MAX_SEQ_LENGTH, device).cpu().numpy()
     elif cfg.TEST_CRITERIA == 1:
         for t in range (0, cfg.TEST_TRIES):
             print(f"Testing -> {t}")
             
             dummy_out = decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask,
-                                     cfg.MAX_SEQ_LENGTH).cpu().numpy()
+                                     cfg.MAX_SEQ_LENGTH, device).cpu().numpy()
             #dummy_out[0][4] = 26416
             if np.any(dummy_out.cpu().numpy() > cfg.BARRE_NOTE):
                 return dummy_out.cpu().numpy()
@@ -33,7 +33,7 @@ def inference(device, decoder, embedding_layer, pos_enc, mask):
         while t < cfg.TEST_TRIES:
             print(f"Testing -> {t}")
             dummy_out[t] = decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask,
-                                     cfg.MAX_SEQ_LENGTH).cpu().numpy()
+                                     cfg.MAX_SEQ_LENGTH, device).cpu().numpy()
             if np.any(dummy_out[t] == 0):
                 print("0 detected")
             else:
@@ -44,12 +44,17 @@ def inference(device, decoder, embedding_layer, pos_enc, mask):
         while t < cfg.TEST_TRIES:
             print(f"Testing -> {t}")
             dummy_out[t] = decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask,
-                                     cfg.MAX_SEQ_LENGTH).cpu().numpy()
+                                     cfg.MAX_SEQ_LENGTH, device).cpu().numpy()
             if np.any(dummy_out[t] == 0):
                 print("0 detected")
             else:
-                if dummy_out[t][-1] < BOS:
-                    dummy_in[0][0] = dummy_out[t][-1]
+                idx = len(dummy_out[t]) - 1
+                while idx >= 0 and dummy_out[t][idx] < EOS:
+                    idx -= 1
+                if idx >= 0:
+                    dummy_in[0][0] = dummy_out[t][idx]
+                else:
+                    dummy_in[0][0] = EOS
                 t += 1
 
     return dummy_out
