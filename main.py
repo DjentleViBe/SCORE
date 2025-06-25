@@ -213,6 +213,7 @@ if __name__ == '__main__':
         training_tgt_notes[:, :-1] = training_tgt_decoder_1[:, 1:]
         training_tgt_notes[:, -1] = 0  # pad token
         training_src_encoder_1 = torch.tensor(training_src_encoder_1)
+        training_tgt_notes = torch.tensor(training_tgt_notes)
         full_pad_mask = (training_src_encoder_1 == 0).unsqueeze(1).unsqueeze(2)  # bool mask
         full_pad_mask = full_pad_mask.expand(cfg.NUM_SEQUENCE, 1, cfg.MAX_SEQ_LENGTH, cfg.MAX_SEQ_LENGTH)
         full_pad_mask = full_pad_mask.to(dtype=torch.float32) * float('-1e9')  # use -1e9 instead of -inf
@@ -223,16 +224,15 @@ if __name__ == '__main__':
             test_size=0.1,
             random_state=42  # for reproducibility
         )
-
-        train_src_tensor = torch.tensor(train_src, dtype=torch.long)
-        train_tgt_tensor = torch.tensor(train_tgt, dtype=torch.long)
-        val_src_tensor = torch.tensor(val_src, dtype=torch.long)
-        val_tgt_tensor = torch.tensor(val_tgt, dtype=torch.long)
+        train_src_tensor = train_src.detach().clone()
+        train_tgt_tensor = train_tgt.detach().clone()
+        val_src_tensor = val_src.detach().clone()
+        val_tgt_tensor = val_tgt.detach().clone()
 
 
         del training_tgt_decoder_1
-        print("Source")
-        print(f"{training_tgt_notes}")
+        # print("Source")
+        # print(f"{training_tgt_notes}")
         # plot notes
         training_note_encoder_1 = training_note_encoder_1[training_note_encoder_1 != 0]
         training_beat_encoder_1 = training_beat_encoder_1[training_beat_encoder_1 != 0]
