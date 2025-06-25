@@ -245,7 +245,6 @@ def adjustmeasure(beat_collect):
     for b, beat_val in enumerate(beat_collect):
         note_denominator, _ = getnotetype(beat_val)   # e.g. 4 for quarter, 8 for eighth, etc.
         total_quarters += 4.0 / note_denominator
-    print(math.ceil(total_quarters))
     return math.ceil(total_quarters)
 
 def makegpro(titlename, noteval, stringnum, beatval, palmval):
