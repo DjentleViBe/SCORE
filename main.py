@@ -50,7 +50,7 @@ if __name__ == '__main__':
                      'SLIDE_NOTE_1', 'SLIDE_NOTE_2', 'SLIDE_NOTE_3', 'SLIDE_NOTE_4', 'SLIDE_NOTE_5', 'SLIDE_NOTE_6',
                      'HAMMER', 'VIBRATO', 'HARMONIC_1']
     accents_collect = np.zeros((23), dtype='int32')
-
+    start_collect = np.zeros((cfg.VOCAB_SIZE), dtype = 'int32')
     ################################
     END_SEQ = False
     NUM_PATCH = ((cfg.MAX_SEQ_LENGTH - cfg.PATCH)//cfg.STRIDE) + 1
@@ -105,7 +105,8 @@ if __name__ == '__main__':
                                                                             note.string,
                                                                             note.beat.duration,
                                                                             note.effect.palmMute + 1)
-                                        
+                                        if L == 0:
+                                            start_collect[training_src_encoder_1[num_s][L]] += 1
                                         training_note_encoder_1[N] = note_prob(note.value, note.string)
                                         training_beat_encoder_1[N] = beat_prob(note.beat.duration)
                                         N += 1
@@ -228,9 +229,9 @@ if __name__ == '__main__':
         train_tgt_tensor = train_tgt.detach().clone()
         val_src_tensor = val_src.detach().clone()
         val_tgt_tensor = val_tgt.detach().clone()
-
-
         del training_tgt_decoder_1
+
+        sorted_indices = np.argsort(-start_collect)
         # print("Source")
         # print(f"{training_tgt_notes}")
         # plot notes
@@ -251,6 +252,13 @@ if __name__ == '__main__':
         writebincount(accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
         plotbar(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.png')
         del accents_collect
+
+        top_indices = sorted_indices[:10]
+        top_values = start_collect[top_indices]
+        top_labels = [str(i) for i in top_indices]
+        writebincount(start_collect[sorted_indices[:10]], './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt')
+        plotbar(top_labels, 'Occurance of First note', top_values, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.png')
+        
 
         ITERATION = 0
         lossplot = []
