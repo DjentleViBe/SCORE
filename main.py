@@ -72,19 +72,24 @@ if __name__ == '__main__':
         create_dir('./RESULTS/')
         create_dir('./RESULTS/' + cfg.BACKUP)
         shutil.copy("./config.py", "./RESULTS/" + cfg.BACKUP + "/" + cfg.BACKUP + ".py")
-        training_src_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
+        training_src_encoder_1 = np.zeros((1 * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         training_note_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         training_beat_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         GPROFOLDER = './gprofiles/'
         L = 0
-        L_MAX = cfg.MAX_SEQ_LENGTH - 1
+        L_MAX = cfg.MAX_SEQ_LENGTH * cfg.NUM_SEQUENCE - 1
         N = 0
-        training_src_encoder_1 = training_src_encoder_1.reshape(cfg.NUM_SEQUENCE, cfg.MAX_SEQ_LENGTH)
+        SEQ_LEN = cfg.MAX_SEQ_LENGTH       # e.g., 32
+        OVERLAP = cfg.OVERLAP               # e.g., 8
+        STEP = SEQ_LEN - OVERLAP           # how much to move forward each time
+        training_src_encoder_1 = training_src_encoder_1.reshape(1, cfg.MAX_SEQ_LENGTH)
         num_s = 0
+        file_ind = 0
         for f in cfg.TRAINING:
             for filename in os.listdir(GPROFOLDER + f):
+                training_src = []
                 file_path = os.path.join(GPROFOLDER + f, filename)
-
+                L = 0
                 # Check if it is a file (not a directory)
                 if os.path.isfile(file_path):
                     print(f"File: {file_path}")
@@ -94,120 +99,126 @@ if __name__ == '__main__':
                     for track in song.tracks:
                         # Map values to Genaral MIDI.
                         for measure in track.measures:
-                            L = 0
                             if not END_SEQ:
                                 for beat in measure.voices[0].beats:
                                     for note_index, note in enumerate(beat.notes):
-                                        if L > cfg.MAX_SEQ_LENGTH - 1:
-                                            break
-                                        
-                                        training_src_encoder_1[num_s][L] = tokenizer_1(note.value,
+                                        training_src.append(tokenizer_1(note.value,
                                                                             note.string,
                                                                             note.beat.duration,
-                                                                            note.effect.palmMute + 1)
+                                                                            note.effect.palmMute + 1))
                                         if L == 0:
-                                            start_collect[training_src_encoder_1[num_s][L]] += 1
+                                            start_collect[training_src[L]] += 1
                                         training_note_encoder_1[N] = note_prob(note.value, note.string)
                                         training_beat_encoder_1[N] = beat_prob(note.beat.duration)
                                         N += 1
                                         L = min(L + 1, L_MAX)
                                         if note_index != 0:
-                                            training_src_encoder_1[num_s][L] = cfg.BARRE_NOTE
+                                            training_src.append(cfg.BARRE_NOTE)
                                             accents_collect[0] += 1
                                             L = min(L + 1, L_MAX)
 
                                         if note.effect.isBend > 0:
                                             if note.effect.bend.type.value == 1:
-                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_1
+                                                training_src.append(cfg.BEND_NOTE_1)
                                                 accents_collect[1] += 1
                                             elif note.effect.bend.type.value == 2:
-                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_2
+                                                training_src.append(cfg.BEND_NOTE_2)
                                                 accents_collect[2] += 1
                                             elif note.effect.bend.type.value == 3:
-                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_3
+                                                training_src.append(cfg.BEND_NOTE_3)
                                                 accents_collect[3] += 1
                                             elif note.effect.bend.type.value == 4:
-                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_4
+                                                training_src.append(cfg.BEND_NOTE_4)
                                                 accents_collect[4] += 1
                                             elif note.effect.bend.type.value == 5:
-                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_5
+                                                training_src.append(cfg.BEND_NOTE_5)
                                                 accents_collect[5] += 1
                                             elif note.effect.bend.type.value == 6:
-                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_6
+                                                training_src.append(cfg.BEND_NOTE_6)
                                                 accents_collect[6] += 1
                                             elif note.effect.bend.type.value == 7:
-                                                training_src_encoder_1[num_s][L] = cfg.BEND_NOTE_7
+                                                training_src.append(cfg.BEND_NOTE_7)
                                                 accents_collect[7] += 1
                                             L = min(L + 1, L_MAX)
                                         
                                         if note.type.name == 'dead':
-                                            training_src_encoder_1[num_s][L] = cfg.DEAD_NOTE
+                                            training_src.append(cfg.DEAD_NOTE)
                                             accents_collect[13] += 1
                                             L = min(L + 1, L_MAX)
 
                                         if beat.effect.isTremoloBar is True:
                                             if beat.effect.tremoloBar.type.value == 1:
-                                                training_src_encoder_1[num_s][L] = cfg.TREM_BAR_1
+                                                training_src.append(cfg.TREM_BAR_1)
                                                 accents_collect[8] += 1
                                             elif beat.effect.tremoloBar.type.value == 2:
-                                                training_src_encoder_1[num_s][L] = cfg.TREM_BAR_2
+                                                training_src.append(cfg.TREM_BAR_2)
                                                 accents_collect[9] += 1
                                             elif beat.effect.tremoloBar.type.value == 3:
-                                                training_src_encoder_1[num_s][L] = cfg.TREM_BAR_3
+                                                training_src.append(cfg.TREM_BAR_3)
                                                 accents_collect[10] += 1
                                             elif beat.effect.tremoloBar.type.value == 4:
-                                                training_src_encoder_1[num_s][L] = cfg.TREM_BAR_4
+                                                training_src.append(cfg.TREM_BAR_4)
                                                 accents_collect[11] += 1
                                             elif beat.effect.tremoloBar.type.value == 5:
-                                                training_src_encoder_1[num_s][L] = cfg.TREM_BAR_5
+                                                training_src.append(cfg.TREM_BAR_5)
                                                 accents_collect[12] += 1
                                             L = min(L + 1, L_MAX)
 
                                         if note.effect.slides:
                                             if note.effect.slides[0].name == 'legatoSlideTo':
-                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_1
+                                                training_src.append(cfg.SLIDE_NOTE_1)
                                                 accents_collect[14] += 1
                                             elif note.effect.slides[0].name == 'shiftSlideTo':
-                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_2
+                                                training_src.append(cfg.SLIDE_NOTE_2)
                                                 accents_collect[15] += 1
                                             elif note.effect.slides[0].name == 'intoFromBelow':
-                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_3
+                                                training_src.append(cfg.SLIDE_NOTE_3)
                                                 accents_collect[16] += 1
                                             elif note.effect.slides[0].name == 'intoFromAbove':
-                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_4
+                                                training_src.append(cfg.SLIDE_NOTE_4)
                                                 accents_collect[17] += 1
                                             elif note.effect.slides[0].name == 'outDownwards':
-                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_5
+                                                training_src.append(cfg.SLIDE_NOTE_5)
                                                 accents_collect[18] += 1
                                             elif note.effect.slides[0].name == 'outUpwards':
-                                                training_src_encoder_1[num_s][L] = cfg.SLIDE_NOTE_6
+                                                training_src.append(cfg.SLIDE_NOTE_6)
                                                 accents_collect[19] += 1
                                             L = min(L + 1, L_MAX)
                                         
                                         if note.effect.hammer == True:
-                                            training_src_encoder_1[num_s][L] = cfg.HAMMER
+                                            training_src.append(cfg.HAMMER)
                                             accents_collect[20] += 1
                                             L = min(L + 1, L_MAX)
 
                                         if note.effect.vibrato == True:
-                                            training_src_encoder_1[num_s][L] = cfg.VIBRATO
+                                            training_src.append(cfg.VIBRATO)
                                             accents_collect[21] += 1
                                             L = min(L + 1, L_MAX)
 
                                         if note.effect.isHarmonic == True:
-                                            training_src_encoder_1[num_s][L] = cfg.HARMONIC_1
+                                            training_src.append(cfg.HARMONIC_1)
                                             accents_collect[22] += 1
                                             L = min(L + 1, L_MAX)
                                         
-                                                            
-                                if cfg.EOS_TRUE:
-                                    training_src_encoder_1[num_s][L] = cfg.EOS
-                                    # L = min(L + 1, L_MAX)
-                                    num_s += 1
-                                    if num_s == cfg.NUM_SEQUENCE:
-                                        END_SEQ = True
-                                        break
+                                training_src.append(cfg.BAR)
+                                L = min(L + 1, L_MAX)                      
+                if cfg.EOS_TRUE:
+                    training_src.append(cfg.EOS)
+                    remainder = len(training_src) % 32
+                    if remainder != 0:
+                        pad_length = 32 - remainder
+                        training_src.extend([0] * pad_length)
+                    long_tokens = training_src
+                    num_chunks = (len(long_tokens) - OVERLAP) // STEP
+                    overlapping_sequences = np.zeros((num_chunks, SEQ_LEN), dtype='int32')
+                    # Fill in overlapping chunks
+                    for i in range(num_chunks):
+                        start = i * STEP
+                        end = start + SEQ_LEN
+                        overlapping_sequences[i] = long_tokens[start:end]
+                training_src_encoder_1 = np.concatenate((training_src_encoder_1, overlapping_sequences), axis=0)
         
+        NUM_SEQUENCE = len(training_src_encoder_1)
         training_tgt_decoder_1 = training_src_encoder_1.copy().astype(np.int64)
         training_tgt_notes = np.roll(training_tgt_decoder_1, shift=-1)
         training_tgt_notes = np.zeros_like(training_tgt_decoder_1)
@@ -216,7 +227,7 @@ if __name__ == '__main__':
         training_src_encoder_1 = torch.tensor(training_src_encoder_1)
         training_tgt_notes = torch.tensor(training_tgt_notes)
         full_pad_mask = (training_src_encoder_1 == 0).unsqueeze(1).unsqueeze(2)  # bool mask
-        full_pad_mask = full_pad_mask.expand(cfg.NUM_SEQUENCE, 1, cfg.MAX_SEQ_LENGTH, cfg.MAX_SEQ_LENGTH)
+        full_pad_mask = full_pad_mask.expand(NUM_SEQUENCE, 1, cfg.MAX_SEQ_LENGTH, cfg.MAX_SEQ_LENGTH)
         full_pad_mask = full_pad_mask.to(dtype=torch.float32) * float('-1e9')  # use -1e9 instead of -inf
         full_pad_mask = full_pad_mask.to(device)
         train_src, val_src, train_tgt, val_tgt = train_test_split(
