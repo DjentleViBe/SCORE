@@ -1,61 +1,37 @@
 """Decoding results"""
 from config import EOS, BOS, BARRE_NOTE, BEND_NOTE_1, BEND_NOTE_7, \
                     TREM_BAR_1, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_6, \
-                    HAMMER, VIBRATO, HARMONIC_1, VERBOSE
+                    HAMMER, VIBRATO, HARMONIC_1, VERBOSE, BAR
+import numpy as np
 
-DEMAPPING_BEAT_TYPE = {
-    1:   'Base---------------',
-    2:   'Triplet------------',
-    3:   'Quintuplet---------',
-    4:   'Sextuplet----------',
-    5:   'Septuplet----------',
-    6:   '9_Tuplets----------',
-    7:   '11_Tuplets---------',
-    8:   'Dotted - Base------',
-    9:   'Dotted - Triplet---',
-    10:  'Dotted - Quintuplet',
-    11:  'Dotted - Sextuplet-',
-    12:  'Dotted - Septuplet-',
-    13:  'Dotted - 9_Tuplets-',
-    14:  'Dotted - 11_Tuplets',
+BASE_BEAT_START = {
+    0 : 64,
+    1 : 32,
+    2 : 16,
+    3 : 8,
+    4 : 4,
+    5 : 2,
+    6 : 1,
 }
 
-def demapping_beat_num(beat):
-    """returns beat type num"""
-    if beat >= 71:
-        return beat - 70
-    elif 71 > beat >= 57:
-        return beat - 56
-    elif 57 > beat >= 43:
-        return beat - 42
-    elif 43 > beat >= 29:
-        return beat - 28
-    elif 29 > beat >= 15:
-        return beat - 14
-    else:
-        return beat
+TUPLET_REV = {
+    0: None,
+    1: 3,
+    2: 5,
+    3: 6,
+    4: 7,
+    5: 9,
+    6: 11
+}
 
-def demapping_beat(beat):
+def demapping_beat(beatkind):
     """returns beat type"""
-    beat_type = ''
-    if beat >= 71:
-        beat_type += DEMAPPING_BEAT_TYPE.get(beat - 70)
-        return beat_type
-    elif 71 > beat >= 57:
-        beat_type += DEMAPPING_BEAT_TYPE.get(beat - 56)
-        return beat_type
-    elif 57 > beat >= 43:
-        beat_type += DEMAPPING_BEAT_TYPE.get(beat - 42)
-        return beat_type
-    elif 43 > beat >= 29:
-        beat_type += DEMAPPING_BEAT_TYPE.get(beat - 28)
-        return beat_type
-    elif 29 > beat >= 15:
-        beat_type += DEMAPPING_BEAT_TYPE.get(beat - 14)
-        return beat_type
-    else:
-        beat_type += DEMAPPING_BEAT_TYPE.get(beat)
-        return beat_type
+    dotted = False
+    if beatkind > 7:
+        beatkind -= 7
+        dotted = True
+
+    return TUPLET_REV.get(beatkind), dotted
 
 def detokenizer_1(dummy):
     """Derive notes from token"""
@@ -63,6 +39,10 @@ def detokenizer_1(dummy):
     note_type = 0
     string_num = 0
     palm_mute = False
+    beat_type = {"duration": 0,      # e.g., 4 for quarter
+                "tuplet": None,     # e.g., 3, 5, 6, etc.
+                "dotted": False}
+    beat_kind = 0
     if dummy == EOS:
         if VERBOSE == 1:
             print(f"-------EOS-------")
@@ -104,21 +84,32 @@ def detokenizer_1(dummy):
             print("-------Harmonic----------")
         note_val = dummy
     else:
-        palm_mute = False
-        beat_type = demapping_beat(max(1, dummy // 276))
-        note_type = dummy % 276
-        if note_type > 138:
-            # Palm mute
-            note_type -= 138
-            palm_mute = True
-            string_num = (note_type) // 23 + 1
-            note_val = (note_type) % string_num
-        else:
-            string_num = note_type // 23 + 1
-            note_val = note_type % string_num
-
+        if(dummy < BAR):
+            palm_mute = False
+            note_type = dummy % 276
+            
+            beat_kind = (dummy // 276) % 14
+            base_beat = BASE_BEAT_START.get((dummy // (276 * 14)) % 7)
+            if(base_beat == 0):
+                print("cautuion")
+            bt_0, bt_1 = demapping_beat(beat_kind)
+            beat_type = {"duration": base_beat,      # e.g., 4 for quarter
+                        "tuplet": bt_0,     # e.g., 3, 5, 6, etc.
+                        "dotted": bt_1}
+            
+            if note_type > 138:
+                # Palm mute
+                note_type -= 138
+                palm_mute = True
+                string_num = (note_type) // 23 + 1
+                note_val = (note_type) % string_num
+            else:
+                string_num = (note_type) // 23 + 1
+                note_val = (note_type) % string_num
+ 
         if VERBOSE == 1:
-            print(f"Beat : {beat_type} String : {string_num} Note : {note_val} PalmMute : {palm_mute}")
+            beat_type_cleaned = {k: int(v) if isinstance(v, np.integer) else v for k, v in beat_type.items()}
+            print(f"Beat : {beat_type_cleaned} String : {string_num} Note : {note_val} PalmMute : {palm_mute}")
 
 
-    return note_val, note_type, string_num, dummy // 276, palm_mute, demapping_beat_num((dummy if dummy < EOS - 1 else 276) // 276)
+    return note_val, note_type, string_num, beat_type, palm_mute, beat_kind

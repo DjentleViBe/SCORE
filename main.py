@@ -89,7 +89,6 @@ if __name__ == '__main__':
             for filename in os.listdir(GPROFOLDER + f):
                 training_src = []
                 file_path = os.path.join(GPROFOLDER + f, filename)
-                L = 0
                 # Check if it is a file (not a directory)
                 if os.path.isfile(file_path):
                     print(f"File: {file_path}")
@@ -101,13 +100,15 @@ if __name__ == '__main__':
                         for measure in track.measures:
                             if not END_SEQ:
                                 for beat in measure.voices[0].beats:
+                                    L = 0
                                     for note_index, note in enumerate(beat.notes):
                                         training_src.append(tokenizer_1(note.value,
                                                                             note.string,
                                                                             note.beat.duration,
                                                                             note.effect.palmMute + 1))
                                         if L == 0:
-                                            start_collect[training_src[L]] += 1
+                                            if training_src[L] < cfg.BAR:
+                                                start_collect[training_src[L]] += 1
                                         training_note_encoder_1[N] = note_prob(note.value, note.string)
                                         training_beat_encoder_1[N] = beat_prob(note.beat.duration)
                                         N += 1

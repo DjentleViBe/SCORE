@@ -9,7 +9,7 @@ from matplotlib.patches import Patch
 from config import (BACKUP, MAX_SEQ_LENGTH, EOS, BOS, BARRE_NOTE, MEASURE, BEND_NOTE_1, BEND_NOTE_2, BEND_NOTE_3,
 BEND_NOTE_4, BEND_NOTE_5, BEND_NOTE_6, BEND_NOTE_7, TREM_BAR_1, TREM_BAR_2, TREM_BAR_3,
 TREM_BAR_4, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_2, SLIDE_NOTE_3, SLIDE_NOTE_4, SLIDE_NOTE_5, SLIDE_NOTE_6,
-HAMMER, VIBRATO, HARMONIC_1, 
+HAMMER, VIBRATO, HARMONIC_1, BAR,
 TEMPERATURE, TEST_CRITERIA, PREDICTION_CRITERIA)
 from inference import multinomial_sample, multinomial_sample_2, create_causal_mask
 
@@ -29,6 +29,8 @@ DEMAPPING_BEAT_DETYPE = {
     'Dotted - 9_Tuplets-' : 13,
     'Dotted - 11_Tuplets' : 14,
 }
+
+valid_tuplets = [(1, 1), (3, 2), (5, 4), (6, 4), (7, 4), (9, 8), (10, 8), (11, 8), (12, 8), (13, 8)]
 
 def plot_multiple(plot_collect, labels, text, filename):
     "Plots data and saves figure"
@@ -222,30 +224,11 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
         print(dummy_in)
     return dummy_in
 
-def getnotetype(notetype):
-    """Return note type"""
-    if 1 <= notetype <= 14:
-        return 32, notetype
-    elif 15 <= notetype <= 28:
-        return 16, notetype - 14
-    elif 29 <= notetype <= 40:
-        return 8, notetype - 28
-    elif 41 <= notetype <= 54:
-        return 4, notetype - 40
-    elif 55 <= notetype <= 68:
-        return 2, notetype - 54
-    elif 69 <= notetype <= 82:
-        return 1, notetype - 68
-    else:
-        return 1000, 0
-
-def adjustmeasure(beat_collect):
-    """calculate the total measure length"""
-    total_quarters = 0.0
-    for b, beat_val in enumerate(beat_collect):
-        note_denominator, _ = getnotetype(beat_val)   # e.g. 4 for quarter, 8 for eighth, etc.
-        total_quarters += 4.0 / note_denominator
-    return math.ceil(total_quarters)
+def check_measure(duration_sum, n):
+    if math.ceil(duration_sum) > 32:
+        print("Exiting early at Token : ", n + 1)
+        print("total duration : ", math.ceil(duration_sum))
+        return True
 
 def makegpro(titlename, noteval, stringnum, beatval, palmval):
     """Generate gpro file"""
@@ -309,7 +292,6 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     song.tracks[0].channel.instrument = 30
 
     song.tracks[0].measures[0].hasTimeSignature  = True 
-    song.tracks[0].measures[0].timeSignature.numerator = min(32, adjustmeasure(beatval))
     song.tracks[0].measures[0].timeSignature.denominator.value = 4
     voice = song.tracks[0].measures[0].voices[0]
 
@@ -317,7 +299,8 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     l_val = 0
     beat_collect = []
     note_collect = []
-    
+    duration_sum = 0
+
     for n, note in enumerate(noteval):
 
         if note == EOS:
@@ -326,9 +309,18 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         elif note == BOS:
             # print("-----BOS-----")
             continue
+        elif note == BAR:
+            continue
         elif note == BARRE_NOTE:
             if k_val != 0:
                 k_val -= 1
+                base_duration = beatval[n - 1].get("duration")
+                enters = beatval[n - 1].get("tuplet")
+                times = beatval[n - 1].get("duration")
+                if (enters, times) in valid_tuplets:
+                    base_duration = base_duration * enters / times
+                duration_sum -= 4.0 / base_duration
+
         elif note == DEAD_NOTE:
             dead_beat.notes[0].value = note_collect[l_val - 1].value
             dead_beat.notes[0].string = note_collect[l_val - 1].string
@@ -452,41 +444,39 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 voice.beats[l_val - 1] = slide6_beat
             continue
         else:
+            duration = beatval[n].get("duration")
             beat_collect.append(gp.Beat(voice=voice))
             voice.beats.append(beat_collect[k_val])
             note_collect.append(gp.Note(beat = beat_collect[k_val]))
             note_collect[l_val].value = note
             note_collect[l_val].effect.palmMute = palmval[n]
             note_collect[l_val].string = min(stringnum[n], 6)
+            note_collect[l_val].beat.duration.value = beatval[n].get("duration")
+            
+            if beatval[n].get("dotted") == True:
+                note_collect[l_val].beat.duration.isDotted = True
+                duration = duration * 1.5
 
-            note_collect[l_val].beat.duration.value, b_val = getnotetype(beatval[n])
-
-            if b_val >= 8:
-                note_collect[k_val].beat.duration.isDotted = True
-            if b_val in (2, 9):
-                note_collect[k_val].beat.duration.tuplet.enters = 3
-                note_collect[k_val].beat.duration.tuplet.times = 2
-            if b_val in (3, 10):
-                note_collect[k_val].beat.duration.tuplet.enters = 5
-                note_collect[k_val].beat.duration.tuplet.times = 4
-            if b_val in (4, 11):
-                note_collect[k_val].beat.duration.tuplet.enters = 6
-                note_collect[k_val].beat.duration.tuplet.times = 4
-            if b_val in (5, 12):
-                note_collect[k_val].beat.duration.tuplet.enters = 7
-                note_collect[k_val].beat.duration.tuplet.times = 4
-            if b_val in (6, 13):
-                note_collect[k_val].beat.duration.tuplet.enters = 9
-                note_collect[k_val].beat.duration.tuplet.times = 8
-            if b_val in (7, 14):
-                note_collect[k_val].beat.duration.tuplet.enters = 11
-                note_collect[k_val].beat.duration.tuplet.times = 8
+            enters = beatval[n].get("tuplet")
+            times = beatval[n].get("duration")
+            if (enters, times) in valid_tuplets:
+                duration = duration * times / enters
+                note_collect[l_val].beat.duration.tuplet.enters = enters
+                note_collect[l_val].beat.duration.tuplet.times = times
 
             beat_collect[k_val].notes.append(note_collect[l_val])
+            
             k_val += 1
             if l_val != MAX_SEQ_LENGTH - 1:
                 l_val += 1
-    
+
+            duration_sum += 4.0 / duration
+            if check_measure(duration_sum, n):
+                song.tracks[0].measures[0].timeSignature.numerator = min(32, math.ceil(duration_sum))
+                return song
+            
+    print("total duration : ", math.ceil(duration_sum))
+    song.tracks[0].measures[0].timeSignature.numerator = min(32, math.ceil(duration_sum))
     return song
 
 def writegpro(filename, song):
