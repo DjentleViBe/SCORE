@@ -302,7 +302,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     duration_sum = 0
 
     for n, note in enumerate(noteval):
-
+        dotted = False
         if note == EOS:
             # print("-----EOS-----")
             continue
@@ -312,14 +312,17 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         elif note == BAR:
             continue
         elif note == BARRE_NOTE:
+            print("-----Barre note------")
             if k_val != 0:
                 k_val -= 1
-                base_duration = beatval[n - 1].get("duration")
-                enters = beatval[n - 1].get("tuplet")
-                times = beatval[n - 1].get("duration")
+                duration = 4.0 / beatval[n - 1].get("duration")
+                if beatval[n].get("dotted") == True:
+                    duration = duration * 1.5
+                enters = beatval[n].get("tuplet")
+                times = beatval[n].get("duration")
                 if (enters, times) in valid_tuplets:
-                    base_duration = base_duration * enters / times
-                duration_sum -= 4.0 / base_duration
+                    duration = duration * times / enters
+                duration_sum -= duration
 
         elif note == DEAD_NOTE:
             dead_beat.notes[0].value = note_collect[l_val - 1].value
@@ -444,7 +447,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 voice.beats[l_val - 1] = slide6_beat
             continue
         else:
-            duration = beatval[n].get("duration")
+            duration = 4.0 / beatval[n].get("duration")
             beat_collect.append(gp.Beat(voice=voice))
             voice.beats.append(beat_collect[k_val])
             note_collect.append(gp.Note(beat = beat_collect[k_val]))
@@ -455,6 +458,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             
             if beatval[n].get("dotted") == True:
                 note_collect[l_val].beat.duration.isDotted = True
+                dotted = True
                 duration = duration * 1.5
 
             enters = beatval[n].get("tuplet")
@@ -470,11 +474,11 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             if l_val != MAX_SEQ_LENGTH - 1:
                 l_val += 1
 
-            duration_sum += 4.0 / duration
+            duration_sum += duration
             if check_measure(duration_sum, n):
                 song.tracks[0].measures[0].timeSignature.numerator = min(32, math.ceil(duration_sum))
                 return song
-            
+        print(f"Beat : {beatval[n].get("duration")}, Tuplet : {enters}, Dotted : {dotted}, Duration_sum : {round(duration_sum, 2)}")
     print("total duration : ", math.ceil(duration_sum))
     song.tracks[0].measures[0].timeSignature.numerator = min(32, math.ceil(duration_sum))
     return song
