@@ -5,10 +5,10 @@
 # 1 : eval
 # 2 : both 
 # 3 : load from file
-MODE                =   0
-BACKUP              =   "dec_only_notes_CB_Large_2"
-SAVE                =   "dec_only_notes_CB_Large_2A"
-START_ID            =   8125
+MODE                =   1
+BACKUP              =   "dec_only_chunks_CB_Large"
+SAVE                =   "dec_only_chunks_CB_Large_C"
+START_ID            =   15462
 BOS_TRUE            =   0
 EOS_TRUE            =   1
 # 0 - Vanilla
@@ -17,7 +17,7 @@ EOS_TRUE            =   1
 # 3 - Same as above + last note of every bar is fed to firt note of next bar
 # 4 - Same as above + loop until no repeatitive notes > BOS 
 TEST_CRITERIA       =   3
-TEST_TRIES          =   1
+TEST_TRIES          =   2
 # 1 - Greedy Search
 # 2 - Beam Search
 # 3 - Multinomial Sampling
@@ -26,16 +26,16 @@ PREDICTION_CRITERIA =   3
 ########## Params ##############
 EPOCHS          =   100
 SAVE_EVERY      =   20
-VOCAB_SIZE      =   23210
+VOCAB_SIZE      =   27076
 FFN_HIDDEN      =   1024
 MAX_SEQ_LENGTH  =   32
 NUM_HEADS       =   8
-DROP_PROB       =   0.2
+DROP_PROB       =   0.3
 NUM_LAYERS      =   6
 D_MODEL         =   256
 SCHEDULER       =   1
 SCHEDULER_SIZE  =   30
-LEARNING_RATE   =   0.00005
+LEARNING_RATE   =   0.0001
 SMOOTHING       =   0.1
 PATCH           =   1
 STRIDE          =   1
@@ -44,32 +44,34 @@ NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
 TEMPERATURE     =   1.0
 BATCH           =   32
+OVERLAP         =   8
 
-EOS             =   23185
-BOS             =   23186
-BARRE_NOTE      =   23187
-BEND_NOTE_1     =   23188
-BEND_NOTE_2     =   23189
-BEND_NOTE_3     =   23190
-BEND_NOTE_4     =   23191
-BEND_NOTE_5     =   23192
-BEND_NOTE_6     =   23193
-BEND_NOTE_7     =   23194
-TREM_BAR_1      =   23195
-TREM_BAR_2      =   23196
-TREM_BAR_3      =   23197
-TREM_BAR_4      =   23198
-TREM_BAR_5      =   23199
-DEAD_NOTE       =   23200
-SLIDE_NOTE_1    =   23201
-SLIDE_NOTE_2    =   23202
-SLIDE_NOTE_3    =   23203
-SLIDE_NOTE_4    =   23204
-SLIDE_NOTE_5    =   23205
-SLIDE_NOTE_6    =   23206
-HAMMER          =   23207
-VIBRATO         =   23208
-HARMONIC_1      =   23209
+BAR             =   27049
+BOS             =   27050
+BARRE_NOTE      =   27051
+BEND_NOTE_1     =   27052
+BEND_NOTE_2     =   27053
+BEND_NOTE_3     =   27054
+BEND_NOTE_4     =   27055
+BEND_NOTE_5     =   27056
+BEND_NOTE_6     =   27057
+BEND_NOTE_7     =   27058
+TREM_BAR_1      =   27059
+TREM_BAR_2      =   27060
+TREM_BAR_3      =   27061
+TREM_BAR_4      =   27062
+TREM_BAR_5      =   27063
+DEAD_NOTE       =   27064
+SLIDE_NOTE_1    =   27065
+SLIDE_NOTE_2    =   27066
+SLIDE_NOTE_3    =   27068
+SLIDE_NOTE_4    =   27069
+SLIDE_NOTE_5    =   27070
+SLIDE_NOTE_6    =   27071
+HAMMER          =   27072
+VIBRATO         =   27073
+HARMONIC_1      =   27074
+EOS             =   27075
 
 #################################################################################
 MEASURE         =   8
