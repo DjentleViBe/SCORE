@@ -47,6 +47,10 @@ def detokenizer_1(dummy):
         if VERBOSE == 1:
             print(f"-------EOS-------")
         note_val = EOS
+    elif dummy == BAR:
+        if VERBOSE == 1:
+            print(f"-------BAR-------")
+        note_val = BAR
     elif dummy == BOS:
         if VERBOSE == 1:
             print(f"-------BOS-------")

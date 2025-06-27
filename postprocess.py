@@ -300,10 +300,9 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     beat_collect = []
     note_collect = []
     duration_sum = 0
-
+    reuse_last_beat = False
     for n, note in enumerate(noteval):
         dotted = False
-        reuse_last_beat = False
         base_duration = 0
         if note == EOS:
             # print("-----EOS-----")
@@ -316,7 +315,6 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         elif note == BARRE_NOTE:
             print("-----Barre note------")
             if k_val != 0:
-                k_val -= 1
                 reuse_last_beat = True
             continue
         elif note == DEAD_NOTE:
@@ -450,7 +448,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 beat_collect.append(current_beat)
                 voice.beats.append(current_beat)
                 
-                # ✅ Duration comes from beatval[n]
+                # Duration comes from beatval[n]
                 base_duration = 4.0 / beatval[n].get("duration")
                 
                 if beatval[n].get("dotted"):
@@ -461,6 +459,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 if (enters, times) in valid_tuplets:
                     base_duration *= times / enters
                 duration_sum += base_duration
+                k_val += 1
             
             note_collect.append(gp.Note(beat=current_beat))
             note_collect[l_val].value = note
@@ -478,9 +477,8 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 note_collect[l_val].beat.duration.tuplet.enters = enters
                 note_collect[l_val].beat.duration.tuplet.times = times
 
-            beat_collect[k_val].notes.append(note_collect[l_val])
+            current_beat.notes.append(note_collect[l_val])
             
-            k_val += 1
             if l_val != MAX_SEQ_LENGTH - 1:
                 l_val += 1
 
