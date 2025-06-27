@@ -5,7 +5,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc):
+def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb):
     """Required for attention
     q_val : what am I looking for
     k_val : what do I have to offer
@@ -27,11 +27,16 @@ def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc):
     
     if mask is not None:
         scaled += mask
+    
     # to get probabilities apply softmax
     attention = F.softmax(scaled, dim = -1)
     # 30 x 8 x 200 x 64
     values = torch.matmul(attention, v_val)
-    return values, attention
+
+    rel_pos_value_emb_exp = rel_pos_value_emb
+    rel_pos_value_contrib = torch.einsum('bhqk,qkhd->bhqd', attention, rel_pos_value_emb_exp)
+    output = values + rel_pos_value_contrib
+    return output, attention
 
 class MultiHeadAttentionAPE(nn.Module):
     """Multi head self attention
@@ -49,6 +54,8 @@ class MultiHeadAttentionAPE(nn.Module):
         self.linear_layer.to(device)
         # Learnable relative positional embedding
         self.relative_positional_encoding = nn.Embedding(2 * seq_length - 1, self.head_dim).to(device)
+        self.relative_pos_value_embedding = nn.Embedding(2 * seq_length - 1, self.num_heads * self.head_dim).to(device)
+
 
     
     def relative_position_encoding(self, seq_length, max_len, device):
@@ -93,8 +100,9 @@ class MultiHeadAttentionAPE(nn.Module):
         total_seq_len = k_val.size(2)  # cached_seq_len + current seq_len
         relative_positions = self.relative_position_encoding(total_seq_len, self.relative_positional_encoding.num_embeddings // 2 + 1, self.device)
         rel_pos_enc = self.relative_positional_encoding(relative_positions)  # (1, total_seq_len, total_seq_len, head_dim)
-
-        values, _ = scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc)
+        rel_pos_value_emb = self.relative_pos_value_embedding(relative_positions) 
+        rel_pos_value_emb = rel_pos_value_emb.squeeze(0).reshape(total_seq_len, total_seq_len, self.num_heads, self.head_dim)
+        values, _ = scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb)
 
         values = values.reshape(batch_size, sequence_length, self.num_heads * self.head_dim)
         output = self.linear_layer(values)
