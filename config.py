@@ -6,8 +6,8 @@
 # 2 : both 
 # 3 : load from file
 MODE                =   1
-BACKUP              =   "dec_only_chunks_CB_Large"
-SAVE                =   "dec_only_chunks_CB_Large_C"
+BACKUP              =   "dec_RPE_chunks_CB_Large"
+SAVE                =   "dec_RPE_chunks_CB_Large_C"
 START_ID            =   15462
 BOS_TRUE            =   0
 EOS_TRUE            =   1
