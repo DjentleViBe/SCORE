@@ -231,12 +231,11 @@ def check_measure(duration_sum, n):
         return True
 
 def makegpro(titlename, noteval, stringnum, beatval, palmval):
-    #noteval = [ 3989, 27051, 11830, 11830, 11830,  7966, 11830,  7966,  7966,  7963,
-    #     11691, 11647,  7966,  7966,  7966,  7966,  7966,  7966,  7966,  7966,
-    #      7966,  7966,  7966,  7966,  7966,  7966,  7966,  7966,  7966,  7966,
-    #      7966,  8243]
-    print(beatval)
     #print(noteval)
+    #print(beatval)
+    #print(palmval)
+    #print(stringnum)
+
     """Generate gpro file"""
     # read bend and tremolo templates
     song_trem_1 = gp.parse('./gprofiles/trem_1.gp5')
@@ -327,31 +326,27 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             continue
         elif note == DEAD_NOTE:
             reuse_last_beat = False
-            if note_collect:
-
+            if note_collect and noteval[n - 1] < BAR:
                 note_collect[l_val - 1].type = hammer_beat.notes[0].type
                 continue
         elif note == HAMMER:
             reuse_last_beat = False
-            if note_collect:
-
+            if note_collect and noteval[n - 1] < BAR:
                 note_collect[l_val - 1].effect.hammer = hammer_beat.notes[0].effect.hammer
                 continue
         elif note == VIBRATO:
             reuse_last_beat = False
-            if note_collect:
-  
+            if note_collect and noteval[n - 1] < BAR:
                 note_collect[l_val - 1].effect.vibrato = hammer_beat.notes[0].effect.vibrato
                 continue
         elif note == HARMONIC_1:
             reuse_last_beat = False
-            if note_collect:
-
+            if note_collect and noteval[n - 1] < BAR:
                 note_collect[l_val - 1].effect.harmonic = harmonic_1_beat.notes[0].effect.harmonic
                 continue
         elif TREM_BAR_1 <= note <= TREM_BAR_5:
             reuse_last_beat = False
-            if note_collect:
+            if note_collect and noteval[n - 1] < BAR:
                 if note == TREM_BAR_1:
                     beat_collect[k_val - 1].effect.tremoloBar = trem1_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_2:
@@ -368,7 +363,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             reuse_last_beat = False
             if k_val != 0:
                 beat_collect[k_val - 1].effect.isBend = True
-            if note_collect:
+            if note_collect and noteval[n - 1] < BAR:
                 if note == BEND_NOTE_1:
                     note_collect[l_val - 1].effect.bend = bend1_beat.notes[0].effect.bend
                 elif note == BEND_NOTE_2:
@@ -387,7 +382,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
 
         elif SLIDE_NOTE_1 <= note <= SLIDE_NOTE_6:
             reuse_last_beat = False
-            if note_collect:
+            if note_collect and noteval[n - 1] < BAR:
                 if note == SLIDE_NOTE_1:
                     note_collect[l_val - 1].effect.slides = slide1_beat.notes[0].effect.slides
                 elif note == SLIDE_NOTE_2:
@@ -426,9 +421,10 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 k_val += 1
             
             note_collect.append(gp.Note(beat=current_beat))
+            note_collect[l_val].type = gp.models.NoteType.normal
             note_collect[l_val].value = note
             note_collect[l_val].effect.palmMute = palmval[n]
-            note_collect[l_val].string = min(stringnum[n], 6)
+            note_collect[l_val].string = max(stringnum[n], 1)
             note_collect[l_val].beat.duration.value = beatval[n].get("duration")
             
             if beatval[n].get("dotted") == True:
