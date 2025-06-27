@@ -10,7 +10,7 @@ from config import (BACKUP, MAX_SEQ_LENGTH, EOS, BOS, BARRE_NOTE, MEASURE, BEND_
 BEND_NOTE_4, BEND_NOTE_5, BEND_NOTE_6, BEND_NOTE_7, TREM_BAR_1, TREM_BAR_2, TREM_BAR_3,
 TREM_BAR_4, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_2, SLIDE_NOTE_3, SLIDE_NOTE_4, SLIDE_NOTE_5, SLIDE_NOTE_6,
 HAMMER, VIBRATO, HARMONIC_1, BAR,
-TEMPERATURE, TEST_CRITERIA, PREDICTION_CRITERIA)
+TEMPERATURE, TEST_CRITERIA, PREDICTION_CRITERIA, VERBOSE)
 from inference import multinomial_sample, multinomial_sample_2, create_causal_mask
 
 DEMAPPING_BEAT_DETYPE = {
@@ -313,7 +313,6 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         elif note == BAR:
             continue
         elif note == BARRE_NOTE:
-            print("-----Barre note------")
             if k_val != 0:
                 reuse_last_beat = True
             continue
@@ -321,90 +320,90 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             dead_beat.notes[0].value = note_collect[l_val - 1].value
             dead_beat.notes[0].string = note_collect[l_val - 1].string
             dead_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-            voice.beats[l_val - 1] = dead_beat
+            voice.beats[k_val - 1] = dead_beat
             continue
         elif note == HAMMER:
             hammer_beat.notes[0].value = note_collect[l_val - 1].value
             hammer_beat.notes[0].string = note_collect[l_val - 1].string
             hammer_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-            voice.beats[l_val - 1] = hammer_beat
+            voice.beats[k_val - 1] = hammer_beat
             continue
         elif note == VIBRATO:
             vibrato_beat.notes[0].value = note_collect[l_val - 1].value
             vibrato_beat.notes[0].string = note_collect[l_val - 1].string
             vibrato_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-            voice.beats[l_val - 1] = vibrato_beat
+            voice.beats[k_val - 1] = vibrato_beat
             continue
         elif note == HARMONIC_1:
             harmonic_1_beat.notes[0].value = note_collect[l_val - 1].value
             harmonic_1_beat.notes[0].string = note_collect[l_val - 1].string
             harmonic_1_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-            voice.beats[l_val - 1] = harmonic_1_beat
+            voice.beats[k_val - 1] = harmonic_1_beat
             continue
         elif TREM_BAR_1 <= note <= TREM_BAR_5:
-            beat_collect[l_val - 1].effect.isBend = True
+            beat_collect[k_val - 1].effect.isBend = True
             
             if note == TREM_BAR_1:
                 trem1_beat.notes[0].value = note_collect[l_val - 1].value
                 trem1_beat.notes[0].string = note_collect[l_val - 1].string
                 trem1_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = trem1_beat
+                voice.beats[k_val - 1] = trem1_beat
             elif note == TREM_BAR_2:
                 trem2_beat.notes[0].value = note_collect[l_val - 1].value
                 trem2_beat.notes[0].string = note_collect[l_val - 1].string
-                trem2_beat.notes[0].beat.duration.value = beat_collect[l_val - 1].duration.value
-                voice.beats[l_val - 1] = trem2_beat
+                trem2_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
+                voice.beats[k_val - 1] = trem2_beat
             elif note == TREM_BAR_3:
-                beat_collect[l_val - 1].effect.tremoloBar.type = 3
+                beat_collect[k_val - 1].effect.tremoloBar.type = 3
             elif note == TREM_BAR_4:
                 trem4_beat.notes[0].value = note_collect[l_val - 1].value
                 trem4_beat.notes[0].string = note_collect[l_val - 1].string
                 trem4_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = trem4_beat
+                voice.beats[k_val - 1] = trem4_beat
             elif note == TREM_BAR_5:
                 trem5_beat.notes[0].value = note_collect[l_val - 1].value
                 trem5_beat.notes[0].string = note_collect[l_val - 1].string
                 trem5_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = trem5_beat
+                voice.beats[k_val - 1] = trem5_beat
             continue
             
         elif BEND_NOTE_1 <= note <= BEND_NOTE_7:
-            beat_collect[l_val - 1].effect.isBend = True
+            beat_collect[k_val - 1].effect.isBend = True
             if note == BEND_NOTE_1:
                 bend1_beat.notes[0].value = note_collect[l_val - 1].value
                 bend1_beat.notes[0].string = note_collect[l_val - 1].string
                 bend1_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = bend1_beat
+                voice.beats[k_val - 1] = bend1_beat
             elif note == BEND_NOTE_2:
                 bend2_beat.notes[0].value = note_collect[l_val - 1].value
                 bend2_beat.notes[0].string = note_collect[l_val - 1].string
                 bend2_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = bend2_beat
+                voice.beats[k_val - 1] = bend2_beat
             elif note == BEND_NOTE_3:
                 bend3_beat.notes[0].value = note_collect[l_val - 1].value
                 bend3_beat.notes[0].string = note_collect[l_val - 1].string
                 bend3_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = bend3_beat
+                voice.beats[k_val - 1] = bend3_beat
             elif note == BEND_NOTE_4:
                 bend4_beat.notes[0].value = note_collect[l_val - 1].value
                 bend4_beat.notes[0].string = note_collect[l_val - 1].string
                 bend4_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = bend4_beat
+                voice.beats[k_val - 1] = bend4_beat
             elif note == BEND_NOTE_5:
                 bend5_beat.notes[0].value = note_collect[l_val - 1].value
                 bend5_beat.notes[0].string = note_collect[l_val - 1].string
                 bend5_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = bend5_beat
+                voice.beats[k_val - 1] = bend5_beat
             elif note == BEND_NOTE_6:
                 bend6_beat.notes[0].value = note_collect[l_val - 1].value
                 bend6_beat.notes[0].string = note_collect[l_val - 1].string
                 bend6_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = bend6_beat
+                voice.beats[k_val - 1] = bend6_beat
             elif note == BEND_NOTE_7:
                 bend7_beat.notes[0].value = note_collect[l_val - 1].value
                 bend7_beat.notes[0].string = note_collect[l_val - 1].string
                 bend7_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = bend7_beat
+                voice.beats[k_val - 1] = bend7_beat
             continue
 
         elif SLIDE_NOTE_1 <= note <= SLIDE_NOTE_6:
@@ -412,32 +411,32 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 slide1_beat.notes[0].value = note_collect[l_val - 1].value
                 slide1_beat.notes[0].string = note_collect[l_val - 1].string
                 slide1_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = slide1_beat
+                voice.beats[k_val - 1] = slide1_beat
             elif note == SLIDE_NOTE_2:
                 slide2_beat.notes[0].value = note_collect[l_val - 1].value
                 slide2_beat.notes[0].string = note_collect[l_val - 1].string
                 slide2_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = slide2_beat
+                voice.beats[k_val - 1] = slide2_beat
             elif note == SLIDE_NOTE_3:
                 slide3_beat.notes[0].value = note_collect[l_val - 1].value
                 slide3_beat.notes[0].string = note_collect[l_val - 1].string
                 slide3_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = slide3_beat
+                voice.beats[k_val - 1] = slide3_beat
             elif note == SLIDE_NOTE_4:
                 slide4_beat.notes[0].value = note_collect[l_val - 1].value
                 slide4_beat.notes[0].string = note_collect[l_val - 1].string
                 slide4_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = slide4_beat
+                voice.beats[k_val - 1] = slide4_beat
             elif note == SLIDE_NOTE_5:
                 slide5_beat.notes[0].value = note_collect[l_val - 1].value
                 slide5_beat.notes[0].string = note_collect[l_val - 1].string
                 slide5_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = slide5_beat
+                voice.beats[k_val - 1] = slide5_beat
             elif note == SLIDE_NOTE_6:
                 slide6_beat.notes[0].value = note_collect[l_val - 1].value
                 slide6_beat.notes[0].string = note_collect[l_val - 1].string
                 slide6_beat.notes[0].beat.duration.value = beat_collect[k_val - 1].duration.value
-                voice.beats[l_val - 1] = slide6_beat
+                voice.beats[k_val - 1] = slide6_beat
             continue
         else:
             if reuse_last_beat:  # e.g. from BARRE_NOTE
@@ -482,11 +481,11 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             if l_val != MAX_SEQ_LENGTH - 1:
                 l_val += 1
 
-            
             if check_measure(duration_sum, n):
                 song.tracks[0].measures[0].timeSignature.numerator = min(32, math.ceil(duration_sum))
                 return song
-        print(f"Beat : {beatval[n].get("duration")}, Tuplet : {enters}, Dotted : {dotted}, Duration_sum : {round(duration_sum, 2)}")
+        if VERBOSE == 1:
+            print(f"Beat : {beatval[n].get("duration")}, Tuplet : {enters}, Dotted : {dotted}, Duration_sum : {round(duration_sum, 2)}")
     print("total duration : ", math.ceil(duration_sum))
     song.tracks[0].measures[0].timeSignature.numerator = min(32, math.ceil(duration_sum))
     return song
