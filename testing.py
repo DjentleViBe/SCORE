@@ -3,7 +3,7 @@ import config as cfg
 from postprocess import decoder_inference
 import torch
 import numpy as np
-from config import EOS
+from config import EOS, BAR
 
 def inference(device, decoder, embedding_layer, pos_enc, mask):
     """Run inference"""
@@ -49,7 +49,7 @@ def inference(device, decoder, embedding_layer, pos_enc, mask):
                 print("0 detected")
             else:
                 idx = len(dummy_out[t]) - 1
-                while idx >= 0 and dummy_out[t][idx] >= EOS:
+                while idx >= 0 and dummy_out[t][idx] >= BAR:
                     idx -= 1
                 if idx >= 0:
                     dummy_in[0][0] = dummy_out[t][idx]
