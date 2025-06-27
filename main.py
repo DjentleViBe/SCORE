@@ -419,8 +419,10 @@ if __name__ == '__main__':
             song.tracks[0].strings[3].value = 39
             song.tracks[0].strings[4].value = 34
             song.tracks[0].strings[5].value = 27
+            if m == 0:
+                del song.tracks[0].measures[0]
             m += 1
-            print("")
+            # print("")
             writegpro(cfg.SAVE, song)
         song_notes = [value for value in song_notes if value != 100]
         bincounts_inf = np.bincount(song_notes, minlength=13)[1:]
