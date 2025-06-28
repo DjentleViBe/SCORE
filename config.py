@@ -1,5 +1,5 @@
 """Defines parameters required for training and inference"""
-
+TUNING              =   [53, 48, 44, 39, 34, 27]
 ################################ transformers #################################
 # 0: train, 
 # 1 : eval
@@ -7,7 +7,7 @@
 # 3 : load from file
 MODE                =   1
 BACKUP              =   "dec_RPE_chunks_CB_Large"
-SAVE                =   "dec_RPE_chunks_CB_Large_C"
+SAVE                =   "dec_RPE_chunks_CB_Large_L"
 START_ID            =   15462
 BOS_TRUE            =   0
 EOS_TRUE            =   1
@@ -17,7 +17,7 @@ EOS_TRUE            =   1
 # 3 - Same as above + last note of every bar is fed to firt note of next bar
 # 4 - Same as above + loop until no repeatitive notes > BOS 
 TEST_CRITERIA       =   3
-TEST_TRIES          =   2
+TEST_TRIES          =   10
 # 1 - Greedy Search
 # 2 - Beam Search
 # 3 - Multinomial Sampling
@@ -39,10 +39,10 @@ LEARNING_RATE   =   0.0001
 SMOOTHING       =   0.1
 PATCH           =   1
 STRIDE          =   1
-TRAINING        =   ["CB"]
+TRAINING        =   ["Mesh"]
 NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
-TEMPERATURE     =   1.0
+TEMPERATURE     =   0.7
 BATCH           =   32
 OVERLAP         =   8
 

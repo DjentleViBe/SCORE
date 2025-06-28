@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
         sorted_indices = np.argsort(-start_collect)
         # print("Source")
-        # print(f"{training_tgt_notes}")
+        print(f"{training_tgt_notes}")
         # plot notes
         training_note_encoder_1 = training_note_encoder_1[training_note_encoder_1 != 0]
         training_beat_encoder_1 = training_beat_encoder_1[training_beat_encoder_1 != 0]
@@ -395,12 +395,6 @@ if __name__ == '__main__':
         song.tempo = 120  # Set the tempo
         song.tracks[0].name = "Guitar"
         song.tracks[0].channel.instrument = 30
-        song.tracks[0].strings[0].value = 58
-        song.tracks[0].strings[1].value = 53
-        song.tracks[0].strings[2].value = 49
-        song.tracks[0].strings[3].value = 44
-        song.tracks[0].strings[4].value = 39
-        song.tracks[0].strings[5].value = 32
         song_collect = []
         song_notes = []
         song_beats = []
@@ -425,12 +419,12 @@ if __name__ == '__main__':
                 song_beats.append(beatnum)
             song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
             song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
-            song.tracks[0].strings[0].value = 53
-            song.tracks[0].strings[1].value = 48
-            song.tracks[0].strings[2].value = 44
-            song.tracks[0].strings[3].value = 39
-            song.tracks[0].strings[4].value = 34
-            song.tracks[0].strings[5].value = 27
+            song.tracks[0].strings[0].value = cfg.TUNING[0]
+            song.tracks[0].strings[1].value = cfg.TUNING[1]
+            song.tracks[0].strings[2].value = cfg.TUNING[2]
+            song.tracks[0].strings[3].value = cfg.TUNING[3]
+            song.tracks[0].strings[4].value = cfg.TUNING[4]
+            song.tracks[0].strings[5].value = cfg.TUNING[5]
             if m == 0:
                 del song.tracks[0].measures[0]
             m += 1
