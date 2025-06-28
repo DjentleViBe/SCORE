@@ -47,6 +47,7 @@ def inference(device, decoder, embedding_layer, pos_enc, mask):
                                      cfg.MAX_SEQ_LENGTH, device).cpu().numpy()
             if np.any(dummy_out[t] == 0):
                 print("0 detected")
+                break
             else:
                 idx = len(dummy_out[t]) - 1
                 while idx >= 0 and dummy_out[t][idx] >= BAR:
@@ -55,10 +56,10 @@ def inference(device, decoder, embedding_layer, pos_enc, mask):
                     dummy_in[0][0] = dummy_out[t][idx]
                 else:
                     dummy_in[0][0] = EOS
-                #dummy_out[t] = [11680, 27051, 15495, 27051,  3938, 11702, 14253, 11723, 11702, 11681,
-                #3901, 15522, 11681, 11702, 11681, 27065,  3966, 11702, 11727, 11659,
-                #11703, 11730, 11699, 11681, 11725, 11702, 11725, 11681, 11725, 12253,
-                #11725, 11702]
+                #dummy_out[t] = [13618, 27049, 21301,  7959, 11687, 27051, 25219, 13595, 11846, 15574,
+                #23262, 15552,  8514, 12378, 11875, 23207, 11688, 11688, 13615, 13638,
+                #15780, 22195, 13758, 13781, 11617, 11687,  7979, 15689, 15780, 13618,
+                #13618, 13618]
                 t += 1
                 
    

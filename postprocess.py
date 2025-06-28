@@ -232,7 +232,7 @@ def check_measure(duration_sum, n):
 
 def findnewstring(note, string):
     notepos = TUNING[string - 1] + note
-    if string < 4:
+    if string > 4:
         notepos += 12
     else:
         notepos -= 12
@@ -417,6 +417,8 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                         print("changing string")
                     noteval[n], stringnum[n] = findnewstring(noteval[n], stringnum[n])
                 if noteval[n - 3] == BARRE_NOTE:
+                    if VERBOSE == 1:
+                        print("chord")
                     if stringnum[n] == stringnum[n - 4]:
                         noteval[n], stringnum[n] = findnewstring(noteval[n], stringnum[n])
                 current_beat = beat_collect[k_val - 1]
