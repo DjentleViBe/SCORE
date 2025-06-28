@@ -9,7 +9,7 @@ from matplotlib.patches import Patch
 from config import (BACKUP, MAX_SEQ_LENGTH, EOS, BOS, BARRE_NOTE, MEASURE, BEND_NOTE_1, BEND_NOTE_2, BEND_NOTE_3,
 BEND_NOTE_4, BEND_NOTE_5, BEND_NOTE_6, BEND_NOTE_7, TREM_BAR_1, TREM_BAR_2, TREM_BAR_3,
 TREM_BAR_4, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_2, SLIDE_NOTE_3, SLIDE_NOTE_4, SLIDE_NOTE_5, SLIDE_NOTE_6,
-HAMMER, VIBRATO, HARMONIC_1, BAR,
+HAMMER, VIBRATO, HARMONIC_1, BAR, TUNING,
 TEMPERATURE, TEST_CRITERIA, PREDICTION_CRITERIA, VERBOSE)
 from inference import multinomial_sample, multinomial_sample_2, create_causal_mask
 
@@ -230,6 +230,15 @@ def check_measure(duration_sum, n):
         print("total duration : ", math.ceil(duration_sum))
         return True
 
+def findnewstring(note, string):
+    notepos = TUNING[string - 1] + note
+    if string < 4:
+        notepos += 12
+    else:
+        notepos -= 12
+    closest_index = min(range(len(TUNING)), key=lambda i: abs(TUNING[i] - notepos))
+    return notepos - TUNING[closest_index], closest_index
+    
 def makegpro(titlename, noteval, stringnum, beatval, palmval):
     #print(noteval)
     #print(beatval)
@@ -348,22 +357,23 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
                 if note == TREM_BAR_1:
-                    beat_collect[k_val - 1].effect.tremoloBar = trem1_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[l_val - 1].effect.tremoloBar = trem1_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_2:
                     beat_collect[k_val - 1].effect.tremoloBar = trem2_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_3:
-                    beat_collect[k_val - 1].effect.tremoloBar.type = 3
+                    beat_collect[l_val - 1].effect.tremoloBar.type = 3
                 elif note == TREM_BAR_4:
-                    beat_collect[k_val - 1].effect.tremoloBar = trem4_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[l_val - 1].effect.tremoloBar = trem4_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_5:
-                    beat_collect[k_val - 1].effect.tremoloBar = trem5_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[l_val - 1].effect.tremoloBar = trem5_beat.notes[0].beat.effect.tremoloBar
+                note_collect[l_val - 1].effect.isTremoloBar = True
                 continue
             
         elif BEND_NOTE_1 <= note <= BEND_NOTE_7:
             reuse_last_beat = False
-            if k_val != 0:
-                beat_collect[k_val - 1].effect.isBend = True
             if note_collect and noteval[n - 1] < BAR:
+                if k_val != 0:
+                    beat_collect[k_val - 1].effect.isBend = True
                 if note == BEND_NOTE_1:
                     note_collect[l_val - 1].effect.bend = bend1_beat.notes[0].effect.bend
                 elif note == BEND_NOTE_2:
@@ -398,9 +408,19 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 continue
         else:
             if reuse_last_beat:  # e.g. from BARRE_NOTE
-                if note == noteval[n - 1]:
-                    note += 1
+                # check if the note is the same
+                if noteval[n] == noteval[n - 2]:
+                    noteval[n] += 1
+                # check if the string is the same
+                if stringnum[n] == stringnum[n - 2]:
+                    if VERBOSE == 1:
+                        print("changing string")
+                    noteval[n], stringnum[n] = findnewstring(noteval[n], stringnum[n])
+                if noteval[n - 3] == BARRE_NOTE:
+                    if stringnum[n] == stringnum[n - 4]:
+                        noteval[n], stringnum[n] = findnewstring(noteval[n], stringnum[n])
                 current_beat = beat_collect[k_val - 1]
+                current_beat.status = gp.models.BeatStatus.normal
                 reuse_last_beat = False
             else:
                 current_beat = gp.Beat(voice=voice)
