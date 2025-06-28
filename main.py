@@ -245,7 +245,7 @@ if __name__ == '__main__':
 
         sorted_indices = np.argsort(-start_collect)
         # print("Source")
-        print(f"{training_tgt_notes}")
+        # print(f"{training_tgt_notes}")
         # plot notes
         training_note_encoder_1 = training_note_encoder_1[training_note_encoder_1 != 0]
         training_beat_encoder_1 = training_beat_encoder_1[training_beat_encoder_1 != 0]
@@ -428,7 +428,7 @@ if __name__ == '__main__':
             if m == 0:
                 del song.tracks[0].measures[0]
             m += 1
-            print("")
+            # print("")
             writegpro(cfg.SAVE, song)
         song_notes = [value for value in song_notes if value != 100]
         bincounts_inf = np.bincount(song_notes, minlength=13)[1:]

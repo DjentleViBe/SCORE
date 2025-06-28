@@ -95,7 +95,7 @@ def detokenizer_1(dummy):
             beat_kind = (dummy // 276) % 14
             base_beat = BASE_BEAT_START.get((dummy // (276 * 14)) % 7)
             if(base_beat == 0):
-                print("cautuion")
+                print("caution")
             bt_0, bt_1 = demapping_beat(beat_kind)
             beat_type = {"duration": base_beat,      # e.g., 4 for quarter
                         "tuplet": bt_0,     # e.g., 3, 5, 6, etc.
