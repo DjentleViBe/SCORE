@@ -5,7 +5,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-def scaled_dot_product(q_val, k_val, v_val, mask):
+def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb):
     """Required for attention
     q_val : what am I looking for
     k_val : what do I have to offer
@@ -20,19 +20,30 @@ def scaled_dot_product(q_val, k_val, v_val, mask):
     # 30 x 8 x 10 x 64 matmul 30 x 8 x 64 x 10 = 30 x 8 x 10 x 10 ( pre-cursor
     # to self attention matrix)
     scaled = (torch.matmul(q_val, k_val.transpose(-1, -2)) / math.sqrt(d_k))
+    
+    # Add relative positional encoding to attention scores
+    scaled += torch.einsum('bhqd,qkd->bhqk', q_val, rel_pos_enc.squeeze(0))  # Add relative positional bias
+
+    
     if mask is not None:
         scaled += mask
+    
     # to get probabilities apply softmax
     attention = F.softmax(scaled, dim = -1)
     # 30 x 8 x 200 x 64
     values = torch.matmul(attention, v_val)
-    return values, attention
+
+    rel_pos_value_emb_exp = rel_pos_value_emb
+    rel_pos_value_contrib = torch.einsum('bhqk,qkhd->bhqd', attention, rel_pos_value_emb_exp)
+    output = values + rel_pos_value_contrib
+    return output, attention
 
 class MultiHeadAttentionAPE(nn.Module):
     """Multi head self attention
     """
     def __init__(self, device, d_model, seq_length, num_heads) -> None:
         super().__init__()
+        self.device = device
         self.d_model = d_model  # 512
         self.num_heads = num_heads # 8
         self.head_dim = d_model // num_heads # 64
@@ -41,8 +52,27 @@ class MultiHeadAttentionAPE(nn.Module):
         self.qkv_layer.to(device)
         self.linear_layer = nn.Linear(d_model, d_model)
         self.linear_layer.to(device)
+        # Learnable relative positional embedding
+        self.relative_positional_encoding = nn.Embedding(2 * seq_length - 1, self.head_dim).to(device)
+        self.relative_pos_value_embedding = nn.Embedding(2 * seq_length - 1, self.num_heads * self.head_dim).to(device)
 
-    def forward(self, x_val, mask=None):
+
+    
+    def relative_position_encoding(self, seq_length, max_len, device):
+        # Generate the relative distance matrix
+        relative_pos_enc = torch.zeros(seq_length, seq_length, dtype=torch.long).to(device)
+        for i in range(seq_length):
+            for j in range(seq_length):
+                relative_pos_enc[i, j] = j - i  # Compute relative positions
+        
+        # Shift the relative positions to be non-negative for embedding indexing
+        max_relative_position = max_len - 1  # max_len is defined by the size of your embedding layer
+        relative_pos_enc += max_relative_position  # Shift to have positive values for indexing
+
+        # Return relative positional encoding with an extra batch dimension
+        return relative_pos_enc.unsqueeze(0)  # Shape: (1, seq_length, seq_length) 
+
+    def forward(self, x_val, mask=None, key_cache=None, value_cache=None):
         """Forward layer
         """
         # 30 x 10 x 32
@@ -56,13 +86,28 @@ class MultiHeadAttentionAPE(nn.Module):
         # break tensor into respective parts, each are 30 x 8 x 10 x 12
         # batch x head x seq x (3 * (embed / head))
         q_val, k_val, v_val = qkv.chunk(3, dim = -1)
-        # 30 x 8 x 10 x 32, 30 x 8 x 10 x 10
-        values, _ = scaled_dot_product(q_val, k_val, v_val, mask)
-        # 30 x 10 x 32
+
+         # Concatenate caches if present
+        if key_cache is not None and value_cache is not None:
+            k_val = torch.cat([key_cache, k_val], dim=2)  # concat on seq_len dimension
+            v_val = torch.cat([value_cache, v_val], dim=2)
+        
+         # Update cache with current keys and values
+        key_cache_updated = k_val
+        value_cache_updated = v_val
+
+        # Compute relative positional encodings for the combined length
+        total_seq_len = k_val.size(2)  # cached_seq_len + current seq_len
+        relative_positions = self.relative_position_encoding(total_seq_len, self.relative_positional_encoding.num_embeddings // 2 + 1, self.device)
+        rel_pos_enc = self.relative_positional_encoding(relative_positions)  # (1, total_seq_len, total_seq_len, head_dim)
+        rel_pos_value_emb = self.relative_pos_value_embedding(relative_positions) 
+        rel_pos_value_emb = rel_pos_value_emb.squeeze(0).reshape(total_seq_len, total_seq_len, self.num_heads, self.head_dim)
+        values, _ = scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb)
+
         values = values.reshape(batch_size, sequence_length, self.num_heads * self.head_dim)
-        # 30 x 10 x 1
-        values = self.linear_layer(values)
-        return values
+        output = self.linear_layer(values)
+
+        return output, key_cache_updated, value_cache_updated
 
 class LayerNormalization(nn.Module):
     """Layer normalisation
