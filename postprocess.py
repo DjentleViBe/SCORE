@@ -357,15 +357,15 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
                 if note == TREM_BAR_1:
-                    beat_collect[l_val - 1].effect.tremoloBar = trem1_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[k_val - 1].effect.tremoloBar = trem1_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_2:
                     beat_collect[k_val - 1].effect.tremoloBar = trem2_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_3:
-                    beat_collect[l_val - 1].effect.tremoloBar.type = 3
+                    beat_collect[k_val - 1].effect.tremoloBar.type = 3
                 elif note == TREM_BAR_4:
-                    beat_collect[l_val - 1].effect.tremoloBar = trem4_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[k_val - 1].effect.tremoloBar = trem4_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_5:
-                    beat_collect[l_val - 1].effect.tremoloBar = trem5_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[k_val - 1].effect.tremoloBar = trem5_beat.notes[0].beat.effect.tremoloBar
                 note_collect[l_val - 1].effect.isTremoloBar = True
                 continue
             
