@@ -21,6 +21,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from validation import validation
 from masking import create_combined_mask
+from models import compute_sequence_gaussians, kl_divergence_gaussians
 
 if __name__ == '__main__':
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -283,7 +284,7 @@ if __name__ == '__main__':
                            cfg.BOS, cfg.VIBRATO, cfg.HAMMER, cfg.HARMONIC_1]
         criterion = RepetitionPenaltyLossForSpecificTokens(
             label_smoothing=cfg.SMOOTHING, 
-            repetition_penalty_weight=1.5, 
+            repetition_penalty_weight=cfg.LAMBDA, 
             ngram_size=3, 
             penalize_tokens=penalize_tokens
         )
@@ -321,7 +322,6 @@ if __name__ == '__main__':
                 # Embeddings
                 embeddings = embedding_layer(batch_token_ids)
                 input_embeddings = embeddings + pos_enc[:batch_token_ids.size(1)]
-
                 # Forward
                 logits = decoder(input_embeddings, mask)
 

@@ -4,8 +4,10 @@ import math
 import torch
 from torch import nn
 import torch.nn.functional as F
+from models import compute_sequence_gaussians, kl_divergence_gaussians
+from config import ALPHA
 
-def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb):
+def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb, klmatrix):
     """Required for attention
     q_val : what am I looking for
     k_val : what do I have to offer
@@ -23,7 +25,7 @@ def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb
     
     # Add relative positional encoding to attention scores
     scaled += torch.einsum('bhqd,qkd->bhqk', q_val, rel_pos_enc.squeeze(0))  # Add relative positional bias
-
+    scaled -= ALPHA * klmatrix
     
     if mask is not None:
         scaled += mask
@@ -56,8 +58,6 @@ class MultiHeadAttentionAPE(nn.Module):
         self.relative_positional_encoding = nn.Embedding(2 * seq_length - 1, self.head_dim).to(device)
         self.relative_pos_value_embedding = nn.Embedding(2 * seq_length - 1, self.num_heads * self.head_dim).to(device)
 
-
-    
     def relative_position_encoding(self, seq_length, max_len, device):
         # Generate the relative distance matrix
         relative_pos_enc = torch.zeros(seq_length, seq_length, dtype=torch.long).to(device)
@@ -75,6 +75,8 @@ class MultiHeadAttentionAPE(nn.Module):
     def forward(self, x_val, mask=None, key_cache=None, value_cache=None):
         """Forward layer
         """
+        mu, sig = compute_sequence_gaussians(x_val)
+        kl_matrix = kl_divergence_gaussians(mu, sig, mu, sig)
         # 30 x 10 x 32
         batch_size, sequence_length, _ = x_val.size()
         # 30 x 10 x 96
@@ -102,7 +104,7 @@ class MultiHeadAttentionAPE(nn.Module):
         rel_pos_enc = self.relative_positional_encoding(relative_positions)  # (1, total_seq_len, total_seq_len, head_dim)
         rel_pos_value_emb = self.relative_pos_value_embedding(relative_positions) 
         rel_pos_value_emb = rel_pos_value_emb.squeeze(0).reshape(total_seq_len, total_seq_len, self.num_heads, self.head_dim)
-        values, _ = scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb)
+        values, _ = scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb, kl_matrix)
 
         values = values.reshape(batch_size, sequence_length, self.num_heads * self.head_dim)
         output = self.linear_layer(values)
