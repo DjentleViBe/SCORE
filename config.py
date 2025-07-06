@@ -5,9 +5,9 @@ TUNING              =   [53, 48, 44, 39, 34, 27]
 # 1 : eval
 # 2 : both 
 # 3 : load from file
-MODE                =   0
-BACKUP              =   "dec_RPE_chunks_PerNote_Large"
-SAVE                =   "dec_RPE_chunks_PerNote_Large_L"
+MODE                =   2
+BACKUP              =   "dec_RPE_attn_CB_Large"
+SAVE                =   "dec_RPE_attn_CB_Large_L"
 START_ID            =   15462
 BOS_TRUE            =   0
 EOS_TRUE            =   1
@@ -24,7 +24,7 @@ TEST_TRIES          =   10
 # 4 - Multinomial Sampling - manual
 PREDICTION_CRITERIA =   3
 ########## Params ##############
-EPOCHS          =   100
+EPOCHS          =   1
 SAVE_EVERY      =   20
 VOCAB_SIZE      =   27076
 FFN_HIDDEN      =   1024
@@ -39,10 +39,10 @@ LEARNING_RATE   =   0.0001
 SMOOTHING       =   0.1
 PATCH           =   1
 STRIDE          =   1
-TRAINING        =   ["PerNote"]
-NUM_SEQUENCE    =   600
+TRAINING        =   ["CB"]
+NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
-TEMPERATURE     =   0.7
+TEMPERATURE     =   1.0
 BATCH           =   32
 OVERLAP         =   8
 LAMBDA          =   1.5

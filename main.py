@@ -309,6 +309,8 @@ if __name__ == '__main__':
             epoch_loss = 0.0  # track epoch loss
             batch_count = 0
             for batch_idx, (batch_token_ids, batch_target) in enumerate(loader):
+                #if len(batch_token_ids) != cfg.BATCH:
+                #    break
                 # print(batch_count, end = " ")
                 batch_token_ids = batch_token_ids.to(device)
                 batch_target = batch_target.to(device)
