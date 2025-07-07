@@ -59,8 +59,13 @@ class MultiHeadAttentionAPE(nn.Module):
         # Learnable relative positional embedding
         self.relative_positional_encoding = nn.Embedding(2 * seq_length - 1, self.head_dim).to(device)
         self.relative_pos_value_embedding = nn.Embedding(2 * seq_length - 1, self.num_heads * self.head_dim).to(device)
-        #self.mu = nn.Parameter(torch.randn(BATCH, D_MODEL))
-        #self.log_sigma = nn.Parameter(torch.zeros(BATCH, D_MODEL))  # initialize std near 1
+        # self.mu = nn.Parameter(torch.randn(BATCH, D_MODEL))
+        # self.log_sigma = nn.Parameter(torch.zeros(BATCH, D_MODEL))  # initialize std near 1
+        self.gaussian_mlp = nn.Sequential(
+                            nn.Linear(D_MODEL, D_MODEL),
+                            nn.ReLU(),
+                            nn.Linear(D_MODEL, 2 * D_MODEL)  # outputs [μ | log σ]
+                        )
 
     def relative_position_encoding(self, seq_length, max_len, device):
         # Generate the relative distance matrix
@@ -80,10 +85,15 @@ class MultiHeadAttentionAPE(nn.Module):
         """Forward layer
         """
         # sigma = torch.exp(self.log_sigma)
-        mu, sig = compute_sequence_gaussians(x_val)
-        #kl_matrix = kl_divergence_gaussians(self.mu, sigma, self.mu, sigma)
-        kl_matrix = kl_divergence_gaussians(mu, sig, mu, sig)
+        pooled = x_val.mean(dim=1)  # x: [batch_size, seq_len, D_MODEL]
+        stats = self.gaussian_mlp(pooled)  # [batch_size, 2 * D_MODEL]
+        mu, log_sigma = torch.chunk(stats, 2, dim=-1)
+        sigma = torch.exp(log_sigma) + 1e-8
+        # mu, sig = compute_sequence_gaussians(x_val)
+        kl_matrix = kl_divergence_gaussians(mu, sigma, mu, sigma)
+        # kl_matrix = kl_divergence_gaussians(mu, sig, mu, sig)
         # 30 x 10 x 32
+
         batch_size, sequence_length, _ = x_val.size()
         # 30 x 10 x 96
         qkv = self.qkv_layer(x_val)
