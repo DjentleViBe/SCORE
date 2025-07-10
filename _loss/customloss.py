@@ -98,7 +98,7 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         self.ngram_size = ngram_size
         self.penalize_tokens = penalize_tokens if penalize_tokens else []
 
-    def forward(self, logits, targets, prev_sequence_embedding):
+    def forward(self, logits, targets, prev_sequence_embedding, steps):
         """
         Args:
             logits: (batch_size, seq_len, vocab_size)
@@ -119,8 +119,11 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
             # print(sigma_curr.max().item())
             kl_loss = kl_divergence_gaussians_loss(mu_curr, sigma_curr, mu_prev, sigma_prev)
             kl_loss = self.sequence_penalty_weight * kl_loss.mean() / cfg.BATCH
+            # kl_loss = min(5.0, steps / cfg.EPOCHS) 
+            kl_loss = torch.clamp(kl_loss * steps / cfg.EPOCHS, max=0.2)
+            
             # print(kl_loss)
-            kl_loss = torch.clamp(kl_loss, max=5.0)
+            
         else:
             kl_loss = torch.tensor(0.0, device=sequence_embedding.device)
         

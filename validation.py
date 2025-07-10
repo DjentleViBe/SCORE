@@ -28,7 +28,7 @@ def validation(loader, device, optimizer, embedding_layer, decoder, criterion, p
 
             # Compute loss
             loss, ce_loss, rep_loss, kl_loss, prev_sequence_embedding = criterion(
-                logits, batch_target, prev_sequence_embedding)
+                logits, batch_target, prev_sequence_embedding, cfg.EPOCHS)
             epoch_loss += loss.item()
             batch_count += 1
         avg_loss = epoch_loss / batch_count

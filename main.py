@@ -338,7 +338,7 @@ if __name__ == '__main__':
                 batch_target = batch_target.view(-1)
 
                 # Compute loss
-                loss, ce_loss, rep_loss, kl_loss, prev_sequence_embedding = criterion(logits, batch_target, prev_sequence_embedding)
+                loss, ce_loss, rep_loss, kl_loss, prev_sequence_embedding = criterion(logits, batch_target, prev_sequence_embedding, ITERATION)
 
                 loss.backward()
                 optimizer.step()
