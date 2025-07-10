@@ -310,6 +310,9 @@ if __name__ == '__main__':
         while ITERATION <= cfg.EPOCHS:
             decoder.train()
             epoch_loss = 0.0  # track epoch loss
+            epoch_rep_loss = 0.0
+            epoch_seq_loss = 0.0
+            epoch_ce_loss = 0.0
             batch_count = 0
             kl_loss = 0.0
             prev_sequence_embedding = None
@@ -342,20 +345,26 @@ if __name__ == '__main__':
 
                 # Log and accumulate loss
                 epoch_loss += loss.item()
+                epoch_ce_loss += ce_loss.item()
+                epoch_rep_loss += rep_loss.item()
+                epoch_seq_loss += kl_loss.item()
                 batch_count += 1
                 # print("batch count : ", batch_count)
             
             avg_loss = epoch_loss / batch_count
+            avg_ce_loss = epoch_ce_loss / batch_count
+            avg_rep_loss = epoch_rep_loss / batch_count
+            avg_seq_loss = epoch_seq_loss / batch_count
             val_loss = validation(loader_val, device, optimizer, embedding_layer, decoder, criterion, pos_enc)
             if cfg.SCHEDULER == 1:
                     scheduler.step(val_loss)
-            print(f"{ITERATION + 1} : main :{round(loss.item(), 4)}, ce :{round(ce_loss.item(), 4)}, rep :{round(rep_loss.item(), 4)}, seq :{round(kl_loss.item(), 4)}, validation :{round(val_loss, 4)}")
+            print(f"{ITERATION + 1} : main :{round(avg_loss, 4)}, ce :{round(avg_ce_loss, 4)}, rep :{round(avg_rep_loss, 4)}, seq :{round(avg_seq_loss, 4)}, validation :{round(val_loss, 4)}")
             ITERATION += 1
-            lossplot.append(loss.item())
-            ce_lossplot.append(ce_loss.item())
-            rep_lossplot.append(rep_loss.item())
+            lossplot.append(avg_loss)
+            ce_lossplot.append(avg_ce_loss)
+            rep_lossplot.append(avg_rep_loss)
             val_lossplot.append(val_loss)
-            seq_lossplot.append(kl_loss.item())
+            seq_lossplot.append(avg_seq_loss)
 
             if avg_loss < cfg.CONVERGENCE:
                 print("Convergence criteria reached!")

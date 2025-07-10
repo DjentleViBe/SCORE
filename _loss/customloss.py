@@ -112,20 +112,23 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         targets_flat = targets.view(-1)
 
         ce_loss = self.ce_loss(logits_flat, targets_flat)
-
+        
         if prev_sequence_embedding is not None and sequence_embedding.shape[0] == cfg.MAX_SEQ_LENGTH:
-            mu_curr, sigma_curr = compute_sequence_gaussians(sequence_embedding.unsqueeze(1))
-            mu_prev, sigma_prev = compute_sequence_gaussians(prev_sequence_embedding.unsqueeze(1))
-
-            kl_loss = kl_divergence_gaussians_loss(mu_curr, sigma_curr, mu_prev, sigma_prev).mean()
+            mu_curr, sigma_curr = compute_sequence_gaussians(sequence_embedding)
+            mu_prev, sigma_prev = compute_sequence_gaussians(prev_sequence_embedding.detach())
+            # print(sigma_curr.max().item())
+            kl_loss = kl_divergence_gaussians_loss(mu_curr, sigma_curr, mu_prev, sigma_prev)
+            kl_loss = self.sequence_penalty_weight * kl_loss.mean() / cfg.BATCH
+            # print(kl_loss)
+            kl_loss = torch.clamp(kl_loss, max=5.0)
         else:
             kl_loss = torch.tensor(0.0, device=sequence_embedding.device)
-            
+        
         #with torch.no_grad():
         #    sampled_tokens = generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, seq_len=logits.size(1), temperature=cfg.TEMPERATURE)
         #repetition_loss = self.compute_repetition_penalty(sampled_tokens)
-        repetition_loss = soft_repetition_penalty(logits, temperature=cfg.TEMPERATURE)
-        total_loss = ce_loss + self.repetition_penalty_weight * repetition_loss + self.sequence_penalty_weight * kl_loss
+        repetition_loss = self.repetition_penalty_weight * soft_repetition_penalty(logits, temperature=cfg.TEMPERATURE)
+        total_loss = ce_loss + repetition_loss +  kl_loss
         return total_loss, ce_loss, repetition_loss, kl_loss, sequence_embedding.detach()
 
     def compute_repetition_penalty(self, generated_tokens):
