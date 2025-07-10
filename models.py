@@ -42,3 +42,20 @@ def kl_divergence_gaussians(mu_q, sigma_q, mu_k, sigma_k, eps=1e-8):
     kl = 0.5 * torch.sum(log_term + frac_term + mean_term - 1, dim=2)  # [N, M]
 
     return kl
+
+def kl_divergence_gaussians_loss(mu_q, sigma_q, mu_k, sigma_k, eps=1e-8):
+    """
+    mu_q, sigma_q: [B, d]
+    mu_k, sigma_k: [B, d]
+    Returns:
+        kl: [B]
+    """
+    var_q = sigma_q ** 2 + eps
+    var_k = sigma_k ** 2 + eps
+
+    log_term = torch.log(var_k / var_q)
+    frac_term = var_q / var_k
+    mean_term = ((mu_q - mu_k) ** 2) / var_k
+
+    kl = 0.5 * torch.mean(log_term + frac_term + mean_term - 1, dim=-1)  # sum over d, result [B]
+    return kl

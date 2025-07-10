@@ -9,6 +9,7 @@ import numpy as np
 import sys
 np.set_printoptions(threshold=sys.maxsize)
 import torch.nn.functional as F
+from models import compute_sequence_gaussians, kl_divergence_gaussians_loss
 
 def generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, seq_len, temperature=1.0):
     """
@@ -89,14 +90,15 @@ def soft_repetition_penalty(logits, temperature=1.0):
     return penalty
 
 class RepetitionPenaltyLossForSpecificTokens(nn.Module):
-    def __init__(self, label_smoothing=0.0, repetition_penalty_weight=1.0, ngram_size=1, penalize_tokens=None):
+    def __init__(self, label_smoothing=0.0, repetition_penalty_weight=1.0, ngram_size=1, penalize_tokens=None, sequence_penalty_weight=1.0):
         super(RepetitionPenaltyLossForSpecificTokens, self).__init__()
         self.ce_loss = nn.CrossEntropyLoss(label_smoothing=label_smoothing, ignore_index=0)  # Assuming 0 is pad_token_id
         self.repetition_penalty_weight = repetition_penalty_weight
+        self.sequence_penalty_weight = sequence_penalty_weight
         self.ngram_size = ngram_size
         self.penalize_tokens = penalize_tokens if penalize_tokens else []
 
-    def forward(self, logits, targets):
+    def forward(self, logits, targets, prev_sequence_embedding):
         """
         Args:
             logits: (batch_size, seq_len, vocab_size)
@@ -104,17 +106,27 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         """
         # batch_size, seq_len, _ = logits.size()
         logits, _, _ = logits  # unpack the tuple
+        probs = torch.softmax(logits, dim=-1)
+        sequence_embedding = probs
         logits_flat = logits.view(-1, logits.size(-1))
         targets_flat = targets.view(-1)
 
         ce_loss = self.ce_loss(logits_flat, targets_flat)
 
+        if prev_sequence_embedding is not None and sequence_embedding.shape[0] == cfg.MAX_SEQ_LENGTH:
+            mu_curr, sigma_curr = compute_sequence_gaussians(sequence_embedding.unsqueeze(1))
+            mu_prev, sigma_prev = compute_sequence_gaussians(prev_sequence_embedding.unsqueeze(1))
+
+            kl_loss = kl_divergence_gaussians_loss(mu_curr, sigma_curr, mu_prev, sigma_prev).mean()
+        else:
+            kl_loss = torch.tensor(0.0, device=sequence_embedding.device)
+            
         #with torch.no_grad():
         #    sampled_tokens = generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, seq_len=logits.size(1), temperature=cfg.TEMPERATURE)
         #repetition_loss = self.compute_repetition_penalty(sampled_tokens)
         repetition_loss = soft_repetition_penalty(logits, temperature=cfg.TEMPERATURE)
-        total_loss = ce_loss + self.repetition_penalty_weight * repetition_loss
-        return total_loss, ce_loss, repetition_loss
+        total_loss = ce_loss + self.repetition_penalty_weight * repetition_loss + self.sequence_penalty_weight * kl_loss
+        return total_loss, ce_loss, repetition_loss, kl_loss, sequence_embedding.detach()
 
     def compute_repetition_penalty(self, generated_tokens):
         """
