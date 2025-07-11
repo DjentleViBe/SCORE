@@ -255,22 +255,22 @@ if __name__ == '__main__':
         bincountsaccents = np.bincount(accents_collect, minlength=23)[1:]
 
         writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
-        plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.png')
+        plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.pdf')
         del training_note_encoder_1
 
         writebincount(bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
-        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.png')
+        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.pdf')
         del training_beat_encoder_1
 
         writebincount(accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
-        plotbar(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.png')
+        plotbar(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.pdf')
         del accents_collect
 
         top_indices = sorted_indices[:10]
         top_values = start_collect[top_indices]
         top_labels = [str(i) for i in top_indices]
         writebincount(start_collect[sorted_indices[:10]], './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt')
-        plotbar(top_labels, 'Occurance of First note', top_values, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.png')
+        plotbar(top_labels, 'Occurance of First note', top_values, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.pdf')
         
 
         ITERATION = 0
@@ -392,7 +392,7 @@ if __name__ == '__main__':
         'loss': loss     # Optionally save the loss value
         }
         torch.save(checkpoint, './RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth')
-        plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot, seq_lossplot], ["Total loss", "Training loss", "Repetition loss", "Validation_loss", "Sequence loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.png')
+        plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot, seq_lossplot], ["Total loss", "Training loss", "Repetition loss", "Validation_loss", "Sequence loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.pdf')
 
     if cfg.MODE in (1, 2):
         checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth', map_location=torch.device(DEVICE_TYPE))
@@ -449,20 +449,20 @@ if __name__ == '__main__':
         song_notes = [value for value in song_notes if value != 100]
         bincounts_inf = np.bincount(song_notes, minlength=13)[1:]
         bincountsbeats_inf = np.bincount(song_beats, minlength=15)[1:]
-        writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobability.png')
+        writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobability.pdf')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         bincountsbeats_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
-        plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitynotes.png')
-        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeats.png')
+        plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitynotes.pdf')
+        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeats.pdf')
         
         KLD = KLDivergence(bincounts_train, bincounts_inf)
-        plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.png')
+        plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf')
         
         KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
-        plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.png')
+        plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf')
         
-        combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.png',
-                   './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.png',
-                   './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobability.png')
+        #combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf',
+        #           './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf',
+        #          './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobability.pdf')
 
     print("Finished")

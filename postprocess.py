@@ -59,7 +59,7 @@ def plot(lossplot, text, filename):
 
 def plotbar(labels, title, counts, filename):
     plt.figure(figsize=(10, 6))
-    bars = plt.bar(labels, counts, color='skyblue', edgecolor='black')
+    bars = plt.bar(labels, counts, color='black', edgecolor='black')
     # plt.xlabel('Notes', fontsize=12)
     plt.ylabel('Occurrences', fontsize=12)
     plt.title(title, fontsize=14)
@@ -70,7 +70,7 @@ def plotbar(labels, title, counts, filename):
         yval = bar.get_height()
         plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, int(yval), ha='center', va='bottom')
 
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
+    plt.grid(axis='y', linestyle='--', alpha=0.7, color = 'k')
     plt.tight_layout()
     plt.savefig(filename, dpi = 200)
 
@@ -85,7 +85,7 @@ def plotbar_dual(labels, counts1, counts2, KLD, filename, label1='Training', lab
 
     # Primary axis
     fig, ax1 = plt.subplots(figsize=(12, 6))
-    bars1 = ax1.bar(x - width/2, counts1, width, label=label1, color='skyblue', edgecolor='black')
+    bars1 = ax1.bar(x - width/2, counts1, width, label=label1, color='black', edgecolor='black')
     # ax1.set_xlabel('Notes', fontsize=12)
     ax1.set_ylabel(f'Training', fontsize=12)
     ax1.tick_params(axis='y')
@@ -101,7 +101,7 @@ def plotbar_dual(labels, counts1, counts2, KLD, filename, label1='Training', lab
 
     # Secondary axis
     ax2 = ax1.twinx()
-    bars2 = ax2.bar(x + width/2, counts2, width, label=label2, color='salmon', edgecolor='black')
+    bars2 = ax2.bar(x + width/2, counts2, width, label=label2, color='lightgray', edgecolor='black')
     ax2.set_ylabel(f'Inference', fontsize=12)
     ax2.tick_params(axis='y')
 
@@ -113,8 +113,8 @@ def plotbar_dual(labels, counts1, counts2, KLD, filename, label1='Training', lab
     # Combine legends
     labels = [label1, label2]
     legend_patches = [
-        Patch(facecolor='skyblue', edgecolor='black', label=label1),
-        Patch(facecolor='salmon', edgecolor='black', label=label2)
+        Patch(facecolor='black', edgecolor='black', label=label1),
+        Patch(facecolor='lightgray', edgecolor='black', label=label2)
     ]
     ax1.legend(handles=legend_patches, loc='upper right')
 
