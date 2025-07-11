@@ -286,7 +286,7 @@ if __name__ == '__main__':
         criterion = RepetitionPenaltyLossForSpecificTokens(
             label_smoothing=cfg.SMOOTHING, 
             repetition_penalty_weight=cfg.LAMBDA, 
-            sequence_penalty_weight=cfg.ALPHA, 
+            sequence_penalty_weight=cfg.DELTA, 
             ngram_size=3, 
             penalize_tokens=penalize_tokens
         )
