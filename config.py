@@ -6,8 +6,8 @@ TUNING              =   [53, 48, 44, 39, 34, 27]
 # 2 : both 
 # 3 : load from file
 MODE                =   2
-BACKUP              =   "dec_RPE_attn_CB_Large"
-SAVE                =   "dec_RPE_attn_CB_Large_L"
+BACKUP              =   "dec_RPE_ann_CB_Large"
+SAVE                =   "dec_RPE_ann_CB_Large_L"
 START_ID            =   15462
 BOS_TRUE            =   0
 EOS_TRUE            =   1
@@ -24,7 +24,7 @@ TEST_TRIES          =   10
 # 4 - Multinomial Sampling - manual
 PREDICTION_CRITERIA =   3
 ########## Params ##############
-EPOCHS          =   1
+EPOCHS          =   100
 SAVE_EVERY      =   20
 VOCAB_SIZE      =   27076
 FFN_HIDDEN      =   1024
@@ -46,7 +46,8 @@ TEMPERATURE     =   1.0
 BATCH           =   32
 OVERLAP         =   8
 LAMBDA          =   1.5
-ALPHA           =   1.0
+ALPHA           =   0.1
+DELTA           =   0.001
 
 BAR             =   27049
 BOS             =   27050
