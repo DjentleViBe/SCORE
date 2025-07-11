@@ -21,6 +21,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from validation import validation
 from masking import create_combined_mask
+from models import compute_sequence_gaussians, kl_divergence_gaussians_loss
 
 if __name__ == '__main__':
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
@@ -254,22 +255,22 @@ if __name__ == '__main__':
         bincountsaccents = np.bincount(accents_collect, minlength=23)[1:]
 
         writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
-        plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.png')
+        plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.pdf')
         del training_note_encoder_1
 
         writebincount(bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
-        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.png')
+        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.pdf')
         del training_beat_encoder_1
 
         writebincount(accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
-        plotbar(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.png')
+        plotbar(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.pdf')
         del accents_collect
 
         top_indices = sorted_indices[:10]
         top_values = start_collect[top_indices]
         top_labels = [str(i) for i in top_indices]
         writebincount(start_collect[sorted_indices[:10]], './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt')
-        plotbar(top_labels, 'Occurance of First note', top_values, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.png')
+        plotbar(top_labels, 'Occurance of First note', top_values, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.pdf')
         
 
         ITERATION = 0
@@ -277,13 +278,15 @@ if __name__ == '__main__':
         ce_lossplot = []
         rep_lossplot =[]
         val_lossplot = []
+        seq_lossplot = []
         penalize_tokens = [cfg.BEND_NOTE_1, cfg.BEND_NOTE_2, cfg.BEND_NOTE_3, cfg.BEND_NOTE_4, cfg.BEND_NOTE_5, cfg.BEND_NOTE_6, cfg.BEND_NOTE_7,
                            cfg.TREM_BAR_1, cfg.TREM_BAR_2, cfg.TREM_BAR_3, cfg.TREM_BAR_4, cfg.TREM_BAR_5,
                            cfg.DEAD_NOTE, cfg.SLIDE_NOTE_1, cfg.SLIDE_NOTE_2, cfg.SLIDE_NOTE_3, cfg.SLIDE_NOTE_4, cfg.SLIDE_NOTE_5, cfg.SLIDE_NOTE_6, 
                            cfg.BOS, cfg.VIBRATO, cfg.HAMMER, cfg.HARMONIC_1]
         criterion = RepetitionPenaltyLossForSpecificTokens(
             label_smoothing=cfg.SMOOTHING, 
-            repetition_penalty_weight=1.5, 
+            repetition_penalty_weight=cfg.LAMBDA, 
+            sequence_penalty_weight=cfg.DELTA, 
             ngram_size=3, 
             penalize_tokens=penalize_tokens
         )
@@ -303,11 +306,19 @@ if __name__ == '__main__':
             embedding_layer.load_state_dict(checkpoint['embedding_state_dict'])
             ITERATION = checkpoint['epoch']
         print(cfg.EPOCHS)
+        
         while ITERATION <= cfg.EPOCHS:
             decoder.train()
             epoch_loss = 0.0  # track epoch loss
+            epoch_rep_loss = 0.0
+            epoch_seq_loss = 0.0
+            epoch_ce_loss = 0.0
             batch_count = 0
+            kl_loss = 0.0
+            prev_sequence_embedding = None
             for batch_idx, (batch_token_ids, batch_target) in enumerate(loader):
+                #if len(batch_token_ids) != cfg.BATCH:
+                #    break
                 # print(batch_count, end = " ")
                 batch_token_ids = batch_token_ids.to(device)
                 batch_target = batch_target.to(device)
@@ -321,34 +332,39 @@ if __name__ == '__main__':
                 # Embeddings
                 embeddings = embedding_layer(batch_token_ids)
                 input_embeddings = embeddings + pos_enc[:batch_token_ids.size(1)]
-
                 # Forward
                 logits = decoder(input_embeddings, mask)
-
                 # Flatten target
                 batch_target = batch_target.view(-1)
 
                 # Compute loss
-                loss, ce_loss, rep_loss = criterion(logits, batch_target)
+                loss, ce_loss, rep_loss, kl_loss, prev_sequence_embedding = criterion(logits, batch_target, prev_sequence_embedding, ITERATION)
 
                 loss.backward()
                 optimizer.step()
 
                 # Log and accumulate loss
                 epoch_loss += loss.item()
+                epoch_ce_loss += ce_loss.item()
+                epoch_rep_loss += rep_loss.item()
+                epoch_seq_loss += kl_loss.item()
                 batch_count += 1
                 # print("batch count : ", batch_count)
             
             avg_loss = epoch_loss / batch_count
+            avg_ce_loss = epoch_ce_loss / batch_count
+            avg_rep_loss = epoch_rep_loss / batch_count
+            avg_seq_loss = epoch_seq_loss / batch_count
             val_loss = validation(loader_val, device, optimizer, embedding_layer, decoder, criterion, pos_enc)
             if cfg.SCHEDULER == 1:
                     scheduler.step(val_loss)
-            print(f"{ITERATION + 1} : main :{round(loss.item(), 4)}, ce :{round(ce_loss.item(), 4)}, rep :{round(rep_loss.item(), 4)}, validation :{round(val_loss, 4)}")
+            print(f"{ITERATION + 1} : main :{round(avg_loss, 4)}, ce :{round(avg_ce_loss, 4)}, rep :{round(avg_rep_loss, 4)}, seq :{round(avg_seq_loss, 4)}, validation :{round(val_loss, 4)}")
             ITERATION += 1
-            lossplot.append(loss.item())
-            ce_lossplot.append(ce_loss.item())
-            rep_lossplot.append(rep_loss.item())
+            lossplot.append(avg_loss)
+            ce_lossplot.append(avg_ce_loss)
+            rep_lossplot.append(avg_rep_loss)
             val_lossplot.append(val_loss)
+            seq_lossplot.append(avg_seq_loss)
 
             if avg_loss < cfg.CONVERGENCE:
                 print("Convergence criteria reached!")
@@ -367,7 +383,7 @@ if __name__ == '__main__':
         
         with open('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP + '.csv', mode='a', newline='') as lossfile:
             writer = csv.writer(lossfile)
-            writer.writerows(zip(lossplot, ce_lossplot, rep_lossplot, val_lossplot))
+            writer.writerows(zip(lossplot, ce_lossplot, rep_lossplot, val_lossplot, seq_lossplot))
         checkpoint = {
         'model_state_dict': decoder.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
@@ -376,7 +392,7 @@ if __name__ == '__main__':
         'loss': loss     # Optionally save the loss value
         }
         torch.save(checkpoint, './RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth')
-        plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot], ["Total loss", "Training loss", "Repetition loss", "Validation_loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.png')
+        plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot, seq_lossplot], ["Total loss", "Training loss", "Repetition loss", "Validation_loss", "Sequence loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.pdf')
 
     if cfg.MODE in (1, 2):
         checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth', map_location=torch.device(DEVICE_TYPE))
@@ -433,20 +449,20 @@ if __name__ == '__main__':
         song_notes = [value for value in song_notes if value != 100]
         bincounts_inf = np.bincount(song_notes, minlength=13)[1:]
         bincountsbeats_inf = np.bincount(song_beats, minlength=15)[1:]
-        writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobability.png')
+        writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobability.pdf')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         bincountsbeats_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
-        plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitynotes.png')
-        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeats.png')
+        plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitynotes.pdf')
+        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeats.pdf')
         
         KLD = KLDivergence(bincounts_train, bincounts_inf)
-        plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.png')
+        plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf')
         
         KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
-        plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.png')
+        plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf')
         
-        combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.png',
-                   './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.png',
-                   './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobability.png')
+        #combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf',
+        #           './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf',
+        #          './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobability.pdf')
 
     print("Finished")

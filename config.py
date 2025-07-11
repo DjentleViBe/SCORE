@@ -5,9 +5,9 @@ TUNING              =   [53, 48, 44, 39, 34, 27]
 # 1 : eval
 # 2 : both 
 # 3 : load from file
-MODE                =   1
-BACKUP              =   "dec_RPE_chunks_CB_Large"
-SAVE                =   "dec_RPE_chunks_CB_Large_L"
+MODE                =   2
+BACKUP              =   "dec_RPE_ann_CB_Large"
+SAVE                =   "dec_RPE_ann_CB_Large_L"
 START_ID            =   15462
 BOS_TRUE            =   0
 EOS_TRUE            =   1
@@ -39,12 +39,15 @@ LEARNING_RATE   =   0.0001
 SMOOTHING       =   0.1
 PATCH           =   1
 STRIDE          =   1
-TRAINING        =   ["Mesh"]
+TRAINING        =   ["CB"]
 NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
-TEMPERATURE     =   0.7
+TEMPERATURE     =   1.0
 BATCH           =   32
 OVERLAP         =   8
+LAMBDA          =   1.5
+ALPHA           =   0.1
+DELTA           =   0.001
 
 BAR             =   27049
 BOS             =   27050

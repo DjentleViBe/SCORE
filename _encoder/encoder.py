@@ -4,8 +4,10 @@ import math
 import torch
 from torch import nn
 import torch.nn.functional as F
+from models import compute_sequence_gaussians, kl_divergence_gaussians
+from config import ALPHA, MAX_SEQ_LENGTH, BATCH, NUM_SEQUENCE, D_MODEL
 
-def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb):
+def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb, klmatrix):
     """Required for attention
     q_val : what am I looking for
     k_val : what do I have to offer
@@ -23,7 +25,9 @@ def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb
     
     # Add relative positional encoding to attention scores
     scaled += torch.einsum('bhqd,qkd->bhqk', q_val, rel_pos_enc.squeeze(0))  # Add relative positional bias
-
+    kl_backward_score = klmatrix[:, :].sum(dim=0)  
+    kl_bias = ALPHA * kl_backward_score[:, None, None, None] 
+    scaled = scaled - kl_bias
     
     if mask is not None:
         scaled += mask
@@ -55,9 +59,14 @@ class MultiHeadAttentionAPE(nn.Module):
         # Learnable relative positional embedding
         self.relative_positional_encoding = nn.Embedding(2 * seq_length - 1, self.head_dim).to(device)
         self.relative_pos_value_embedding = nn.Embedding(2 * seq_length - 1, self.num_heads * self.head_dim).to(device)
+        # self.mu = nn.Parameter(torch.randn(BATCH, D_MODEL))
+        # self.log_sigma = nn.Parameter(torch.zeros(BATCH, D_MODEL))  # initialize std near 1
+        self.gaussian_mlp = nn.Sequential(
+                            nn.Linear(D_MODEL, D_MODEL),
+                            nn.ReLU(),
+                            nn.Linear(D_MODEL, 2 * D_MODEL)  # outputs [μ | log σ]
+                        )
 
-
-    
     def relative_position_encoding(self, seq_length, max_len, device):
         # Generate the relative distance matrix
         relative_pos_enc = torch.zeros(seq_length, seq_length, dtype=torch.long).to(device)
@@ -75,7 +84,16 @@ class MultiHeadAttentionAPE(nn.Module):
     def forward(self, x_val, mask=None, key_cache=None, value_cache=None):
         """Forward layer
         """
+        # sigma = torch.exp(self.log_sigma)
+        pooled = x_val.mean(dim=1)  # x: [batch_size, seq_len, D_MODEL]
+        stats = self.gaussian_mlp(pooled)  # [batch_size, 2 * D_MODEL]
+        mu, log_sigma = torch.chunk(stats, 2, dim=-1)
+        sigma = torch.exp(log_sigma) + 1e-8
+        # mu, sig = compute_sequence_gaussians(x_val)
+        kl_matrix = kl_divergence_gaussians(mu, sigma, mu, sigma)
+        # kl_matrix = kl_divergence_gaussians(mu, sig, mu, sig)
         # 30 x 10 x 32
+
         batch_size, sequence_length, _ = x_val.size()
         # 30 x 10 x 96
         qkv = self.qkv_layer(x_val)
@@ -102,7 +120,7 @@ class MultiHeadAttentionAPE(nn.Module):
         rel_pos_enc = self.relative_positional_encoding(relative_positions)  # (1, total_seq_len, total_seq_len, head_dim)
         rel_pos_value_emb = self.relative_pos_value_embedding(relative_positions) 
         rel_pos_value_emb = rel_pos_value_emb.squeeze(0).reshape(total_seq_len, total_seq_len, self.num_heads, self.head_dim)
-        values, _ = scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb)
+        values, _ = scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb, kl_matrix)
 
         values = values.reshape(batch_size, sequence_length, self.num_heads * self.head_dim)
         output = self.linear_layer(values)
