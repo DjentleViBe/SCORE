@@ -2,3 +2,4 @@ numpy == 1.26.4
 PyGuitarPro
 torch
 matplotlib
+scikit-learn
