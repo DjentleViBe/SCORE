@@ -11,3 +11,5 @@ _papers/*.aux
 _papers/*.log
 _papers/*.out
 _papers/*.synctex.gz
+_papers/*.blg
+_papers/*.bbl
