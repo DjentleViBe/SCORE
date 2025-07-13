@@ -1,8 +1,9 @@
-![Banner.jpg](Banner.jpg)
-<p align="center" style="font-size: 30px;"><b>S</b>upervised <b>C</b>omp<b>O</b>sition and <b>R</b>iff <b>E</b>ngine</p>
+<p align="center">
+ <img width="400px" src="./Banner.jpg" align="center" alt="SCORE" />
+<h1 align="center">SCORE</h1>
+<p align="center" style="font-size: 18px;"><b>S</b>upervised <b>C</b>omp<b>O</b>sition and <b>R</b>iff <b>E</b>ngine</p>
 
-##
-Riff generation using Transformers Architecture
+<p align="center">Riff generation using Transformers Architecture</p>
 
 ## Dependencies
 - python > 3.11
