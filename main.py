@@ -38,8 +38,9 @@ if __name__ == '__main__':
             with open('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt', 'r') as file:
                 for line in file:
                     parts = line.strip().split()
-                    if len(parts) >= 2:
-                        first_values.append(int(parts[1]))
+                    if len(parts) > 1:
+                        number_str = parts[1].replace(':', '')  # Remove the colon
+                        first_values.append(int(number_str))
         else:
             first_values.append(args.start_id)
         print(f"Evaluating from ID {args.start_id}...")
@@ -430,7 +431,10 @@ if __name__ == '__main__':
         decoder.eval()
         embedding_layer.eval()
 
+        song_notes_collect = []
+        song_beats_collect = []
         for sid, startid in enumerate(first_values):
+            print("\nTesting with start-id :",startid)
             dummy_in = inference(startid, device, decoder, embedding_layer, pos_enc, casualmask)
 
             m = 0
@@ -473,10 +477,18 @@ if __name__ == '__main__':
                 if m == 0:
                     del song.tracks[0].measures[0]
                 m += 1
-                writegpro(cfg.SAVE, song)
-        song_notes = [value for value in song_notes if value != 100]
-        bincounts_inf = np.bincount(song_notes, minlength=13)[1:]
-        bincountsbeats_inf = np.bincount(song_beats, minlength=15)[1:]
+                writegpro(cfg.SAVE + "_" + str(startid), song)
+                song_notes_collect.append(song_notes)
+                song_beats_collect.append(song_beats)
+        flattened_notes = [
+                note
+                for song_notes in song_notes_collect
+                for note in song_notes
+                if note != 100
+            ]
+        flattened_beats = [beat for song_beats in song_beats_collect for beat in song_beats]
+        bincounts_inf = np.bincount(flattened_notes, minlength=13)[1:]
+        bincountsbeats_inf = np.bincount(flattened_beats, minlength=15)[1:]
         writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobability.pdf')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         bincountsbeats_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
