@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
-from postprocess import combinepng, plot, plot_multiple, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, readbincount, KLDivergence
+from postprocess import combinepng, plot, plot_multiple, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, writebincount2, readbincount, KLDivergence
 from encoding import tokenizer_1, note_prob, beat_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
@@ -20,10 +20,34 @@ import platform
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from validation import validation
-from masking import create_combined_mask
-from models import compute_sequence_gaussians, kl_divergence_gaussians_loss
+import argparse
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description="Run script with mode and optional start_id.")
+    parser.add_argument("--mode", type=str, required=True, choices=["train", "eval", "test"], help="Mode to run")
+    parser.add_argument("--start_id", type=int, help="Start ID for processing (required for eval)")
+
+    args = parser.parse_args()
+    print(f"Mode: {args.mode}")
+    first_values = []
+    if args.mode == "eval":
+        cfg.MODE = 1
+        if args.start_id is None:
+            # take the top 10 occurences of first note
+            print("Reading startprobabilities.csv")
+            with open('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt', 'r') as file:
+                for line in file:
+                    parts = line.strip().split()
+                    if len(parts) >= 2:
+                        first_values.append(int(parts[1]))
+        else:
+            first_values.append(args.start_id)
+        print(f"Evaluating from ID {args.start_id}...")
+        # evaluation logic
+    elif args.mode == "train":
+        cfg.MODE = 0
+        print("Training...")
+
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
     os_type = platform.system()
     if os_type == 'Darwin':
@@ -72,6 +96,7 @@ if __name__ == '__main__':
     if cfg.MODE in (0, 2, 3):
         create_dir('./RESULTS/')
         create_dir('./RESULTS/' + cfg.BACKUP)
+        create_dir('./RESULTS/' + cfg.BACKUP + "gp5")
         shutil.copy("./config.py", "./RESULTS/" + cfg.BACKUP + "/" + cfg.BACKUP + ".py")
         training_src_encoder_1 = np.zeros((1 * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         training_note_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
@@ -269,7 +294,7 @@ if __name__ == '__main__':
         top_indices = sorted_indices[:10]
         top_values = start_collect[top_indices]
         top_labels = [str(i) for i in top_indices]
-        writebincount(start_collect[sorted_indices[:10]], './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt')
+        writebincount2(top_labels, start_collect[sorted_indices[:10]], './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt')
         plotbar(top_labels, 'Occurance of First note', top_values, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.pdf')
         
 
@@ -305,7 +330,7 @@ if __name__ == '__main__':
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             embedding_layer.load_state_dict(checkpoint['embedding_state_dict'])
             ITERATION = checkpoint['epoch']
-        print(cfg.EPOCHS)
+        print("\nTotal epochs : ", cfg.EPOCHS)
         
         while ITERATION <= cfg.EPOCHS:
             decoder.train()
@@ -395,6 +420,7 @@ if __name__ == '__main__':
         plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot, seq_lossplot], ["Total loss", "Training loss", "Repetition loss", "Validation_loss", "Sequence loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.pdf')
 
     if cfg.MODE in (1, 2):
+        create_dir('./RESULTS/' + cfg.BACKUP + "/gp5")
         checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth', map_location=torch.device(DEVICE_TYPE))
         decoder.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -402,50 +428,52 @@ if __name__ == '__main__':
         print(f"Loss : ', {checkpoint['loss'].item()}")
         print(f"Epochs : ', {checkpoint['epoch']}")
         decoder.eval()
-        dummy_in = inference(device, decoder, embedding_layer, pos_enc, casualmask)
+        embedding_layer.eval()
 
-        m = 0
-        song = gp.models.Song()
-        song.title = cfg.SAVE
-        song.artist = "DjentleViBe"
-        song.tempo = 120  # Set the tempo
-        song.tracks[0].name = "Guitar"
-        song.tracks[0].channel.instrument = 30
-        song_collect = []
-        song_notes = []
-        song_beats = []
+        for sid, startid in enumerate(first_values):
+            dummy_in = inference(startid, device, decoder, embedding_layer, pos_enc, casualmask)
 
-        while m < cfg.TEST_TRIES:
-            noteval = []
-            notetypeval = []
-            stringnum = []
-            beatval = []
-            palmval = []
+            m = 0
+            song = gp.models.Song()
+            song.title = cfg.SAVE
+            song.artist = "DjentleViBe"
+            song.tempo = 120  # Set the tempo
+            song.tracks[0].name = "Guitar"
+            song.tracks[0].channel.instrument = 30
+            song_collect = []
+            song_notes = []
+            song_beats = []
 
-            for ind, dummy in enumerate(dummy_in[m]):
-                if cfg.VERBOSE == 1:
-                    print(f"{ind + 1:02}", end=' ')
-                note, notetype, string, beat, palm, beatnum = detokenizer_1(dummy)
-                noteval.append(note)
-                notetypeval.append(notetype)
-                stringnum.append(string)
-                beatval.append(beat)
-                palmval.append(palm)
-                song_notes.append(note_prob(note, string))
-                song_beats.append(beatnum)
-            song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
-            song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
-            song.tracks[0].strings[0].value = cfg.TUNING[0]
-            song.tracks[0].strings[1].value = cfg.TUNING[1]
-            song.tracks[0].strings[2].value = cfg.TUNING[2]
-            song.tracks[0].strings[3].value = cfg.TUNING[3]
-            song.tracks[0].strings[4].value = cfg.TUNING[4]
-            song.tracks[0].strings[5].value = cfg.TUNING[5]
-            if m == 0:
-                del song.tracks[0].measures[0]
-            m += 1
-            # print("")
-            writegpro(cfg.SAVE, song)
+            while m < cfg.TEST_TRIES:
+                noteval = []
+                notetypeval = []
+                stringnum = []
+                beatval = []
+                palmval = []
+
+                for ind, dummy in enumerate(dummy_in[m]):
+                    if cfg.VERBOSE == 1:
+                        print(f"{ind + 1:02}", end=' ')
+                    note, notetype, string, beat, palm, beatnum = detokenizer_1(dummy)
+                    noteval.append(note)
+                    notetypeval.append(notetype)
+                    stringnum.append(string)
+                    beatval.append(beat)
+                    palmval.append(palm)
+                    song_notes.append(note_prob(note, string))
+                    song_beats.append(beatnum)
+                song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
+                song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
+                song.tracks[0].strings[0].value = cfg.TUNING[0]
+                song.tracks[0].strings[1].value = cfg.TUNING[1]
+                song.tracks[0].strings[2].value = cfg.TUNING[2]
+                song.tracks[0].strings[3].value = cfg.TUNING[3]
+                song.tracks[0].strings[4].value = cfg.TUNING[4]
+                song.tracks[0].strings[5].value = cfg.TUNING[5]
+                if m == 0:
+                    del song.tracks[0].measures[0]
+                m += 1
+                writegpro(cfg.SAVE, song)
         song_notes = [value for value in song_notes if value != 100]
         bincounts_inf = np.bincount(song_notes, minlength=13)[1:]
         bincountsbeats_inf = np.bincount(song_beats, minlength=15)[1:]
