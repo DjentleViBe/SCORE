@@ -1,6 +1,8 @@
 ![Banner.jpg](Banner.jpg)
-# Supervised Composition and Riff Engine (SC0RE)
-Riff generation using various Transformers Architecture
+<p align="center" style="font-size: 30px;"><b>S</b>upervised <b>C</b>omp<b>O</b>sition and <b>R</b>iff <b>E</b>ngine</p>
+
+##
+Riff generation using Transformers Architecture
 
 ## Dependencies
 - python > 3.11
@@ -11,9 +13,20 @@ Riff generation using various Transformers Architecture
 - PyGuitarPro
 
 ### Installation
-Use virtual environment if possible <br>
-```pip install -r requirements-{OS_TYPE}.txt```
+Use virtual environment if possible. To install dependencies:
 
+On Windows:
+```
+pip install -r requirements-windows.txt
+```
+On macOS:
+```
+pip install -r requirements-macos.txt
+```
+On Linux:
+```
+pip install -r requirements-linux.txt
+```
 ## Running
 ### Training
 1. Place the `.gp5` files intended for training inside the folder:
