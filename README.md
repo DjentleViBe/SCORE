@@ -20,20 +20,18 @@ Use virtual environment if possible <br>
 `gprofiles/<MUSIC_STYLE>/`
 where `<MUSIC_STYLE>` corresponds to the value of the `TRAINING` variable in `config.py`.
 2. Modify the relevant variables in `config.py` as needed for your experiment.
-3. Set `MODE = 0` in `config.py` to enable training mode. 
-4. Run the training script:
+3. Run the training script:
 ```sh
-python main.py
+python main.py --mode train
 ```
 
 ### Evaluation
 After training is complete:
-1. Change `MODE = 1` in `config.py` for evaluation.
-2. Adjust the `START_ID` variable in `config.py` to the desired starting token ID for evaluation.
-3. Run the evaluation script:
+1. Run the evaluation script:
 ```sh
-python main.py
+python main.py --mode eval --start_id <id>  
 ```
+where `<id>` is the first token of the musical measure. 
 
 `.gp5` files are exported inside `RESULTS`/`<TEST>` folder where `<TEST>` is the `BACKUP` variable entered in `config.py`.
 
