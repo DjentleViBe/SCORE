@@ -63,7 +63,7 @@ An inference method is implemented that provides meaningful validation without h
 \end{abstract}
 
 \begin{keywords}
-  Transformers, Music, Generative
+  Transformer models, Music, Generative, Sequence modelling, Attention mechanism
 \end{keywords}
 
 \section{Introduction}
@@ -339,18 +339,20 @@ To make the training more stable, the sequence loss is annealed and clamped.
 Sequenceloss = \min\left( \frac{\text{step}}{\text{EPOCHS}} \cdot \left( \frac{\delta \cdot \mathcal{L}_{\text{KL}}}{\text{BATCH}} \right),\ 0.2 \right)
 \end{align}
 where, $\delta$ is a sequence weight hyper parameter.
+\subsubsection{Dataset}
+Relavant statistics about the dataset used for training and evaluation are provided in Appendix~\eqref{app:C}
 \section{Inference}
 Given that the model is autoregressive and expects an initial token, selecting the start token based on the distribution of starting notes of musical measures in the training data yields more consistent generation.\\
 \begin{figure}[H]
   \centering
-\includegraphics[clip, width=0.8\linewidth]{dec_RPE_ann_CB_Large_startprobability.pdf}
+\includegraphics[clip, width=0.6\linewidth]{dec_RPE_ann_CB_Large_startprobability.pdf}
 \caption{Token occurrences of first note of a musical measure in training data.}
   \label{fig:note}
 \end{figure}
 
 \begin{figure}[H]
   \centering
-\includegraphics[clip, width=0.7\linewidth]{dec_RPE_ann_CB_Large_trainingaccentprobability.pdf}
+\includegraphics[clip, width=0.6\linewidth]{dec_RPE_ann_CB_Large_trainingaccentprobability.pdf}
 \caption{Accent occurrences in training data.}
   \label{fig:note}
 \end{figure}
@@ -388,7 +390,7 @@ D_{\mathrm{KL}}(P \parallel Q) = \sum_{x \in X} P(x) \log \left( \frac{P(x)}{Q(x
   \centering
 \includegraphics[clip, width=0.8\linewidth]{dec_RPE_ann_CB_Large_L_compareprobabilitynotes.pdf}
 \includegraphics[clip, width=0.8\linewidth]{dec_RPE_ann_CB_Large_L_compareprobabilitybeats.pdf}
-\caption{Note and beat occurrences of training data and inference}
+\caption{Note and beat occurrences of training data and test data}
   \label{fig:note}
 \end{figure}
 
@@ -397,10 +399,11 @@ The model produces musically pleasing sequences, effectively combining notes, be
 \begin{figure}[H]
   \centering
 \includegraphics[trim={20 200 0 130}, clip, width=0.8\linewidth]{dec_RPE_ann_CB_Large_L_inference.pdf}
-\caption{Inference results showing 4 musical measures}
+\caption{Test results showing 4 musical measures}
   \label{fig:inference}
 \end{figure}
-The model implementation is available on GitHub \cite{SC0RE}.
+
+Implementation details and hyper-parameter settings are provided in the associated GitHub repository \cite{SC0RE}.
 % Acknowledgements and Disclosure of Funding should go at the end, before appendices and references
 
 \acks{This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.}
@@ -491,6 +494,18 @@ Dotted - 11-tuplets & 14 \\
 \caption{Example of unique indexing of rhythm.}
 \label{tab:rhythmic_indexing}
 \end{table}
+
+\section{}
+\label{app:C}
+This appendix explains relevant statistics about the dataset used for training and evaluation.
+\subsection{Preparation}
+The rhythm guitar tracks were extracted manually from the original Guitar Pro files. Finger adjustments present in the source files are described in detail in the encoding section. No additional normalization or filtering—such as pitch standardization or sequence length filtering—was performed beyond this manual selection.
+
+The dataset consists exclusively of rhythm guitar tracks in .gp5 format with a custom tuning (F C G\# D\# A\# D\#). It contains 6,208 sequences, each with a maximum length of 32 tokens.
+
+An 80/20 split was used to create the training and validation sets. For testing, the top 10 first notes of each measure were selected as prompts for sequence generation and evaluation.
+
+Due to copyright restrictions, the original .gp5 files and preprocessing scripts cannot be shared. However, the code and model pipeline are designed to operate on any Guitar Pro dataset, provided the files are preprocessed into the expected format as described.
 
 \vskip .2in
 \bibliography{TransformerRiffage}
