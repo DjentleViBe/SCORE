@@ -476,7 +476,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
 def writegpro(filename, song):
     """write gpro file to disk"""
     # Save the song to a Guitar Pro file
-    with open("./RESULTS/" + "/" + BACKUP + "/" + filename + ".gp5", 'wb') as file:
+    with open("./RESULTS/" + "/" + BACKUP + "/gp5/" + filename + ".gp5", 'wb') as file:
         gp.write(song, file)
 
 def writebincount(counts, filename):
@@ -484,7 +484,13 @@ def writebincount(counts, filename):
     with open(filename, 'w') as file:
         for idx, count in enumerate(counts):
             file.write(f"Value {idx}: {count} occurrences\n")
-    
+
+def writebincount2(labels, counts, filename):
+    # Write to a text file
+    with open(filename, 'w') as file:
+        for idx, count in enumerate(counts):
+            file.write(f"Value {labels[idx]}: {count} occurrences\n")
+
 def readbincount(filename):
     # Read the counts from the text file
     counts = []
