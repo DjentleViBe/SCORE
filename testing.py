@@ -5,14 +5,14 @@ import torch
 import numpy as np
 from config import EOS, BAR
 
-def inference(device, decoder, embedding_layer, pos_enc, mask):
+def inference(start, device, decoder, embedding_layer, pos_enc, mask):
     """Run inference"""
     dummy_np = np.full((1, cfg.MAX_SEQ_LENGTH), cfg.EOS, dtype = 'int32')
     if cfg.BOS_TRUE == 0:
-        dummy_np[0, 0] = cfg.START_ID
+        dummy_np[0, 0] = start
     else:
         dummy_np[0, 0] = cfg.BOS
-        dummy_np[0, 1] = cfg.START_ID
+        dummy_np[0, 1] = start
     dummy_in = torch.tensor(dummy_np).to(device)
 
     if cfg.TEST_CRITERIA == 0:
