@@ -434,6 +434,8 @@ if __name__ == '__main__':
         song_notes_collect = []
         song_beats_collect = []
         for sid, startid in enumerate(first_values):
+            if sid >= cfg.TEST_NUM:
+                break
             print("\nTesting with start-id :",startid)
             dummy_in = inference(startid, device, decoder, embedding_layer, pos_enc, casualmask)
 

@@ -8,7 +8,6 @@ TUNING              =   [53, 48, 44, 39, 34, 27]
 MODE                =   2
 BACKUP              =   "dec_RPE_ann_CB_Large"
 SAVE                =   "dec_RPE_ann_CB_Large_L"
-START_ID            =   15462
 BOS_TRUE            =   0
 EOS_TRUE            =   1
 # 0 - Vanilla
@@ -18,6 +17,8 @@ EOS_TRUE            =   1
 # 4 - Same as above + loop until no repeatitive notes > BOS 
 TEST_CRITERIA       =   3
 TEST_TRIES          =   10
+# Total number of start_id to try with testing
+TEST_NUM            =   3
 # 1 - Greedy Search
 # 2 - Beam Search
 # 3 - Multinomial Sampling
