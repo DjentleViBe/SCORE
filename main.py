@@ -97,7 +97,7 @@ if __name__ == '__main__':
     if cfg.MODE in (0, 2, 3):
         create_dir('./RESULTS/')
         create_dir('./RESULTS/' + cfg.BACKUP)
-        create_dir('./RESULTS/' + cfg.BACKUP + "gp5")
+        create_dir('./RESULTS/' + cfg.BACKUP + "/gp5")
         shutil.copy("./config.py", "./RESULTS/" + cfg.BACKUP + "/" + cfg.BACKUP + ".py")
         training_src_encoder_1 = np.zeros((1 * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         training_note_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
