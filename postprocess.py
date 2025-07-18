@@ -336,7 +336,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         elif note == DEAD_NOTE:
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
-                note_collect[l_val - 1].type = hammer_beat.notes[0].type
+                note_collect[l_val - 1].type = dead_beat.notes[0].type
                 continue
         elif note == HAMMER:
             reuse_last_beat = False
