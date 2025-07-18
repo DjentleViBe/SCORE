@@ -6,8 +6,8 @@ TUNING              =   [53, 48, 44, 39, 34, 27]
 # 2 : both 
 # 3 : load from file
 MODE                =   2
-BACKUP              =   "dec_RPE_ann_CB_Large"
-SAVE                =   "dec_RPE_ann_CB_Large_L"
+BACKUP              =   "maestro_gpro-v1.0.0_Large"
+SAVE                =   "maestro_gpro-v1.0.0_Large_L"
 BOS_TRUE            =   0
 EOS_TRUE            =   1
 # 0 - Vanilla
@@ -40,7 +40,7 @@ LEARNING_RATE   =   0.0001
 SMOOTHING       =   0.1
 PATCH           =   1
 STRIDE          =   1
-TRAINING        =   ["CB"]
+TRAINING        =   ["maestro_gpro-v1.0.0"]
 NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
 TEMPERATURE     =   1.0
