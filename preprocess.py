@@ -12,7 +12,7 @@ def readgpro(filename):
 def getnumstrings(ginfo):
     """get string count"""
     stringcount = len(ginfo.strings)
-    print("Number of strings : ", stringcount)
+    # print("Number of strings : ", stringcount)
     return stringcount
 
 def gettuning(strings):
