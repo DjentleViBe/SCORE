@@ -247,22 +247,22 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
 
     """Generate gpro file"""
     # read bend and tremolo templates
-    song_trem_1 = gp.parse('./gprofiles/trem_1.gp5')
-    song_trem_2 = gp.parse('./gprofiles/trem_2.gp5')
-    song_trem_4 = gp.parse('./gprofiles/trem_4.gp5')
-    song_trem_5 = gp.parse('./gprofiles/trem_5.gp5')
+    song_trem_1 = gp.parse('./gprofiles/gp5_templates/trem_1.gp5')
+    song_trem_2 = gp.parse('./gprofiles/gp5_templates/trem_2.gp5')
+    song_trem_4 = gp.parse('./gprofiles/gp5_templates/trem_4.gp5')
+    song_trem_5 = gp.parse('./gprofiles/gp5_templates/trem_5.gp5')
     trem1_beat = song_trem_1.tracks[0].measures[0].voices[0].beats[0]
     trem2_beat = song_trem_2.tracks[0].measures[0].voices[0].beats[0]
     trem4_beat = song_trem_4.tracks[0].measures[0].voices[0].beats[0]
     trem5_beat = song_trem_5.tracks[0].measures[0].voices[0].beats[0]
 
-    song_bend_1 = gp.parse('./gprofiles/bend_1.gp5')
-    song_bend_2 = gp.parse('./gprofiles/bend_2.gp5')
-    song_bend_3 = gp.parse('./gprofiles/bend_3.gp5')
-    song_bend_4 = gp.parse('./gprofiles/bend_4.gp5')
-    song_bend_5 = gp.parse('./gprofiles/bend_5.gp5')
-    song_bend_6 = gp.parse('./gprofiles/bend_6.gp5')
-    song_bend_7 = gp.parse('./gprofiles/bend_7.gp5')
+    song_bend_1 = gp.parse('./gprofiles/gp5_templates/bend_1.gp5')
+    song_bend_2 = gp.parse('./gprofiles/gp5_templates/bend_2.gp5')
+    song_bend_3 = gp.parse('./gprofiles/gp5_templates/bend_3.gp5')
+    song_bend_4 = gp.parse('./gprofiles/gp5_templates/bend_4.gp5')
+    song_bend_5 = gp.parse('./gprofiles/gp5_templates/bend_5.gp5')
+    song_bend_6 = gp.parse('./gprofiles/gp5_templates/bend_6.gp5')
+    song_bend_7 = gp.parse('./gprofiles/gp5_templates/bend_7.gp5')
     bend1_beat = song_bend_1.tracks[0].measures[0].voices[0].beats[0]
     bend2_beat = song_bend_2.tracks[0].measures[0].voices[0].beats[0]
     bend3_beat = song_bend_3.tracks[0].measures[0].voices[0].beats[0]
@@ -271,12 +271,12 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     bend6_beat = song_bend_6.tracks[0].measures[0].voices[0].beats[0]
     bend7_beat = song_bend_7.tracks[0].measures[0].voices[0].beats[0]
 
-    song_slide_1 = gp.parse('./gprofiles/slide_1.gp5')
-    song_slide_2 = gp.parse('./gprofiles/slide_2.gp5')
-    song_slide_3 = gp.parse('./gprofiles/slide_3.gp5')
-    song_slide_4 = gp.parse('./gprofiles/slide_4.gp5')
-    song_slide_5 = gp.parse('./gprofiles/slide_5.gp5')
-    song_slide_6 = gp.parse('./gprofiles/slide_6.gp5')
+    song_slide_1 = gp.parse('./gprofiles/gp5_templates/slide_1.gp5')
+    song_slide_2 = gp.parse('./gprofiles/gp5_templates/slide_2.gp5')
+    song_slide_3 = gp.parse('./gprofiles/gp5_templates/slide_3.gp5')
+    song_slide_4 = gp.parse('./gprofiles/gp5_templates/slide_4.gp5')
+    song_slide_5 = gp.parse('./gprofiles/gp5_templates/slide_5.gp5')
+    song_slide_6 = gp.parse('./gprofiles/gp5_templates/slide_6.gp5')
     slide1_beat = song_slide_1.tracks[0].measures[0].voices[0].beats[0]
     slide2_beat = song_slide_2.tracks[0].measures[0].voices[0].beats[0]
     slide3_beat = song_slide_3.tracks[0].measures[0].voices[0].beats[0]
@@ -284,16 +284,16 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     slide5_beat = song_slide_5.tracks[0].measures[0].voices[0].beats[0]
     slide6_beat = song_slide_6.tracks[0].measures[0].voices[0].beats[0]
 
-    song_dead = gp.parse('./gprofiles/dead.gp5')
+    song_dead = gp.parse('./gprofiles/gp5_templates/dead.gp5')
     dead_beat = song_dead.tracks[0].measures[0].voices[0].beats[0]
 
-    song_hammer = gp.parse('./gprofiles/hammer.gp5')
+    song_hammer = gp.parse('./gprofiles/gp5_templates/hammer.gp5')
     hammer_beat = song_hammer.tracks[0].measures[0].voices[0].beats[0]
 
-    song_vibrato = gp.parse('./gprofiles/vibrato.gp5')
+    song_vibrato = gp.parse('./gprofiles/gp5_templates/vibrato.gp5')
     vibrato_beat = song_vibrato.tracks[0].measures[0].voices[0].beats[0]
 
-    song_harmonic_1 = gp.parse('./gprofiles/harmonic_1.gp5')
+    song_harmonic_1 = gp.parse('./gprofiles/gp5_templates/harmonic_1.gp5')
     harmonic_1_beat = song_harmonic_1.tracks[0].measures[0].voices[0].beats[0]
     # Create a new Guitar Pro song
     song = gp.models.Song()
