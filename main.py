@@ -183,21 +183,32 @@ if __name__ == '__main__':
                                                     L = min(L + 1, L_MAX)
 
                                                 if beat.effect.isTremoloBar is True:
-                                                    if beat.effect.tremoloBar.type.value == 1:
+                                                    points = beat.effect.tremoloBar.points
+                                                    if points:
+                                                        start_value = points[0].value
+                                                        end_value = points[-1].value
+
+                                                    if start_value == 0 and end_value < 0:
                                                         training_src.append(cfg.TREM_BAR_1)
                                                         accents_collect[8] += 1
-                                                    elif beat.effect.tremoloBar.type.value == 2:
+
+                                                    # Dip: starts neutral, dips, returns to neutral
+                                                    elif start_value == 0 and end_value == 0 and any(p.value < 0 for p in points[1:-1]):
                                                         training_src.append(cfg.TREM_BAR_2)
                                                         accents_collect[9] += 1
-                                                    elif beat.effect.tremoloBar.type.value == 3:
-                                                        training_src.append(cfg.TREM_BAR_3)
-                                                        accents_collect[10] += 1
-                                                    elif beat.effect.tremoloBar.type.value == 4:
+
+                                                    # Pre-dive: starts low, returns to neutral
+                                                    elif start_value < 0 and end_value != 0:
                                                         training_src.append(cfg.TREM_BAR_4)
                                                         accents_collect[11] += 1
-                                                    elif beat.effect.tremoloBar.type.value == 5:
+
+                                                    elif start_value < 0 and end_value == 0:
                                                         training_src.append(cfg.TREM_BAR_5)
                                                         accents_collect[12] += 1
+                                                    else:
+                                                        training_src.append(cfg.TREM_BAR_3)
+                                                        accents_collect[10] += 1
+                                                        
                                                     L = min(L + 1, L_MAX)
 
                                                 if note.effect.slides:
