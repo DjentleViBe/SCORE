@@ -18,7 +18,7 @@ Use virtual environment if possible. To install dependencies:
 
 On Windows:
 ```
-pip install -r requirements-windows.txt
+pip install --extra-index-url https://download.pytorch.org/whl/cu124 -r requirement-windows.txt
 ```
 On macOS:
 ```
