@@ -21,6 +21,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from validation import validation
 import argparse
+from fileutils import get_all_files_recursive
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run script with mode and optional start_id.")
@@ -112,124 +113,132 @@ if __name__ == '__main__':
         training_src_encoder_1 = training_src_encoder_1.reshape(1, cfg.MAX_SEQ_LENGTH)
         num_s = 0
         file_ind = 0
+
         for f in cfg.TRAINING:
-            for filename in os.listdir(GPROFOLDER + f):
+            filenamelist = get_all_files_recursive(GPROFOLDER + f)
+            for filename in filenamelist:
                 training_src = []
-                file_path = os.path.join(GPROFOLDER + f, filename)
+                file_path = filename
                 # Check if it is a file (not a directory)
-                if os.path.isfile(file_path):
+                if os.path.isfile(file_path) and not END_SEQ:
                     print(f"File: {file_path}")
                     song = readgpro(str(file_path))
                     tuning = guitarinfo(song)
 
                     for track in song.tracks:
-                        # Map values to Genaral MIDI.
-                        for measure in track.measures:
-                            if not END_SEQ:
-                                for beat in measure.voices[0].beats:
-                                    L = 0
-                                    for note_index, note in enumerate(beat.notes):
-                                        training_src.append(tokenizer_1(note.value,
-                                                                            note.string,
-                                                                            note.beat.duration,
-                                                                            note.effect.palmMute + 1))
-                                        if L == 0:
-                                            if training_src[L] < cfg.BAR:
-                                                start_collect[training_src[L]] += 1
-                                        training_note_encoder_1[N] = note_prob(note.value, note.string)
-                                        training_beat_encoder_1[N] = beat_prob(note.beat.duration)
-                                        N += 1
-                                        L = min(L + 1, L_MAX)
-                                        if note_index != 0:
-                                            training_src.append(cfg.BARRE_NOTE)
-                                            accents_collect[0] += 1
-                                            L = min(L + 1, L_MAX)
+                        if not END_SEQ:
+                            # Map values to Genaral MIDI.
+                            for measure in track.measures:
+                                if not END_SEQ:
+                                    for beat in measure.voices[0].beats:
+                                        L = 0
+                                        if not END_SEQ:
+                                            for note_index, note in enumerate(beat.notes):
+                                                training_src.append(tokenizer_1(note.value,
+                                                                                    note.string,
+                                                                                    note.beat.duration,
+                                                                                    note.effect.palmMute + 1))
+                                                if L == 0:
+                                                    if training_src[L] < cfg.BAR:
+                                                        start_collect[training_src[L]] += 1
+                                                training_note_encoder_1[N] = note_prob(note.value, note.string)
+                                                training_beat_encoder_1[N] = beat_prob(note.beat.duration)
+                                                N += 1
+                                                L = min(L + 1, L_MAX)
+                                                if note_index != 0:
+                                                    training_src.append(cfg.BARRE_NOTE)
+                                                    accents_collect[0] += 1
+                                                    L = min(L + 1, L_MAX)
 
-                                        if note.effect.isBend > 0:
-                                            if note.effect.bend.type.value == 1:
-                                                training_src.append(cfg.BEND_NOTE_1)
-                                                accents_collect[1] += 1
-                                            elif note.effect.bend.type.value == 2:
-                                                training_src.append(cfg.BEND_NOTE_2)
-                                                accents_collect[2] += 1
-                                            elif note.effect.bend.type.value == 3:
-                                                training_src.append(cfg.BEND_NOTE_3)
-                                                accents_collect[3] += 1
-                                            elif note.effect.bend.type.value == 4:
-                                                training_src.append(cfg.BEND_NOTE_4)
-                                                accents_collect[4] += 1
-                                            elif note.effect.bend.type.value == 5:
-                                                training_src.append(cfg.BEND_NOTE_5)
-                                                accents_collect[5] += 1
-                                            elif note.effect.bend.type.value == 6:
-                                                training_src.append(cfg.BEND_NOTE_6)
-                                                accents_collect[6] += 1
-                                            elif note.effect.bend.type.value == 7:
-                                                training_src.append(cfg.BEND_NOTE_7)
-                                                accents_collect[7] += 1
-                                            L = min(L + 1, L_MAX)
-                                        
-                                        if note.type.name == 'dead':
-                                            training_src.append(cfg.DEAD_NOTE)
-                                            accents_collect[13] += 1
-                                            L = min(L + 1, L_MAX)
+                                                if note.effect.isBend > 0:
+                                                    if note.effect.bend.type.value == 1:
+                                                        training_src.append(cfg.BEND_NOTE_1)
+                                                        accents_collect[1] += 1
+                                                    elif note.effect.bend.type.value == 2:
+                                                        training_src.append(cfg.BEND_NOTE_2)
+                                                        accents_collect[2] += 1
+                                                    elif note.effect.bend.type.value == 3:
+                                                        training_src.append(cfg.BEND_NOTE_3)
+                                                        accents_collect[3] += 1
+                                                    elif note.effect.bend.type.value == 4:
+                                                        training_src.append(cfg.BEND_NOTE_4)
+                                                        accents_collect[4] += 1
+                                                    elif note.effect.bend.type.value == 5:
+                                                        training_src.append(cfg.BEND_NOTE_5)
+                                                        accents_collect[5] += 1
+                                                    elif note.effect.bend.type.value == 6:
+                                                        training_src.append(cfg.BEND_NOTE_6)
+                                                        accents_collect[6] += 1
+                                                    elif note.effect.bend.type.value == 7:
+                                                        training_src.append(cfg.BEND_NOTE_7)
+                                                        accents_collect[7] += 1
+                                                    L = min(L + 1, L_MAX)
+                                                
+                                                if note.type.name == 'dead':
+                                                    training_src.append(cfg.DEAD_NOTE)
+                                                    accents_collect[13] += 1
+                                                    L = min(L + 1, L_MAX)
 
-                                        if beat.effect.isTremoloBar is True:
-                                            if beat.effect.tremoloBar.type.value == 1:
-                                                training_src.append(cfg.TREM_BAR_1)
-                                                accents_collect[8] += 1
-                                            elif beat.effect.tremoloBar.type.value == 2:
-                                                training_src.append(cfg.TREM_BAR_2)
-                                                accents_collect[9] += 1
-                                            elif beat.effect.tremoloBar.type.value == 3:
-                                                training_src.append(cfg.TREM_BAR_3)
-                                                accents_collect[10] += 1
-                                            elif beat.effect.tremoloBar.type.value == 4:
-                                                training_src.append(cfg.TREM_BAR_4)
-                                                accents_collect[11] += 1
-                                            elif beat.effect.tremoloBar.type.value == 5:
-                                                training_src.append(cfg.TREM_BAR_5)
-                                                accents_collect[12] += 1
-                                            L = min(L + 1, L_MAX)
+                                                if beat.effect.isTremoloBar is True:
+                                                    if beat.effect.tremoloBar.type.value == 1:
+                                                        training_src.append(cfg.TREM_BAR_1)
+                                                        accents_collect[8] += 1
+                                                    elif beat.effect.tremoloBar.type.value == 2:
+                                                        training_src.append(cfg.TREM_BAR_2)
+                                                        accents_collect[9] += 1
+                                                    elif beat.effect.tremoloBar.type.value == 3:
+                                                        training_src.append(cfg.TREM_BAR_3)
+                                                        accents_collect[10] += 1
+                                                    elif beat.effect.tremoloBar.type.value == 4:
+                                                        training_src.append(cfg.TREM_BAR_4)
+                                                        accents_collect[11] += 1
+                                                    elif beat.effect.tremoloBar.type.value == 5:
+                                                        training_src.append(cfg.TREM_BAR_5)
+                                                        accents_collect[12] += 1
+                                                    L = min(L + 1, L_MAX)
 
-                                        if note.effect.slides:
-                                            if note.effect.slides[0].name == 'legatoSlideTo':
-                                                training_src.append(cfg.SLIDE_NOTE_1)
-                                                accents_collect[14] += 1
-                                            elif note.effect.slides[0].name == 'shiftSlideTo':
-                                                training_src.append(cfg.SLIDE_NOTE_2)
-                                                accents_collect[15] += 1
-                                            elif note.effect.slides[0].name == 'intoFromBelow':
-                                                training_src.append(cfg.SLIDE_NOTE_3)
-                                                accents_collect[16] += 1
-                                            elif note.effect.slides[0].name == 'intoFromAbove':
-                                                training_src.append(cfg.SLIDE_NOTE_4)
-                                                accents_collect[17] += 1
-                                            elif note.effect.slides[0].name == 'outDownwards':
-                                                training_src.append(cfg.SLIDE_NOTE_5)
-                                                accents_collect[18] += 1
-                                            elif note.effect.slides[0].name == 'outUpwards':
-                                                training_src.append(cfg.SLIDE_NOTE_6)
-                                                accents_collect[19] += 1
-                                            L = min(L + 1, L_MAX)
-                                        
-                                        if note.effect.hammer == True:
-                                            training_src.append(cfg.HAMMER)
-                                            accents_collect[20] += 1
-                                            L = min(L + 1, L_MAX)
+                                                if note.effect.slides:
+                                                    if note.effect.slides[0].name == 'legatoSlideTo':
+                                                        training_src.append(cfg.SLIDE_NOTE_1)
+                                                        accents_collect[14] += 1
+                                                    elif note.effect.slides[0].name == 'shiftSlideTo':
+                                                        training_src.append(cfg.SLIDE_NOTE_2)
+                                                        accents_collect[15] += 1
+                                                    elif note.effect.slides[0].name == 'intoFromBelow':
+                                                        training_src.append(cfg.SLIDE_NOTE_3)
+                                                        accents_collect[16] += 1
+                                                    elif note.effect.slides[0].name == 'intoFromAbove':
+                                                        training_src.append(cfg.SLIDE_NOTE_4)
+                                                        accents_collect[17] += 1
+                                                    elif note.effect.slides[0].name == 'outDownwards':
+                                                        training_src.append(cfg.SLIDE_NOTE_5)
+                                                        accents_collect[18] += 1
+                                                    elif note.effect.slides[0].name == 'outUpwards':
+                                                        training_src.append(cfg.SLIDE_NOTE_6)
+                                                        accents_collect[19] += 1
+                                                    L = min(L + 1, L_MAX)
+                                                
+                                                if note.effect.hammer == True:
+                                                    training_src.append(cfg.HAMMER)
+                                                    accents_collect[20] += 1
+                                                    L = min(L + 1, L_MAX)
 
-                                        if note.effect.vibrato == True:
-                                            training_src.append(cfg.VIBRATO)
-                                            accents_collect[21] += 1
-                                            L = min(L + 1, L_MAX)
+                                                if note.effect.vibrato == True:
+                                                    training_src.append(cfg.VIBRATO)
+                                                    accents_collect[21] += 1
+                                                    L = min(L + 1, L_MAX)
 
-                                        if note.effect.isHarmonic == True:
-                                            training_src.append(cfg.HARMONIC_1)
-                                            accents_collect[22] += 1
-                                            L = min(L + 1, L_MAX)
-                                        
-                                training_src.append(cfg.BAR)
-                                L = min(L + 1, L_MAX)                      
+                                                if note.effect.isHarmonic == True:
+                                                    training_src.append(cfg.HARMONIC_1)
+                                                    accents_collect[22] += 1
+                                                    L = min(L + 1, L_MAX)
+                                                if N == cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH - 1:
+                                                    END_SEQ = True
+                                                    print("Max number of sequences reached!", N)
+                                                    break   
+                                    training_src.append(cfg.BAR)
+                                    L = min(L + 1, L_MAX)
+                                                   
                 if cfg.EOS_TRUE:
                     training_src.append(cfg.EOS)
                     remainder = len(training_src) % 32
