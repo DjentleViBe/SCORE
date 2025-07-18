@@ -64,7 +64,7 @@ def plotbar(labels, title, counts, filename):
     plt.ylabel('Occurrences', fontsize=12)
     plt.title(title, fontsize=14)
     #plt.xticks(range(1, 13))
-    plt.xticks(rotation=45) 
+    plt.xticks(rotation=90) 
 
     for bar in bars:
         yval = bar.get_height()

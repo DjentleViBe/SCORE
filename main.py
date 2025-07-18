@@ -151,25 +151,28 @@ if __name__ == '__main__':
                                                     L = min(L + 1, L_MAX)
 
                                                 if note.effect.isBend > 0:
-                                                    if note.effect.bend.type.value == 1:
+                                                    if note.effect.bend.type == gp.BendType.bend:
                                                         training_src.append(cfg.BEND_NOTE_1)
                                                         accents_collect[1] += 1
-                                                    elif note.effect.bend.type.value == 2:
-                                                        training_src.append(cfg.BEND_NOTE_2)
-                                                        accents_collect[2] += 1
-                                                    elif note.effect.bend.type.value == 3:
+                                                    elif note.effect.bend.type == gp.BendType.bendRelease:
                                                         training_src.append(cfg.BEND_NOTE_3)
                                                         accents_collect[3] += 1
-                                                    elif note.effect.bend.type.value == 4:
-                                                        training_src.append(cfg.BEND_NOTE_4)
-                                                        accents_collect[4] += 1
-                                                    elif note.effect.bend.type.value == 5:
-                                                        training_src.append(cfg.BEND_NOTE_5)
-                                                        accents_collect[5] += 1
-                                                    elif note.effect.bend.type.value == 6:
-                                                        training_src.append(cfg.BEND_NOTE_6)
-                                                        accents_collect[6] += 1
-                                                    elif note.effect.bend.type.value == 7:
+                                                    elif note.effect.bend.type == gp.BendType.prebend:
+                                                        points = note.effect.bend.points
+                                                        if len(points) < 2:
+                                                            training_src.append(cfg.BEND_NOTE_5)
+                                                            accents_collect[5] += 1
+                                                        start_val = points[0].value
+                                                        next_val = points[1].value
+
+                                                        # Check if first point starts bent and next one bends higher
+                                                        if start_val > 0 and next_val > start_val:
+                                                            training_src.append(cfg.BEND_NOTE_6)
+                                                            accents_collect[6] += 1
+                                                        else:
+                                                            training_src.append(cfg.BEND_NOTE_5)
+                                                            accents_collect[5] += 1
+                                                    elif note.effect.bend.type == gp.BendType.prebendRelease:
                                                         training_src.append(cfg.BEND_NOTE_7)
                                                         accents_collect[7] += 1
                                                     L = min(L + 1, L_MAX)
