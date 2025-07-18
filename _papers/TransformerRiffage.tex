@@ -342,19 +342,20 @@ where, $\delta$ is a sequence weight hyper parameter.
 \subsubsection{Dataset}
 Relavant statistics about the dataset used for training and evaluation are provided in Appendix~\eqref{app:C}
 \section{Inference}
-Given that the model is autoregressive and expects an initial token, selecting the start token based on the distribution of starting notes of musical measures in the training data yields more consistent generation.\\
+Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
+distribution of starting notes of musical measures in the training data yields more consistent generation.
 \begin{figure}[H]
   \centering
 \includegraphics[clip, width=0.6\linewidth]{dec_RPE_ann_CB_Large_startprobability.pdf}
 \caption{Token occurrences of first note of a musical measure in training data.}
-  \label{fig:note}
+  \label{fig:firstnote}
 \end{figure}
 
 \begin{figure}[H]
   \centering
 \includegraphics[clip, width=0.6\linewidth]{dec_RPE_ann_CB_Large_trainingaccentprobability.pdf}
 \caption{Accent occurrences in training data.}
-  \label{fig:note}
+  \label{fig:accentnote}
 \end{figure}
 The idea of context carryover has been well-established in \cite{context}. During inference, the model carries over context from previous sequences by using the last token of the preceding measure as the first token for the subsequent measure.
 
