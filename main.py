@@ -73,10 +73,10 @@ if __name__ == '__main__':
     'D - 9_Tuplets',
     'D - 11_Tuplets']
     labelsaccents = ['BARRE_NOTE', 'BEND_NOTE_1', 'BEND_NOTE_2', 'BEND_NOTE_3', 'BEND_NOTE_4', 'BEND_NOTE_5', 'BEND_NOTE_6', 'BEND_NOTE_7', 
-                     'TREM_BAR_1', 'TREM_BAR_2', 'TREM_BAR_3', 'TREM_BAR_4', 'TREM_BAR_5', 'DEAD_NOTE',
+                     'TREM_BAR_1', 'TREM_BAR_2', 'TREM_BAR_3', 'TREM_BAR_4', 'TREM_BAR_5', 
                      'SLIDE_NOTE_1', 'SLIDE_NOTE_2', 'SLIDE_NOTE_3', 'SLIDE_NOTE_4', 'SLIDE_NOTE_5', 'SLIDE_NOTE_6',
-                     'HAMMER', 'VIBRATO', 'HARMONIC_1']
-    accents_collect = np.zeros((23), dtype='int32')
+                     'DEAD_NOTE', 'HAMMER', 'VIBRATO', 'HARMONIC_1', 'PALM_MUTE']
+    accents_collect = np.zeros((24), dtype='int32')
     start_collect = np.zeros((cfg.VOCAB_SIZE), dtype = 'int32')
     ################################
     END_SEQ = False
@@ -179,7 +179,7 @@ if __name__ == '__main__':
                                                 
                                                 if note.type.name == 'dead':
                                                     training_src.append(cfg.DEAD_NOTE)
-                                                    accents_collect[13] += 1
+                                                    accents_collect[19] += 1
                                                     L = min(L + 1, L_MAX)
 
                                                 if beat.effect.isTremoloBar is True:
@@ -214,22 +214,22 @@ if __name__ == '__main__':
                                                 if note.effect.slides:
                                                     if note.effect.slides[0].name == 'legatoSlideTo':
                                                         training_src.append(cfg.SLIDE_NOTE_1)
-                                                        accents_collect[14] += 1
+                                                        accents_collect[13] += 1
                                                     elif note.effect.slides[0].name == 'shiftSlideTo':
                                                         training_src.append(cfg.SLIDE_NOTE_2)
-                                                        accents_collect[15] += 1
+                                                        accents_collect[14] += 1
                                                     elif note.effect.slides[0].name == 'intoFromBelow':
                                                         training_src.append(cfg.SLIDE_NOTE_3)
-                                                        accents_collect[16] += 1
+                                                        accents_collect[15] += 1
                                                     elif note.effect.slides[0].name == 'intoFromAbove':
                                                         training_src.append(cfg.SLIDE_NOTE_4)
-                                                        accents_collect[17] += 1
+                                                        accents_collect[16] += 1
                                                     elif note.effect.slides[0].name == 'outDownwards':
                                                         training_src.append(cfg.SLIDE_NOTE_5)
-                                                        accents_collect[18] += 1
+                                                        accents_collect[17] += 1
                                                     elif note.effect.slides[0].name == 'outUpwards':
                                                         training_src.append(cfg.SLIDE_NOTE_6)
-                                                        accents_collect[19] += 1
+                                                        accents_collect[18] += 1
                                                     L = min(L + 1, L_MAX)
                                                 
                                                 if note.effect.hammer == True:
@@ -246,10 +246,15 @@ if __name__ == '__main__':
                                                     training_src.append(cfg.HARMONIC_1)
                                                     accents_collect[22] += 1
                                                     L = min(L + 1, L_MAX)
+
+                                                if note.effect.palmMute:
+                                                    accents_collect[23] += 1
+
                                                 if N == cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH - 1:
                                                     END_SEQ = True
                                                     print("Max number of sequences reached!", N)
-                                                    break   
+                                                    break
+
                                     training_src.append(cfg.BAR)
                                     L = min(L + 1, L_MAX)
                                                    
