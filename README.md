@@ -30,11 +30,9 @@ pip install -r requirements-linux.txt
 ```
 ## Running
 ### Training
-1. Place the `.gp5` files intended for training inside the folder:
-`gprofiles/<MUSIC_STYLE>/`
-where `<MUSIC_STYLE>` corresponds to the value of the `TRAINING` variable in `config.py`.
-2. Modify the relevant variables in `config.py` as needed for your experiment.
-3. Run the training script:
+1. Dataset can be downloaded from [SCORE-SET](). Extract the contents to ```gprofiles```
+2. Change the `TRAINING` variable in `config.py` to match the extracted folder downloaded in 1.
+3. Run:
 ```sh
 python main.py --mode train
 ```
@@ -50,5 +48,5 @@ where `<id>` is the first token of the musical measure.
 `.gp5` files are exported inside `RESULTS`/`<TEST>` folder where `<TEST>` is the `BACKUP` variable entered in `config.py`.
 
 ### (Pre-)trained model
-A pre-trained model is available in the latest release section of the repository.
-Please download and extract its contents into the `RESULTS` folder before running evaluation or inference. `BACKUP` variable in `config.py` should match the name of the downloaded model.
+A pre-trained model can be obtained in the latest [release]().
+Please download and extract its contents into the `RESULTS` folder before running evaluation. `BACKUP` variable in `config.py` should match the name of the pre-trained model.
