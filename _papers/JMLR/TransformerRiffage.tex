@@ -91,7 +91,7 @@ but also provides flexibility to accommodate alternative tunings, which are incr
 With 6 strings and 23 frets per string, the instrument offers 138 distinct fretboard positions. The rhythmic structure is 
 divided into seven beat durations: whole, 1/2, 1/4, 1/8, 1/16, and 1/32 and 1/64 notes. 
 These divisions provide varying levels of temporal granularity for representing note durations. Each beat can further be 
-subdivided into 14 distinct rhythmic values which is listed in Appendix~\ref{app:B}, which makes a total to 82 unique beat indices.
+subdivided into 14 distinct rhythmic values which is listed in Appendix~\ref{app:C}, which makes a total to 82 unique beat indices.
 Since palm muting is a prominent feature in metal music, 
 it is assigned a unique token in the representation. This encoding process produces 138 * 98 * 2 = 27048 unique musical tokens. 
 The expressive vocabulary listed in Appendix~\ref{app:A} is represented using the same format. A unique integer is assigned to various accents used in guitar playing.
@@ -340,7 +340,7 @@ Sequenceloss = \min\left( \frac{\text{step}}{\text{EPOCHS}} \cdot \left( \frac{\
 \end{align}
 where, $\delta$ is a sequence weight hyper parameter.
 \subsubsection{Dataset}
-Relavant statistics about the dataset used for training and evaluation are provided in Appendix~\eqref{app:C}
+Relavant statistics about the dataset used for training and evaluation are provided in Appendix~\eqref{app:B}
 \section{Inference}
 Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
 distribution of starting notes of musical measures in the training data yields more consistent generation.
@@ -465,12 +465,21 @@ EOS  & 27075\\
 \label{tab:accent_indexing}
 \end{table}
 
-\newpage
 \section{}
 \label{app:B}
+This appendix explains relevant statistics about the dataset used for training and evaluation.
+The rhythm guitar tracks were obtained from \cite{SCORESET}.
+The dataset consists files in .gp5 format in standard tuning. 
+From the full set, a total of 6208 sequences were selected via random sampling for training.
+An 80/20 split was used to create the training and validation sets. 
+For testing, top 10 first notes of each measure were selected as 
+prompts for sequence generation and evaluation.
+
+\section{}
+\label{app:C}
 In this appendix a comprehensive list of rhythmic patterns are listed.
 \noindent
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \begin{tabular}{|c|c|c|}
 \hline
@@ -497,16 +506,31 @@ Dotted - 11-tuplets & 14 \\
 \end{table}
 
 \section{}
-\label{app:C}
-This appendix explains relevant statistics about the dataset used for training and evaluation.
-\subsection{Preparation}
-The rhythm guitar tracks were extracted manually from the original Guitar Pro files. Finger adjustments present in the source files are described in detail in the encoding section. No additional normalization or filtering—such as pitch standardization or sequence length filtering—was performed beyond this manual selection.
-
-The dataset consists exclusively of rhythm guitar tracks in .gp5 format with a custom tuning (F C G\# D\# A\# D\#). It contains 6,208 sequences, each with a maximum length of 32 tokens.
-
-An 80/20 split was used to create the training and validation sets. For testing, the top 10 first notes of each measure were selected as prompts for sequence generation and evaluation.
-
-Due to copyright restrictions, the original .gp5 files and preprocessing scripts cannot be shared. However, the code and model pipeline are designed to operate on any Guitar Pro dataset, provided the files are preprocessed into the expected format as described.
+\label{app:D}
+This appendix lists hyper-parameter configuration used to generate results.
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Property} & \textbf{Value} \\
+\hline
+FFN\_HIDDEN  & 1024 \\
+MAX\_SEQ\_LENGTH & 32 \\
+NUM\_HEADS & 8 \\
+DROP\_PROB & 0.3 \\
+NUM\_LAYERS  & 6 \\
+D\_MODEL & 256 \\
+LEARNING\_RATE & 0.0001 \\
+TEMPERATURE  & 1.0 \\
+OVERLAP & 8 \\
+LAMBDA & 1.5 \\
+ALPHA & 0.1 \\
+DELTA  & 0.001 \\
+\hline
+\end{tabular}
+\caption{Hyper-parameters.}
+\label{tab:hyperparams}
+\end{table}
 
 \vskip .2in
 \bibliography{TransformerRiffage}

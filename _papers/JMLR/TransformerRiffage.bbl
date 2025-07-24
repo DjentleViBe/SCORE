@@ -1,14 +1,20 @@
-\begin{thebibliography}{16}
+\begin{thebibliography}{17}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[Begari(2025)]{SC0RE}
+\bibitem[Begari(2025{\natexlab{a}})]{SC0RE}
 Vishakh Begari.
 \newblock Supervised composition and riff engine.
-\newblock \url{https://github.com/DjentleViBe/SC0RE}, 2025.
+\newblock \url{https://github.com/DjentleViBe/SC0RE}, 2025{\natexlab{a}}.
+\newblock Accessed: 2025-07-11.
+
+\bibitem[Begari(2025{\natexlab{b}})]{SCORESET}
+Vishakh Begari.
+\newblock Score-set.
+\newblock \url{https://github.com/DjentleViBe/SCORE-SET}, 2025{\natexlab{b}}.
 \newblock Accessed: 2025-07-11.
 
 \bibitem[Dai et~al.(2019{\natexlab{a}})Dai, Yang, Yang, Carbonell, Le, and
