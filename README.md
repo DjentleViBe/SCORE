@@ -30,7 +30,7 @@ pip install -r requirements-linux.txt
 ```
 ## Running
 ### Training
-1. Dataset can be downloaded from [SCORE-SET](). Extract the contents to ```gprofiles```
+1. Download [SCORE-SET](https://github.com/DjentleViBe/SCORE-SET/releases). Extract the contents of ```SCORE-SET_v*.*.*.zip``` into ```gprofiles``` folder.
 2. Change the `TRAINING` variable in `config.py` to match the extracted folder downloaded in 1.
 3. Run:
 ```sh
