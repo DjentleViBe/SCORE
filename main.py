@@ -22,10 +22,11 @@ from sklearn.model_selection import train_test_split
 from validation import validation
 import argparse
 from fileutils import get_all_files_recursive
+import random
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run script with mode and optional start_id.")
-    parser.add_argument("--mode", type=str, required=True, choices=["train", "eval", "test"], help="Mode to run")
+    parser.add_argument("--mode", type=str, required=True, choices=["train", "eval", "test", "gridsearch"], help="Mode to run")
     parser.add_argument("--start_id", type=int, help="Start ID for processing (required for eval)")
 
     args = parser.parse_args()
@@ -49,6 +50,9 @@ if __name__ == '__main__':
     elif args.mode == "train":
         cfg.MODE = 0
         print("Training...")
+    elif args.mode == "gridsearch":
+        cfg.MODE = 4
+        print("Grid Search")
 
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
     os_type = platform.system()
@@ -95,7 +99,7 @@ if __name__ == '__main__':
     casual_mask_expanded = casualmask.unsqueeze(0).unsqueeze(0)  # (1,1,L,L)
     casual_mask_expanded = casual_mask_expanded.expand(cfg.BATCH, cfg.NUM_HEADS, cfg.MAX_SEQ_LENGTH, cfg.MAX_SEQ_LENGTH)
 
-    if cfg.MODE in (0, 2, 3):
+    if cfg.MODE in (0, 2, 3, 4):
         create_dir('./RESULTS/')
         create_dir('./RESULTS/' + cfg.BACKUP)
         create_dir('./RESULTS/' + cfg.BACKUP + "/gp5")
@@ -121,14 +125,17 @@ if __name__ == '__main__':
                 file_path = filename
                 # Check if it is a file (not a directory)
                 if os.path.isfile(file_path) and not END_SEQ:
-                    print(f"File: {file_path}")
+                    if cfg.MODE != 4:
+                        print(f"File: {file_path}")
                     song = readgpro(str(file_path))
                     tuning = guitarinfo(song)
 
                     for track in song.tracks:
                         if not END_SEQ:
                             # Map values to Genaral MIDI.
-                            for measure in track.measures:
+                            print(f"Total measures : {len(track.measures)}")
+                            start_measure = random.randint(0, len(track.measures))
+                            for measure in track.measures[start_measure:]:
                                 if not END_SEQ:
                                     for beat in measure.voices[0].beats:
                                         L = 0
@@ -308,24 +315,24 @@ if __name__ == '__main__':
         bincountsbeats = np.bincount(training_beat_encoder_1, minlength=15)[1:]
         bincountsaccents = np.bincount(accents_collect, minlength=23)[1:]
 
-        writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
-        plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.pdf')
-        del training_note_encoder_1
+        if cfg.MODE != 4:
+            writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
+            plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.pdf')
+            del training_note_encoder_1
 
-        writebincount(bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
-        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.pdf')
-        del training_beat_encoder_1
+            writebincount(bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
+            plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.pdf')
+            del training_beat_encoder_1
 
-        writebincount(accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
-        plotbar(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.pdf')
-        del accents_collect
+            writebincount(accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
+            plotbar(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.pdf')
+            del accents_collect
 
-        top_indices = sorted_indices[:10]
-        top_values = start_collect[top_indices]
-        top_labels = [str(i) for i in top_indices]
-        writebincount2(top_labels, start_collect[sorted_indices[:10]], './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt')
-        plotbar(top_labels, 'Occurance of First note', top_values, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.pdf')
-        
+            top_indices = sorted_indices[:10]
+            top_values = start_collect[top_indices]
+            top_labels = [str(i) for i in top_indices]
+            writebincount2(top_labels, start_collect[sorted_indices[:10]], './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt')
+            plotbar(top_labels, 'Occurance of First note', top_values, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.pdf')
 
         ITERATION = 0
         lossplot = []
@@ -361,7 +368,7 @@ if __name__ == '__main__':
             ITERATION = checkpoint['epoch']
         print("\nTotal epochs : ", cfg.EPOCHS)
         
-        while ITERATION <= cfg.EPOCHS:
+        while ITERATION < cfg.EPOCHS:
             decoder.train()
             epoch_loss = 0.0  # track epoch loss
             epoch_rep_loss = 0.0
@@ -424,7 +431,7 @@ if __name__ == '__main__':
                 print("Convergence criteria reached!")
                 break
 
-            if ITERATION % cfg.SAVE_EVERY == 0:
+            if ITERATION + 1 % cfg.SAVE_EVERY == 0 and cfg.MODE != 4:
                 checkpoint = {
                 'model_state_dict': decoder.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
@@ -446,7 +453,8 @@ if __name__ == '__main__':
         'loss': loss     # Optionally save the loss value
         }
         torch.save(checkpoint, './RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth')
-        plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot, seq_lossplot], ["Total loss", "Training loss", "Repetition loss", "Validation_loss", "Sequence loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.pdf')
+        if cfg.MODE != 4:
+            plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot, seq_lossplot], ["Total loss", "Training loss", "Repetition loss", "Validation_loss", "Sequence loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.pdf')
 
     if cfg.MODE in (1, 2):
         create_dir('./RESULTS/' + cfg.BACKUP + "/gp5")
@@ -522,14 +530,15 @@ if __name__ == '__main__':
         writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobability.pdf')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         bincountsbeats_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
-        plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitynotes.pdf')
-        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeats.pdf')
+        if cfg.MODE != 4:
+            plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitynotes.pdf')
+            plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeats.pdf')
         
-        KLD = KLDivergence(bincounts_train, bincounts_inf)
-        plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf')
+            KLD = KLDivergence(bincounts_train, bincounts_inf)
+            plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf')
         
-        KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
-        plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf')
+            KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
+            plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf')
         
         #combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf',
         #           './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf',

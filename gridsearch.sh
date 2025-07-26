@@ -1,16 +1,21 @@
 #!/bin/bash
 echo "Starting grid search"
 
+count=0
 FILE="config.py"
-FFNHIDDEN=("1024")
-MAXSEQLEN=("32")
-NUMHEADS=("8")
-NUMLAYERS=("6")
-DMODEL=("256")
+FFNHIDDEN=("1024" "512")
+MAXSEQLEN=("32" "16")
+NUMHEADS=("8" ""4)
+NUMLAYERS=("6" "3")
+DMODEL=("256" "512")
 OVERLAP=("8")
-LAMBDA=("1.5")
-ALPHA=("0.1")
-DELTA=("0.001")
+LAMBDA=("1.5" "0.5")
+ALPHA=("0.1" "0.3")
+DELTA=("0.001" "0.005")
+
+if [ -f "gridsearch.txt" ]; then
+    rm "gridsearch.txt"
+fi
 
 for val1 in "${FFNHIDDEN[@]}"; do
 for val2 in "${MAXSEQLEN[@]}"; do
@@ -22,17 +27,16 @@ for val7 in "${LAMBDA[@]}"; do
 for val8 in "${ALPHA[@]}"; do
 for val9 in "${DELTA[@]}"; do
 
-
         LINE_NUM=9
-        NEW_CONTENT="BACKUP\t\t\t\t = \"maestro_gpro-v1.0.0_Small\""
+        NEW_CONTENT="BACKUP\t\t\t\t = \"${count}_grid_search\""
         sed -i "${LINE_NUM}s/.*/$NEW_CONTENT/" "$FILE"
 
         LINE_NUM=10
-        NEW_CONTENT="SAVE\t\t\t\t = \"maestro_gpro-v1.0.0_Small_L\""
+        NEW_CONTENT="SAVE\t\t\t\t = \"${count}_grid_search_T\""
         sed -i "${LINE_NUM}s/.*/$NEW_CONTENT/" "$FILE"
 
         LINE_NUM=28
-        NEW_CONTENT="EPOCHS\t\t\t = 1"
+        NEW_CONTENT="EPOCHS\t\t\t = 10"
         sed -i "${LINE_NUM}s/.*/$NEW_CONTENT/" "$FILE"
 
         LINE_NUM=31
@@ -63,11 +67,14 @@ for val9 in "${DELTA[@]}"; do
         NEW_CONTENT="DELTA\t\t\t = $val9"
         sed -i "${LINE_NUM}s/.*/$NEW_CONTENT/" "$FILE"
 
-        python main.py --mode train
-        last_line=$(tail -n 1 ./RESULTS/maestro_gpro-v1.0.0_Small/maestro_gpro-v1.0.0_Small.csv | tr -d '\r')
+        python main.py --mode gridsearch
+        last_line=$(tail -n 1 ./RESULTS/${count}_grid_search/${count}_grid_search.csv | tr -d '\r')
         echo "$last_line" | cat -A
-        last_line="$last_line, $val1, $val2, $val3, $val4, $val5, $val6, $val7, $val8, $val9"
+        last_line="$(date +"%T"), $last_line, $val1, $val2, $val3, $val4, $val5, $val6, $val7, $val8, $val9"
         echo "$last_line" >> gridsearch.txt
+
+        
+        count=$((count + 1))
         
 done
 done
