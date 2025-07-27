@@ -13,8 +13,8 @@ LAMBDA=("1.5" "0.5")
 ALPHA=("0.1" "0.3")
 DELTA=("0.001" "0.005")
 
-if [ -f "gridsearch.txt" ]; then
-    rm "gridsearch.txt"
+if [ -f "./_papers/gridsearch.txt" ]; then
+    rm "./_papers/gridsearch.txt"
 fi
 
 for val1 in "${FFNHIDDEN[@]}"; do
@@ -71,7 +71,7 @@ for val9 in "${DELTA[@]}"; do
         last_line=$(tail -n 1 ./RESULTS/${count}_grid_search/${count}_grid_search.csv | tr -d '\r')
         echo "$last_line" | cat -A
         last_line="$(date +"%T"), $last_line, $val1, $val2, $val3, $val4, $val5, $val6, $val7, $val8, $val9"
-        echo "$last_line" >> gridsearch.txt
+        echo "$last_line" >> ./_papers/gridsearch.txt
 
         
         count=$((count + 1))
