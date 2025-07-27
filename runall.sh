@@ -1,7 +1,7 @@
 #!/bin/bash
-echo "Starting grid search"
+echo "Starting test"
 count=0
-
+FILE="config.py"
 if [ -f "./_papers/test_all.txt" ]; then
     rm "./_papers/test_all.txt"
 fi
@@ -25,3 +25,4 @@ for val1 in "${TEST[@]}"; do
         echo "$last_line" >> ./_papers/test_all.txt
         
         count=$((count + 1))
+done
