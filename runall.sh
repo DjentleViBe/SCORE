@@ -6,7 +6,7 @@ if [ -f "./_papers/test_all.txt" ]; then
     rm "./_papers/test_all.txt"
 fi
 
-TEST=("1" "2" "3")
+TEST=("1" "2" "3" "4" "5")
 
 for val1 in "${TEST[@]}"; do
         LINE_NUM=9

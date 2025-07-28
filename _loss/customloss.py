@@ -112,8 +112,7 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         targets_flat = targets.view(-1)
 
         ce_loss = self.ce_loss(logits_flat, targets_flat)
-        
-        if prev_sequence_embedding is not None and sequence_embedding.shape[0] == cfg.MAX_SEQ_LENGTH:
+        if prev_sequence_embedding is not None and sequence_embedding.shape[0] == cfg.BATCH:
             mu_curr, sigma_curr = compute_sequence_gaussians(sequence_embedding)
             mu_prev, sigma_prev = compute_sequence_gaussians(prev_sequence_embedding.detach())
             # print(sigma_curr.max().item())
