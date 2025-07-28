@@ -6,8 +6,8 @@ TUNING              =   [53, 48, 44, 39, 34, 27]
 # 2 : both 
 # 3 : load from file
 MODE                =   2
-BACKUP              =   "maestro_gpro-v1.0.0_Large"
-SAVE                =   "maestro_gpro-v1.0.0_Large_L"
+BACKUP				 = "0_test_all"
+SAVE				 = "0_test_all_T"
 BOS_TRUE            =   0
 EOS_TRUE            =   1
 # 0 - Vanilla
@@ -28,25 +28,25 @@ PREDICTION_CRITERIA =   3
 EPOCHS          =   100
 SAVE_EVERY      =   20
 VOCAB_SIZE      =   27076
-FFN_HIDDEN      =   1024
-MAX_SEQ_LENGTH  =   32
-NUM_HEADS       =   8
+FFN_HIDDEN      =   1512
+MAX_SEQ_LENGTH  =   16
+NUM_HEADS       =   4
 DROP_PROB       =   0.3
-NUM_LAYERS      =   6
-D_MODEL         =   256
+NUM_LAYERS      =   3
+D_MODEL         =   512
 SCHEDULER       =   1
 SCHEDULER_SIZE  =   30
 LEARNING_RATE   =   0.0001
 SMOOTHING       =   0.1
 PATCH           =   1
 STRIDE          =   1
-TRAINING        =   ["maestro_gpro-v1.0.0"]
+TRAINING        =   ["maestro-v3.0.0"]
 NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
 TEMPERATURE     =   1.0
 BATCH           =   32
 OVERLAP         =   8
-LAMBDA          =   1.5
+LAMBDA          =   0.5
 ALPHA           =   0.1
 DELTA           =   0.001
 
