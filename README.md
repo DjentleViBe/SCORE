@@ -43,10 +43,22 @@ After training is complete:
 ```sh
 python main.py --mode eval --start_id <id>  
 ```
-where `<id>` is the first token of the musical measure. 
+where `<id>` is the first token of the musical measure. If ```<id>``` is not passed, first note is obtained from the token probabilities of training data.
 
 `.gp5` files are exported inside `RESULTS`/`<TEST>` folder where `<TEST>` is the `BACKUP` variable entered in `config.py`.
 
 ### (Pre-)trained model
 A pre-trained model can be obtained in the latest [release]().
 Please download and extract its contents into the `RESULTS` folder before running evaluation. `BACKUP` variable in `config.py` should match the name of the pre-trained model.
+
+### Results
+To run hyper-parameter grid search sensitivity study:
+```bash
+./gridsearch.sh
+```
+
+To run random-seed test:
+```bash
+./runall.sh
+```
+```./_papers/findmin.py``` prints mean,  standard deviation values for test and best hyperparameter value based on validation loss.
