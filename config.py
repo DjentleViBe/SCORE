@@ -6,8 +6,8 @@ TUNING              =   [53, 48, 44, 39, 34, 27]
 # 2 : both 
 # 3 : load from file
 MODE                =   2
-BACKUP				 = "0_test_all"
-SAVE				 = "0_test_all_T"
+BACKUP				 = "3_test_all"
+SAVE				 = "3_test_all_T"
 BOS_TRUE            =   0
 EOS_TRUE            =   1
 # 0 - Vanilla
@@ -28,7 +28,7 @@ PREDICTION_CRITERIA =   3
 EPOCHS          =   100
 SAVE_EVERY      =   20
 VOCAB_SIZE      =   27076
-FFN_HIDDEN      =   1512
+FFN_HIDDEN      =   512
 MAX_SEQ_LENGTH  =   16
 NUM_HEADS       =   4
 DROP_PROB       =   0.3
