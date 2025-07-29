@@ -9,6 +9,9 @@ fi
 TEST=("1" "2" "3" "4" "5")
 
 for val1 in "${TEST[@]}"; do
+        LINE_NUM=46
+        NEW_CONTENT="TEMPERATURE\t\t\t\t = 1.0"
+        sed -i "${LINE_NUM}s/.*/$NEW_CONTENT/" "$FILE"
         LINE_NUM=9
         NEW_CONTENT="BACKUP\t\t\t\t = \"${count}_test_all\""
         sed -i "${LINE_NUM}s/.*/$NEW_CONTENT/" "$FILE"
@@ -18,6 +21,9 @@ for val1 in "${TEST[@]}"; do
         sed -i "${LINE_NUM}s/.*/$NEW_CONTENT/" "$FILE"
 
         python main.py --mode train
+        LINE_NUM=46
+        NEW_CONTENT="TEMPERATURE\t\t\t\t = 0.7"
+        sed -i "${LINE_NUM}s/.*/$NEW_CONTENT/" "$FILE"
         python main.py --mode eval
         last_line=$(tail -n 1 ./RESULTS/${count}_test_all/${count}_test_all.csv | tr -d '\r')
         echo "$last_line" | cat -A
