@@ -137,7 +137,7 @@ bt =
 1 + d & \text{if, Triplet(3)} \\
 2 + d & \text{if, Quintuplet(5)} \\
 3 + d & \text{if, Sextuplet(6)} \\
-4  + d& \text{if, Septuplet(7)} \\
+4 + d & \text{if, Septuplet(7)} \\
 5 + d & \text{if, Nonuplet(9)} \\
 6 + d & \text{if, Undecuplet(11)}\\
 \end{cases}
@@ -297,7 +297,7 @@ A weighted sum over relative positional value contributions $V_{\text{rel}}$ is 
 \text{Output} = \text{RA}_{\text{KL}} \times V + \text{RA}_{\text{KL}} \times V_{\text{rel}}
 \end{align}
 \subsection{Loss function}
-The model’s loss is composed of three components:
+The model's loss is composed of three components:
 \begin{align}
 Totalloss=CrossEntropy + Repetition loss + Sequence loss
 \end{align}
@@ -342,40 +342,48 @@ Sequenceloss = \min\left( \frac{\text{step}}{\text{EPOCHS}} \cdot \left( \frac{\
 where, $\delta$ is a sequence weight hyper parameter.
 \subsubsection{Dataset}
 Relavant statistics about the dataset used for training and evaluation are provided in Appendix~\eqref{app:B}
+
+\begin{figure}[htbp]
+  \centering
+\includegraphics[clip, width=0.6\linewidth]{dec_RPE_ann_CB_Large_trainingaccentprobability.pdf}
+\caption{Accent occurrences in training data.}
+  \label{fig:accentnote}
+\end{figure}
+
+\subsection{Grid search over Hyper-Parameters}
+To determine the optimal configuration, a grid search was performed over a predefined set of hyperparameter values. 
+The search included combinations of key parameters such as learning rate, sequence length, model dimensionality, 
+Each configuration was trained for 10 epochs, and performance was evaluated on a validation set using loss. 
+The best-performing set of hyperparameters was selected based on the lowest validation score.
+
 \section{Inference}
 Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
 distribution of starting notes of musical measures in the training data yields more consistent generation.
-\begin{figure}[H]
+\begin{figure}[htbp]
   \centering
 \includegraphics[clip, width=0.6\linewidth]{startprobability.pdf}
 \caption{Token occurrences of first note of a musical measure in training data.}
   \label{fig:firstnote}
 \end{figure}
 
-\begin{figure}[H]
-  \centering
-\includegraphics[clip, width=0.6\linewidth]{dec_RPE_ann_CB_Large_trainingaccentprobability.pdf}
-\caption{Accent occurrences in training data.}
-  \label{fig:accentnote}
-\end{figure}
 The idea of context carryover has been well-established in \cite{context}. During inference, the model carries over context from previous sequences by using the last token of the preceding measure as the first token for the subsequent measure.
 
-Loss values observed after 100 epochs of training:\\
+The reported loss values were computed as the mean over five independent training runs after 100 epochs for hyper-parameter values listen in Appendix~\eqref{app:D}:\\
 \begin{table}[htbp]
  \centering
-\begin{tabular}{cc}
+\begin{tabular}{ccc}
 \hline
-  \multicolumn{1}{|c|}{\textbf{Loss}} & \multicolumn{1}{|c|}{\textbf{Value}}\\
+  \multicolumn{1}{|c|}{\textbf{Loss}} & \multicolumn{1}{|c|}{\textbf{Mean}} & \multicolumn{1}{|c|}{\textbf{Std. dev.}}\\
   \hline
-  \multicolumn{1}{|c|}{Cross Entropy} & \multicolumn{1}{|c|}{1.4629}\\
+  \multicolumn{1}{|c|}{Cross Entropy} & \multicolumn{1}{|c|}{1.5012} & \multicolumn{1}{|c|}{0.0542}\\
   \hline
-  \multicolumn{1}{|c|}{Repetition} & \multicolumn{1}{|c|}{0.1368}\\
+  \multicolumn{1}{|c|}{Repetition} & \multicolumn{1}{|c|}{0.0327} & \multicolumn{1}{|c|}{0.001}\\
   \hline
-  \multicolumn{1}{|c|}{Sequence} & \multicolumn{1}{|c|}{0.1985}\\
+  \multicolumn{1}{|c|}{Sequence} & \multicolumn{1}{|c|}{0.1996} & \multicolumn{1}{|c|}{3e-7}\\
   \hline
-  \multicolumn{1}{|c|}{Total} & \multicolumn{1}{|c|}{1.7983}\\
+  \multicolumn{1}{|c|}{Total} & \multicolumn{1}{|c|}{1.7336} & \multicolumn{1}{|c|}{0.0541}\\
   \hline
-  \multicolumn{1}{|c|}{Validation} & \multicolumn{1}{|c|}{2.0622}\\
+  \multicolumn{1}{|c|}{Validation} & \multicolumn{1}{|c|}{1.9701} & \multicolumn{1}{|c|}{0.1034}\\
     \hline
 \end{tabular}
 \captionsetup{type=table}
@@ -390,9 +398,8 @@ D_{\mathrm{KL}}(P \parallel Q) = \sum_{x \in X} P(x) \log \left( \frac{P(x)}{Q(x
 
 \begin{figure}[H]
   \centering
-\includegraphics[clip, width=0.8\linewidth]{dec_RPE_ann_CB_Large_L_compareprobabilitynotes.pdf}
-\includegraphics[clip, width=0.8\linewidth]{dec_RPE_ann_CB_Large_L_compareprobabilitybeats.pdf}
-\caption{Note and beat occurrences of training data and test data}
+\includegraphics[clip, width=0.8\linewidth]{compareprobabilitynotes.pdf}
+\caption{Note occurrences of training data and test data}
   \label{fig:note}
 \end{figure}
 
@@ -515,21 +522,21 @@ This appendix lists hyper-parameter configuration used to generate results.
 \hline
 \textbf{Property} & \textbf{Value} \\
 \hline
-FFN\_HIDDEN  & 1024 \\
-MAX\_SEQ\_LENGTH & 32 \\
-NUM\_HEADS & 8 \\
+FFN\_HIDDEN  & 512 \\
+MAX\_SEQ\_LENGTH & 16 \\
+NUM\_HEADS & 4 \\
 DROP\_PROB & 0.3 \\
-NUM\_LAYERS  & 6 \\
-D\_MODEL & 256 \\
+NUM\_LAYERS  & 3 \\
+D\_MODEL & 512 \\
 LEARNING\_RATE & 0.0001 \\
 TEMPERATURE  & 1.0 \\
 OVERLAP & 8 \\
-LAMBDA & 1.5 \\
+LAMBDA & 0.5 \\
 ALPHA & 0.1 \\
 DELTA  & 0.001 \\
 \hline
 \end{tabular}
-\caption{Hyper-parameters.}
+\caption{Hyper-parameter values for training.}
 \label{tab:hyperparams}
 \end{table}
 
