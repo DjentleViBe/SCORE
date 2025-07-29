@@ -33,7 +33,7 @@
 % Heading arguments are {volume}{year}{pages}{date submitted}{date published}{paper id}{author-full-names}
 
 \usepackage{lastpage}
-\jmlrheading{23}{2025}{1-\pageref{LastPage}}{1/21; Revised 6/25}{-/-}{21-0000}{Vishakh Begari}
+% \jmlrheading{23}{2025}{1-\pageref{LastPage}}{1/21; Revised 6/25}{-/-}{21-0000}{Vishakh Begari}
 
 % Short headings should be running head and authors last names
 
@@ -342,14 +342,18 @@ Sequenceloss = \min\left( \frac{\text{step}}{\text{EPOCHS}} \cdot \left( \frac{\
 where, $\delta$ is a sequence weight hyper parameter.
 \subsubsection{Dataset}
 Relavant statistics about the dataset used for training and evaluation are provided in Appendix~\eqref{app:B}
-
-\begin{figure}[htbp]
+\begin{figure}[H]
   \centering
-\includegraphics[clip, width=0.6\linewidth]{dec_RPE_ann_CB_Large_trainingaccentprobability.pdf}
+\includegraphics[clip, width=0.7\linewidth]{dec_RPE_ann_CB_Large_trainingaccentprobability.pdf}
 \caption{Accent occurrences in training data.}
   \label{fig:accentnote}
 \end{figure}
-
+\begin{figure}[H]
+  \centering
+\includegraphics[clip, width=0.7\linewidth]{startprobability.pdf}
+\caption{Token occurrences of first note of a musical measure in training data.}
+  \label{fig:firstnote}
+\end{figure}
 \subsection{Grid search over Hyper-Parameters}
 To determine the optimal configuration, a grid search was performed over a predefined set of hyperparameter values. 
 The search included combinations of key parameters such as learning rate, sequence length, model dimensionality, 
@@ -359,17 +363,14 @@ The best-performing set of hyperparameters was selected based on the lowest vali
 \section{Inference}
 Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
 distribution of starting notes of musical measures in the training data yields more consistent generation.
-\begin{figure}[htbp]
-  \centering
-\includegraphics[clip, width=0.6\linewidth]{startprobability.pdf}
-\caption{Token occurrences of first note of a musical measure in training data.}
-  \label{fig:firstnote}
-\end{figure}
 
 The idea of context carryover has been well-established in \cite{context}. During inference, the model carries over context from previous sequences by using the last token of the preceding measure as the first token for the subsequent measure.
-
+To compare the quality of predicted tokens (P)  from true distributions (Q), relative entropy is calculated using Kullback-Leibler divergence:
+\begin{align}
+D_{\mathrm{KL}}(P \parallel Q) = \sum_{x \in X} P(x) \log \left( \frac{P(x)}{Q(x)} \right)
+\end{align}
 The reported loss values were computed as the mean over five independent training runs after 100 epochs for hyper-parameter values listen in Appendix~\eqref{app:D}:\\
-\begin{table}[htbp]
+\begin{table}[H]
  \centering
 \begin{tabular}{ccc}
 \hline
@@ -391,14 +392,9 @@ The reported loss values were computed as the mean over five independent trainin
 \label{tab:loss}
 \end{table}
 
-To compare the quality of predicted tokens (P)  from true distributions (Q), relative entropy is calculated using Kullback–Leibler divergence:
-\begin{align}
-D_{\mathrm{KL}}(P \parallel Q) = \sum_{x \in X} P(x) \log \left( \frac{P(x)}{Q(x)} \right)
-\end{align}
-
 \begin{figure}[H]
   \centering
-\includegraphics[clip, width=0.8\linewidth]{compareprobabilitynotes.pdf}
+\includegraphics[clip, width=0.9\linewidth]{compareprobabilitynotes.pdf}
 \caption{Note occurrences of training data and test data}
   \label{fig:note}
 \end{figure}
