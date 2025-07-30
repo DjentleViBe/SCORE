@@ -1,13 +1,13 @@
 """Defines parameters required for training and inference"""
-TUNING              =   [53, 48, 44, 39, 34, 27]
+TUNING              = [40, 45, 50, 55, 59, 64]
 ################################ transformers #################################
 # 0: train, 
 # 1 : eval
 # 2 : both 
 # 3 : load from file
 MODE                =   2
-BACKUP				 = "3_test_all"
-SAVE				 = "3_test_all_T"
+BACKUP				 = "4_test_all"
+SAVE				 = "4_test_all_T"
 BOS_TRUE            =   0
 EOS_TRUE            =   1
 # 0 - Vanilla
@@ -43,7 +43,7 @@ STRIDE          =   1
 TRAINING        =   ["maestro-v3.0.0"]
 NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
-TEMPERATURE     =   1.0
+TEMPERATURE				 = 0.7
 BATCH           =   32
 OVERLAP         =   8
 LAMBDA          =   0.5
