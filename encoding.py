@@ -2,6 +2,7 @@
 # Note
 # C0 = 0 in GPro
 from config import EOS
+import config as cfg
 
 BASE_INDEX = {
     64: 0,
@@ -92,15 +93,4 @@ def note_prob(note, string):
     if note > EOS:
         return 100
     else:
-        if string == 1:
-            return (note + 6) % 12 + 1
-        elif  string == 2:
-            return (note + 1) % 12 + 1
-        elif  string == 3:
-            return (note + 9) % 12 + 1
-        elif  string == 4:
-            return (note + 4) % 12 + 1
-        elif  string == 5:
-            return (note + 11) % 12 + 1
-        else :
-            return (note + 4) % 12 + 1
+        return (note + (cfg.TUNING[string - 1] % 12)) % 12 + 1
