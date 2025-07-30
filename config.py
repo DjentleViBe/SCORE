@@ -1,5 +1,5 @@
 """Defines parameters required for training and inference"""
-TUNING              = [40, 45, 50, 55, 59, 64]
+TUNING              = [64, 59, 55, 50, 45, 40]
 ################################ transformers #################################
 # 0: train, 
 # 1 : eval
