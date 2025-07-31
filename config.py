@@ -16,7 +16,7 @@ EOS_TRUE            =   1
 # 3 - Same as above + last note of every bar is fed to firt note of next bar
 # 4 - Same as above + loop until no repeatitive notes > BOS 
 TEST_CRITERIA       =   3
-TEST_TRIES          =   10
+TEST_TRIES          =   12
 # Total number of start_id to try with testing
 TEST_NUM            =   3
 # 1 - Greedy Search
