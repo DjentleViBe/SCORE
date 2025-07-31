@@ -7,9 +7,12 @@ __pycache__
 RESULTS
 output.log
 log.txt
-_papers/*.aux
-_papers/*.log
-_papers/*.out
-_papers/*.synctex.gz
-_papers/*.blg
+_papers/JMLR/*.aux
+_papers/JMLR/*.log
+_papers/JMLR/*.out
+_papers/JMLR/*.synctex.gz
+_papers/JMLR/*.blg
 _papers/*.bbl
+*.fls
+*.fdb*
+*.synctex.gz

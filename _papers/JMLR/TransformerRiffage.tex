@@ -33,7 +33,7 @@
 % Heading arguments are {volume}{year}{pages}{date submitted}{date published}{paper id}{author-full-names}
 
 \usepackage{lastpage}
-\jmlrheading{23}{2025}{1-\pageref{LastPage}}{1/21; Revised 6/25}{-/-}{21-0000}{Vishakh Begari}
+% \jmlrheading{23}{2025}{1-\pageref{LastPage}}{1/21; Revised 6/25}{-/-}{21-0000}{Vishakh Begari}
 
 % Short headings should be running head and authors last names
 
@@ -43,9 +43,10 @@
 \begin{document}
 \title{Transformer Riffage}
 
-\author{\name Vishakh Begari \email djentlevibe32168@gmail.com \\
+\author{\name Vishakh Begari \email vibedjentle@gmail.com \\
        \addr Independent Researcher\\
-       Gauting, 82131, Germany}
+       Bavaria, Germany\\
+       ORCID: \href{https://orcid.org/0009-0008-9399-8581}{0009-0008-9399-8581}}
 
 \editor{Adam Smasher}
 
@@ -63,7 +64,7 @@ An inference method is implemented that provides meaningful validation without h
 \end{abstract}
 
 \begin{keywords}
-  Transformers, Music, Generative
+  Transformer models, Music, Generative, Sequence modelling, Attention mechanism
 \end{keywords}
 
 \section{Introduction}
@@ -91,7 +92,7 @@ but also provides flexibility to accommodate alternative tunings, which are incr
 With 6 strings and 23 frets per string, the instrument offers 138 distinct fretboard positions. The rhythmic structure is 
 divided into seven beat durations: whole, 1/2, 1/4, 1/8, 1/16, and 1/32 and 1/64 notes. 
 These divisions provide varying levels of temporal granularity for representing note durations. Each beat can further be 
-subdivided into 14 distinct rhythmic values which is listed in Appendix~\ref{app:B}, which makes a total to 82 unique beat indices.
+subdivided into 14 distinct rhythmic values which is listed in Appendix~\ref{app:C}, which makes a total to 82 unique beat indices.
 Since palm muting is a prominent feature in metal music, 
 it is assigned a unique token in the representation. This encoding process produces 138 * 98 * 2 = 27048 unique musical tokens. 
 The expressive vocabulary listed in Appendix~\ref{app:A} is represented using the same format. A unique integer is assigned to various accents used in guitar playing.
@@ -136,7 +137,7 @@ bt =
 1 + d & \text{if, Triplet(3)} \\
 2 + d & \text{if, Quintuplet(5)} \\
 3 + d & \text{if, Sextuplet(6)} \\
-4  + d& \text{if, Septuplet(7)} \\
+4 + d & \text{if, Septuplet(7)} \\
 5 + d & \text{if, Nonuplet(9)} \\
 6 + d & \text{if, Undecuplet(11)}\\
 \end{cases}
@@ -296,7 +297,7 @@ A weighted sum over relative positional value contributions $V_{\text{rel}}$ is 
 \text{Output} = \text{RA}_{\text{KL}} \times V + \text{RA}_{\text{KL}} \times V_{\text{rel}}
 \end{align}
 \subsection{Loss function}
-The model’s loss is composed of three components:
+The model's loss is composed of three components:
 \begin{align}
 Totalloss=CrossEntropy + Repetition loss + Sequence loss
 \end{align}
@@ -339,39 +340,52 @@ To make the training more stable, the sequence loss is annealed and clamped.
 Sequenceloss = \min\left( \frac{\text{step}}{\text{EPOCHS}} \cdot \left( \frac{\delta \cdot \mathcal{L}_{\text{KL}}}{\text{BATCH}} \right),\ 0.2 \right)
 \end{align}
 where, $\delta$ is a sequence weight hyper parameter.
-\section{Inference}
-Given that the model is autoregressive and expects an initial token, selecting the start token based on the distribution of starting notes of musical measures in the training data yields more consistent generation.\\
+\subsubsection{Dataset}
+Relavant statistics about the dataset used for training and evaluation are provided in Appendix~\eqref{app:B}
 \begin{figure}[H]
   \centering
-\includegraphics[clip, width=0.8\linewidth]{dec_RPE_ann_CB_Large_startprobability.pdf}
+\includegraphics[clip, width=0.7\linewidth]{trainingaccentprobability.pdf}
+\caption{Accent occurrences in training data for a random seed.}
+  \label{fig:accentnote}
+\end{figure}
+\begin{figure}[H]
+  \centering
+\includegraphics[clip, width=0.7\linewidth]{startprobability.pdf}
 \caption{Token occurrences of first note of a musical measure in training data.}
-  \label{fig:note}
+  \label{fig:firstnote}
 \end{figure}
+\subsection{Grid search over Hyper-Parameters}
+To determine the optimal configuration, a grid search was performed over a predefined set of hyperparameter values. 
+The search included combinations of key parameters such as learning rate, sequence length, model dimensionality, 
+Each configuration was trained for 10 epochs, and performance was evaluated on a validation set using loss. 
+The best-performing set of hyperparameters was selected based on the lowest validation score.
 
-\begin{figure}[H]
-  \centering
-\includegraphics[clip, width=0.7\linewidth]{dec_RPE_ann_CB_Large_trainingaccentprobability.pdf}
-\caption{Accent occurrences in training data.}
-  \label{fig:note}
-\end{figure}
+\section{Inference}
+Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
+distribution of starting notes of musical measures in the training data yields more consistent generation.
+
 The idea of context carryover has been well-established in \cite{context}. During inference, the model carries over context from previous sequences by using the last token of the preceding measure as the first token for the subsequent measure.
+To compare the quality of predicted tokens (P)  from true distributions (Q), relative entropy is calculated using Kullback-Leibler divergence:
+\begin{align}
+D_{\mathrm{KL}}(P \parallel Q) = \sum_{x \in X} P(x) \log \left( \frac{P(x)}{Q(x)} \right)
+\end{align}
 
-Loss values observed after 100 epochs of training:\\
-\begin{table}[htbp]
+The reported loss values were computed as the mean over five independent training runs after 100 epochs for hyper-parameter values listed in Appendix~\eqref{app:D}:
+\begin{table}[H]
  \centering
-\begin{tabular}{cc}
+\begin{tabular}{ccc}
 \hline
-  \multicolumn{1}{|c|}{\textbf{Loss}} & \multicolumn{1}{|c|}{\textbf{Value}}\\
+  \multicolumn{1}{|c|}{\textbf{Loss}} & \multicolumn{1}{|c|}{\textbf{Mean}} & \multicolumn{1}{|c|}{\textbf{Std. dev.}}\\
   \hline
-  \multicolumn{1}{|c|}{Cross Entropy} & \multicolumn{1}{|c|}{1.4629}\\
+  \multicolumn{1}{|c|}{Cross Entropy} & \multicolumn{1}{|c|}{1.6827} & \multicolumn{1}{|c|}{0.0437}\\
   \hline
-  \multicolumn{1}{|c|}{Repetition} & \multicolumn{1}{|c|}{0.1368}\\
+  \multicolumn{1}{|c|}{Repetition} & \multicolumn{1}{|c|}{0.0323} & \multicolumn{1}{|c|}{0.0002}\\
   \hline
-  \multicolumn{1}{|c|}{Sequence} & \multicolumn{1}{|c|}{0.1985}\\
+  \multicolumn{1}{|c|}{Sequence} & \multicolumn{1}{|c|}{0.1996} & \multicolumn{1}{|c|}{1e-6}\\
   \hline
-  \multicolumn{1}{|c|}{Total} & \multicolumn{1}{|c|}{1.7983}\\
+  \multicolumn{1}{|c|}{Total} & \multicolumn{1}{|c|}{1.8021} & \multicolumn{1}{|c|}{0.1051}\\
   \hline
-  \multicolumn{1}{|c|}{Validation} & \multicolumn{1}{|c|}{2.0622}\\
+  \multicolumn{1}{|c|}{Validation} & \multicolumn{1}{|c|}{1.8021} & \multicolumn{1}{|c|}{0.1051}\\
     \hline
 \end{tabular}
 \captionsetup{type=table}
@@ -379,28 +393,25 @@ Loss values observed after 100 epochs of training:\\
 \label{tab:loss}
 \end{table}
 
-To compare the quality of predicted tokens (P)  from true distributions (Q), relative entropy is calculated using Kullback–Leibler divergence:
-\begin{align}
-D_{\mathrm{KL}}(P \parallel Q) = \sum_{x \in X} P(x) \log \left( \frac{P(x)}{Q(x)} \right)
-\end{align}
-
 \begin{figure}[H]
   \centering
-\includegraphics[clip, width=0.8\linewidth]{dec_RPE_ann_CB_Large_L_compareprobabilitynotes.pdf}
-\includegraphics[clip, width=0.8\linewidth]{dec_RPE_ann_CB_Large_L_compareprobabilitybeats.pdf}
-\caption{Note and beat occurrences of training data and inference}
+\includegraphics[clip, width=0.9\linewidth]{compareprobabilitynotes.pdf}
+\caption{Note occurrences of training data and test data}
   \label{fig:note}
 \end{figure}
 
 
-The model produces musically pleasing sequences, effectively combining notes, beats, and accents while maintaining sequence context between measures.
+The model produces musically pleasing sequences, effectively 
+combining notes, beats, and accents while maintaining sequence 
+context between measures. Evaluation was performed using a temperature setting of 0.7.
 \begin{figure}[H]
   \centering
-\includegraphics[trim={20 200 0 130}, clip, width=0.8\linewidth]{dec_RPE_ann_CB_Large_L_inference.pdf}
-\caption{Inference results showing 4 musical measures}
+\includegraphics[trim={20 120 0 120}, clip, width=0.8\linewidth]{test_all.pdf}
+\caption{Test results showing 5 musical measures}
   \label{fig:inference}
 \end{figure}
-The model implementation is available on GitHub \cite{SC0RE}.
+
+Implementation details and hyper-parameter settings are provided in the associated GitHub repository \cite{SC0RE}.
 % Acknowledgements and Disclosure of Funding should go at the end, before appendices and references
 
 \acks{This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors.}
@@ -461,12 +472,21 @@ EOS  & 27075\\
 \label{tab:accent_indexing}
 \end{table}
 
-\newpage
 \section{}
 \label{app:B}
+This appendix explains relevant statistics about the dataset used for training and evaluation.
+The rhythm guitar tracks were obtained from \cite{SCORESET}.
+The dataset consists files in .gp5 format in standard tuning. 
+From the full set, a total of 6208 sequences were selected via random sampling for training.
+An 80/20 split was used to create the training and validation sets. 
+For testing, top 10 first notes of each measure were selected as 
+prompts for sequence generation and evaluation.
+
+\section{}
+\label{app:C}
 In this appendix a comprehensive list of rhythmic patterns are listed.
 \noindent
-\begin{table}[h!]
+\begin{table}[H]
 \centering
 \begin{tabular}{|c|c|c|}
 \hline
@@ -490,6 +510,33 @@ Dotted - 11-tuplets & 14 \\
 \end{tabular}
 \caption{Example of unique indexing of rhythm.}
 \label{tab:rhythmic_indexing}
+\end{table}
+
+\section{}
+\label{app:D}
+This appendix lists hyper-parameter configuration used to generate results.
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{Property} & \textbf{Value} \\
+\hline
+FFN\_HIDDEN  & 512 \\
+MAX\_SEQ\_LENGTH & 16 \\
+NUM\_HEADS & 4 \\
+DROP\_PROB & 0.3 \\
+NUM\_LAYERS  & 3 \\
+D\_MODEL & 512 \\
+LEARNING\_RATE & 0.0001 \\
+TEMPERATURE  & 1.0 \\
+OVERLAP & 8 \\
+LAMBDA & 0.5 \\
+ALPHA & 0.1 \\
+DELTA  & 0.001 \\
+\hline
+\end{tabular}
+\caption{Hyper-parameter values for training.}
+\label{tab:hyperparams}
 \end{table}
 
 \vskip .2in

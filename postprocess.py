@@ -64,7 +64,7 @@ def plotbar(labels, title, counts, filename):
     plt.ylabel('Occurrences', fontsize=12)
     plt.title(title, fontsize=14)
     #plt.xticks(range(1, 13))
-    plt.xticks(rotation=45) 
+    plt.xticks(rotation=90) 
 
     for bar in bars:
         yval = bar.get_height()
@@ -74,6 +74,36 @@ def plotbar(labels, title, counts, filename):
     plt.tight_layout()
     plt.savefig(filename, dpi = 200)
 
+    plt.close()
+
+    return 0
+
+def plotbarlog(labels, title, counts, filename):
+    plt.cla()
+    plt.figure(figsize=(10, 6))
+
+    # Plot bar chart
+    bars = plt.bar(range(len(labels)), counts, color='black', edgecolor='black')
+
+    # Set custom tick positions and labels
+    plt.xticks(ticks=range(len(labels)), labels=labels, rotation=90)
+
+    # Set axis labels and title
+    plt.ylabel('Occurrences', fontsize=12)
+    plt.title(title, fontsize=14)
+
+    # Add count labels above bars
+    for bar in bars:
+        yval = bar.get_height()
+        if yval > 0:
+            plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, int(yval), ha='center', va='bottom')
+        # Set y-axis to log scale
+    plt.yscale('log')
+    plt.grid(axis='y', linestyle='--', alpha=0.7, color='k')
+    plt.tight_layout()
+
+    # Save the figure
+    plt.savefig(filename, dpi=200)
     plt.close()
 
     return 0
@@ -240,29 +270,31 @@ def findnewstring(note, string):
     return notepos - TUNING[closest_index], closest_index
     
 def makegpro(titlename, noteval, stringnum, beatval, palmval):
-    #print(noteval)
-    #print(beatval)
+    # print(noteval)
+    # print(beatval)
     #print(palmval)
-    #print(stringnum)
+    # print(stringnum)
 
     """Generate gpro file"""
     # read bend and tremolo templates
-    song_trem_1 = gp.parse('./gprofiles/trem_1.gp5')
-    song_trem_2 = gp.parse('./gprofiles/trem_2.gp5')
-    song_trem_4 = gp.parse('./gprofiles/trem_4.gp5')
-    song_trem_5 = gp.parse('./gprofiles/trem_5.gp5')
+    song_trem_1 = gp.parse('./gprofiles/gp5_templates/trem_1.gp5')
+    song_trem_2 = gp.parse('./gprofiles/gp5_templates/trem_2.gp5')
+    song_trem_4 = gp.parse('./gprofiles/gp5_templates/trem_4.gp5')
+    song_trem_3 = gp.parse('./gprofiles/gp5_templates/trem_3.gp5')
+    song_trem_5 = gp.parse('./gprofiles/gp5_templates/trem_5.gp5')
     trem1_beat = song_trem_1.tracks[0].measures[0].voices[0].beats[0]
     trem2_beat = song_trem_2.tracks[0].measures[0].voices[0].beats[0]
+    trem3_beat = song_trem_3.tracks[0].measures[0].voices[0].beats[0]
     trem4_beat = song_trem_4.tracks[0].measures[0].voices[0].beats[0]
     trem5_beat = song_trem_5.tracks[0].measures[0].voices[0].beats[0]
 
-    song_bend_1 = gp.parse('./gprofiles/bend_1.gp5')
-    song_bend_2 = gp.parse('./gprofiles/bend_2.gp5')
-    song_bend_3 = gp.parse('./gprofiles/bend_3.gp5')
-    song_bend_4 = gp.parse('./gprofiles/bend_4.gp5')
-    song_bend_5 = gp.parse('./gprofiles/bend_5.gp5')
-    song_bend_6 = gp.parse('./gprofiles/bend_6.gp5')
-    song_bend_7 = gp.parse('./gprofiles/bend_7.gp5')
+    song_bend_1 = gp.parse('./gprofiles/gp5_templates/bend_1.gp5')
+    song_bend_2 = gp.parse('./gprofiles/gp5_templates/bend_2.gp5')
+    song_bend_3 = gp.parse('./gprofiles/gp5_templates/bend_3.gp5')
+    song_bend_4 = gp.parse('./gprofiles/gp5_templates/bend_4.gp5')
+    song_bend_5 = gp.parse('./gprofiles/gp5_templates/bend_5.gp5')
+    song_bend_6 = gp.parse('./gprofiles/gp5_templates/bend_6.gp5')
+    song_bend_7 = gp.parse('./gprofiles/gp5_templates/bend_7.gp5')
     bend1_beat = song_bend_1.tracks[0].measures[0].voices[0].beats[0]
     bend2_beat = song_bend_2.tracks[0].measures[0].voices[0].beats[0]
     bend3_beat = song_bend_3.tracks[0].measures[0].voices[0].beats[0]
@@ -271,12 +303,12 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     bend6_beat = song_bend_6.tracks[0].measures[0].voices[0].beats[0]
     bend7_beat = song_bend_7.tracks[0].measures[0].voices[0].beats[0]
 
-    song_slide_1 = gp.parse('./gprofiles/slide_1.gp5')
-    song_slide_2 = gp.parse('./gprofiles/slide_2.gp5')
-    song_slide_3 = gp.parse('./gprofiles/slide_3.gp5')
-    song_slide_4 = gp.parse('./gprofiles/slide_4.gp5')
-    song_slide_5 = gp.parse('./gprofiles/slide_5.gp5')
-    song_slide_6 = gp.parse('./gprofiles/slide_6.gp5')
+    song_slide_1 = gp.parse('./gprofiles/gp5_templates/slide_1.gp5')
+    song_slide_2 = gp.parse('./gprofiles/gp5_templates/slide_2.gp5')
+    song_slide_3 = gp.parse('./gprofiles/gp5_templates/slide_3.gp5')
+    song_slide_4 = gp.parse('./gprofiles/gp5_templates/slide_4.gp5')
+    song_slide_5 = gp.parse('./gprofiles/gp5_templates/slide_5.gp5')
+    song_slide_6 = gp.parse('./gprofiles/gp5_templates/slide_6.gp5')
     slide1_beat = song_slide_1.tracks[0].measures[0].voices[0].beats[0]
     slide2_beat = song_slide_2.tracks[0].measures[0].voices[0].beats[0]
     slide3_beat = song_slide_3.tracks[0].measures[0].voices[0].beats[0]
@@ -284,16 +316,16 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     slide5_beat = song_slide_5.tracks[0].measures[0].voices[0].beats[0]
     slide6_beat = song_slide_6.tracks[0].measures[0].voices[0].beats[0]
 
-    song_dead = gp.parse('./gprofiles/dead.gp5')
+    song_dead = gp.parse('./gprofiles/gp5_templates/dead.gp5')
     dead_beat = song_dead.tracks[0].measures[0].voices[0].beats[0]
 
-    song_hammer = gp.parse('./gprofiles/hammer.gp5')
+    song_hammer = gp.parse('./gprofiles/gp5_templates/hammer.gp5')
     hammer_beat = song_hammer.tracks[0].measures[0].voices[0].beats[0]
 
-    song_vibrato = gp.parse('./gprofiles/vibrato.gp5')
+    song_vibrato = gp.parse('./gprofiles/gp5_templates/vibrato.gp5')
     vibrato_beat = song_vibrato.tracks[0].measures[0].voices[0].beats[0]
 
-    song_harmonic_1 = gp.parse('./gprofiles/harmonic_1.gp5')
+    song_harmonic_1 = gp.parse('./gprofiles/gp5_templates/harmonic_1.gp5')
     harmonic_1_beat = song_harmonic_1.tracks[0].measures[0].voices[0].beats[0]
     # Create a new Guitar Pro song
     song = gp.models.Song()
@@ -316,6 +348,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     duration_sum = 0
     reuse_last_beat = False
     for n, note in enumerate(noteval):
+        
         dotted = False
         base_duration = 0
         if note == EOS:
@@ -332,11 +365,12 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         elif note == BARRE_NOTE:
             if k_val != 0:
                 reuse_last_beat = True
+                reused_beat = beat_collect[k_val - 1]
             continue
         elif note == DEAD_NOTE:
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
-                note_collect[l_val - 1].type = hammer_beat.notes[0].type
+                note_collect[l_val - 1].type = dead_beat.notes[0].type
                 continue
         elif note == HAMMER:
             reuse_last_beat = False
@@ -346,7 +380,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         elif note == VIBRATO:
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
-                note_collect[l_val - 1].effect.vibrato = hammer_beat.notes[0].effect.vibrato
+                note_collect[l_val - 1].effect.vibrato = vibrato_beat.notes[0].effect.vibrato
                 continue
         elif note == HARMONIC_1:
             reuse_last_beat = False
@@ -361,7 +395,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 elif note == TREM_BAR_2:
                     beat_collect[k_val - 1].effect.tremoloBar = trem2_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_3:
-                    beat_collect[k_val - 1].effect.tremoloBar.type = 3
+                    beat_collect[k_val - 1].effect.tremoloBar = trem3_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_4:
                     beat_collect[k_val - 1].effect.tremoloBar = trem4_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_5:
@@ -409,23 +443,26 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         else:
             if reuse_last_beat:  # e.g. from BARRE_NOTE
                 # check if the note is the same
-                if noteval[n] == noteval[n - 2]:
-                    noteval[n] += 1
-                # check if the string is the same
-                if stringnum[n] == stringnum[n - 2]:
+                if VERBOSE == 1:
+                    print("chord", note, stringnum[n])
+                used_strings = {note.string for note in reused_beat.notes}
+                # Collect all strings already used in the reused beat
+                # If the current string is already used in this chord, find a new one
+                if stringnum[n] in used_strings:
                     if VERBOSE == 1:
-                        print("changing string")
+                        print(f"String {stringnum[n]} already used in chord — finding alternate for note {noteval[n]}")
                     noteval[n], stringnum[n] = findnewstring(noteval[n], stringnum[n])
-                if noteval[n - 3] == BARRE_NOTE:
-                    if VERBOSE == 1:
-                        print("chord")
-                    if stringnum[n] == stringnum[n - 4]:
-                        noteval[n], stringnum[n] = findnewstring(noteval[n], stringnum[n])
-                current_beat = beat_collect[k_val - 1]
+
+                # Re-check after changing to avoid accidental collisions again (optional safeguard)
+                if stringnum[n] in used_strings:
+                    raise ValueError(f"Could not resolve string conflict for note {noteval[n]} at position {n}")
+                current_beat = reused_beat
                 current_beat.status = gp.models.BeatStatus.normal
                 reuse_last_beat = False
+                
             else:
                 current_beat = gp.Beat(voice=voice)
+                current_beat.status = gp.models.BeatStatus.normal
                 beat_collect.append(current_beat)
                 voice.beats.append(current_beat)
                 
@@ -441,7 +478,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     base_duration *= times / enters
                 duration_sum += base_duration
                 k_val += 1
-            
+            # print(note,  max(stringnum[n], 1), k_val)
             note_collect.append(gp.Note(beat=current_beat))
             note_collect[l_val].type = gp.models.NoteType.normal
             note_collect[l_val].value = note
@@ -476,7 +513,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
 def writegpro(filename, song):
     """write gpro file to disk"""
     # Save the song to a Guitar Pro file
-    with open("./RESULTS/" + "/" + BACKUP + "/" + filename + ".gp5", 'wb') as file:
+    with open("./RESULTS/" + "/" + BACKUP + "/gp5/" + filename + ".gp5", 'wb') as file:
         gp.write(song, file)
 
 def writebincount(counts, filename):
@@ -484,7 +521,13 @@ def writebincount(counts, filename):
     with open(filename, 'w') as file:
         for idx, count in enumerate(counts):
             file.write(f"Value {idx}: {count} occurrences\n")
-    
+
+def writebincount2(labels, counts, filename):
+    # Write to a text file
+    with open(filename, 'w') as file:
+        for idx, count in enumerate(counts):
+            file.write(f"Value {labels[idx]}: {count} occurrences\n")
+
 def readbincount(filename):
     # Read the counts from the text file
     counts = []

@@ -1,14 +1,13 @@
 """Defines parameters required for training and inference"""
-TUNING              =   [53, 48, 44, 39, 34, 27]
+TUNING              = [64, 59, 55, 50, 45, 40]
 ################################ transformers #################################
 # 0: train, 
 # 1 : eval
 # 2 : both 
 # 3 : load from file
 MODE                =   2
-BACKUP              =   "dec_RPE_ann_CB_Large"
-SAVE                =   "dec_RPE_ann_CB_Large_L"
-START_ID            =   15462
+BACKUP				 = "4_test_all"
+SAVE				 = "4_test_all_T"
 BOS_TRUE            =   0
 EOS_TRUE            =   1
 # 0 - Vanilla
@@ -17,7 +16,9 @@ EOS_TRUE            =   1
 # 3 - Same as above + last note of every bar is fed to firt note of next bar
 # 4 - Same as above + loop until no repeatitive notes > BOS 
 TEST_CRITERIA       =   3
-TEST_TRIES          =   10
+TEST_TRIES          =   12
+# Total number of start_id to try with testing
+TEST_NUM            =   3
 # 1 - Greedy Search
 # 2 - Beam Search
 # 3 - Multinomial Sampling
@@ -27,25 +28,25 @@ PREDICTION_CRITERIA =   3
 EPOCHS          =   100
 SAVE_EVERY      =   20
 VOCAB_SIZE      =   27076
-FFN_HIDDEN      =   1024
-MAX_SEQ_LENGTH  =   32
-NUM_HEADS       =   8
+FFN_HIDDEN      =   512
+MAX_SEQ_LENGTH  =   16
+NUM_HEADS       =   4
 DROP_PROB       =   0.3
-NUM_LAYERS      =   6
-D_MODEL         =   256
+NUM_LAYERS      =   3
+D_MODEL         =   512
 SCHEDULER       =   1
 SCHEDULER_SIZE  =   30
 LEARNING_RATE   =   0.0001
 SMOOTHING       =   0.1
 PATCH           =   1
 STRIDE          =   1
-TRAINING        =   ["CB"]
+TRAINING        =   ["maestro-v3.0.0"]
 NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
-TEMPERATURE     =   1.0
+TEMPERATURE				 = 0.7
 BATCH           =   32
 OVERLAP         =   8
-LAMBDA          =   1.5
+LAMBDA          =   0.5
 ALPHA           =   0.1
 DELTA           =   0.001
 

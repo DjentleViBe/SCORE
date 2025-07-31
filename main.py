@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
-from postprocess import combinepng, plot, plot_multiple, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, readbincount, KLDivergence
+from postprocess import combinepng, plot, plot_multiple, plotbar, plotbarlog, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, writebincount2, readbincount, KLDivergence
 from encoding import tokenizer_1, note_prob, beat_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
@@ -20,10 +20,42 @@ import platform
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 from validation import validation
-from masking import create_combined_mask
-from models import compute_sequence_gaussians, kl_divergence_gaussians_loss
+import argparse
+from fileutils import get_all_files_recursive
+import random
 
 if __name__ == '__main__':
+    
+    parser = argparse.ArgumentParser(description="Run script with mode and optional start_id.")
+    parser.add_argument("--mode", type=str, required=True, choices=["train", "eval", "test", "gridsearch"], help="Mode to run")
+    parser.add_argument("--start_id", type=int, help="Start ID for processing (required for eval)")
+
+    args = parser.parse_args()
+    
+    print(f"Mode: {args.mode}")
+    first_values = []
+    if args.mode == "eval":
+        cfg.MODE = 1
+        if args.start_id is None:
+            # take the top 10 occurences of first note
+            print("Reading startprobabilities.csv")
+            with open('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt', 'r') as file:
+                for line in file:
+                    parts = line.strip().split()
+                    if len(parts) > 1:
+                        number_str = parts[1].replace(':', '')  # Remove the colon
+                        first_values.append(int(number_str))
+        else:
+            first_values.append(args.start_id)
+        print(f"Evaluating from ID {args.start_id}...")
+        # evaluation logic
+    elif args.mode == "train":
+        cfg.MODE = 0
+        print("Training...")
+    elif args.mode == "gridsearch":
+        cfg.MODE = 4
+        print("Grid Search")
+    
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
     os_type = platform.system()
     if os_type == 'Darwin':
@@ -47,10 +79,10 @@ if __name__ == '__main__':
     'D - 9_Tuplets',
     'D - 11_Tuplets']
     labelsaccents = ['BARRE_NOTE', 'BEND_NOTE_1', 'BEND_NOTE_2', 'BEND_NOTE_3', 'BEND_NOTE_4', 'BEND_NOTE_5', 'BEND_NOTE_6', 'BEND_NOTE_7', 
-                     'TREM_BAR_1', 'TREM_BAR_2', 'TREM_BAR_3', 'TREM_BAR_4', 'TREM_BAR_5', 'DEAD_NOTE',
+                     'TREM_BAR_1', 'TREM_BAR_2', 'TREM_BAR_3', 'TREM_BAR_4', 'TREM_BAR_5', 
                      'SLIDE_NOTE_1', 'SLIDE_NOTE_2', 'SLIDE_NOTE_3', 'SLIDE_NOTE_4', 'SLIDE_NOTE_5', 'SLIDE_NOTE_6',
-                     'HAMMER', 'VIBRATO', 'HARMONIC_1']
-    accents_collect = np.zeros((23), dtype='int32')
+                     'DEAD_NOTE', 'HAMMER', 'VIBRATO', 'HARMONIC_1', 'PALM_MUTE']
+    accents_collect = np.zeros((24), dtype='int32')
     start_collect = np.zeros((cfg.VOCAB_SIZE), dtype = 'int32')
     ################################
     END_SEQ = False
@@ -69,9 +101,10 @@ if __name__ == '__main__':
     casual_mask_expanded = casualmask.unsqueeze(0).unsqueeze(0)  # (1,1,L,L)
     casual_mask_expanded = casual_mask_expanded.expand(cfg.BATCH, cfg.NUM_HEADS, cfg.MAX_SEQ_LENGTH, cfg.MAX_SEQ_LENGTH)
 
-    if cfg.MODE in (0, 2, 3):
+    if cfg.MODE in (0, 2, 3, 4):
         create_dir('./RESULTS/')
         create_dir('./RESULTS/' + cfg.BACKUP)
+        create_dir('./RESULTS/' + cfg.BACKUP + "/gp5")
         shutil.copy("./config.py", "./RESULTS/" + cfg.BACKUP + "/" + cfg.BACKUP + ".py")
         training_src_encoder_1 = np.zeros((1 * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         training_note_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
@@ -86,124 +119,154 @@ if __name__ == '__main__':
         training_src_encoder_1 = training_src_encoder_1.reshape(1, cfg.MAX_SEQ_LENGTH)
         num_s = 0
         file_ind = 0
+
         for f in cfg.TRAINING:
-            for filename in os.listdir(GPROFOLDER + f):
+            filenamelist = get_all_files_recursive(GPROFOLDER + f)
+            for filename in filenamelist:
                 training_src = []
-                file_path = os.path.join(GPROFOLDER + f, filename)
+                file_path = filename
                 # Check if it is a file (not a directory)
-                if os.path.isfile(file_path):
-                    print(f"File: {file_path}")
+                if os.path.isfile(file_path) and not END_SEQ:
+                    if cfg.MODE != 4:
+                        print(f"File: {file_path}")
                     song = readgpro(str(file_path))
                     tuning = guitarinfo(song)
 
                     for track in song.tracks:
-                        # Map values to Genaral MIDI.
-                        for measure in track.measures:
-                            if not END_SEQ:
-                                for beat in measure.voices[0].beats:
-                                    L = 0
-                                    for note_index, note in enumerate(beat.notes):
-                                        training_src.append(tokenizer_1(note.value,
-                                                                            note.string,
-                                                                            note.beat.duration,
-                                                                            note.effect.palmMute + 1))
-                                        if L == 0:
-                                            if training_src[L] < cfg.BAR:
-                                                start_collect[training_src[L]] += 1
-                                        training_note_encoder_1[N] = note_prob(note.value, note.string)
-                                        training_beat_encoder_1[N] = beat_prob(note.beat.duration)
-                                        N += 1
-                                        L = min(L + 1, L_MAX)
-                                        if note_index != 0:
-                                            training_src.append(cfg.BARRE_NOTE)
-                                            accents_collect[0] += 1
-                                            L = min(L + 1, L_MAX)
+                        if not END_SEQ:
+                            # Map values to Genaral MIDI.
+                            print(f"Total measures : {len(track.measures)}")
+                            start_measure = random.randint(0, len(track.measures))
+                            for measure in track.measures[start_measure:]:
+                                if not END_SEQ:
+                                    for beat in measure.voices[0].beats:
+                                        L = 0
+                                        if not END_SEQ:
+                                            for note_index, note in enumerate(beat.notes):
+                                                training_src.append(tokenizer_1(note.value,
+                                                                                    note.string,
+                                                                                    note.beat.duration,
+                                                                                    note.effect.palmMute + 1))
+                                                if L == 0:
+                                                    if training_src[L] < cfg.BAR:
+                                                        start_collect[training_src[L]] += 1
+                                                training_note_encoder_1[N] = note_prob(note.value, note.string)
+                                                training_beat_encoder_1[N] = beat_prob(note.beat.duration)
+                                                N += 1
+                                                L = min(L + 1, L_MAX)
+                                                if note_index != 0:
+                                                    training_src.append(cfg.BARRE_NOTE)
+                                                    accents_collect[0] += 1
+                                                    L = min(L + 1, L_MAX)
 
-                                        if note.effect.isBend > 0:
-                                            if note.effect.bend.type.value == 1:
-                                                training_src.append(cfg.BEND_NOTE_1)
-                                                accents_collect[1] += 1
-                                            elif note.effect.bend.type.value == 2:
-                                                training_src.append(cfg.BEND_NOTE_2)
-                                                accents_collect[2] += 1
-                                            elif note.effect.bend.type.value == 3:
-                                                training_src.append(cfg.BEND_NOTE_3)
-                                                accents_collect[3] += 1
-                                            elif note.effect.bend.type.value == 4:
-                                                training_src.append(cfg.BEND_NOTE_4)
-                                                accents_collect[4] += 1
-                                            elif note.effect.bend.type.value == 5:
-                                                training_src.append(cfg.BEND_NOTE_5)
-                                                accents_collect[5] += 1
-                                            elif note.effect.bend.type.value == 6:
-                                                training_src.append(cfg.BEND_NOTE_6)
-                                                accents_collect[6] += 1
-                                            elif note.effect.bend.type.value == 7:
-                                                training_src.append(cfg.BEND_NOTE_7)
-                                                accents_collect[7] += 1
-                                            L = min(L + 1, L_MAX)
-                                        
-                                        if note.type.name == 'dead':
-                                            training_src.append(cfg.DEAD_NOTE)
-                                            accents_collect[13] += 1
-                                            L = min(L + 1, L_MAX)
+                                                if note.effect.isBend > 0:
+                                                    if note.effect.bend.type == gp.BendType.bend:
+                                                        training_src.append(cfg.BEND_NOTE_1)
+                                                        accents_collect[1] += 1
+                                                    elif note.effect.bend.type == gp.BendType.bendRelease:
+                                                        training_src.append(cfg.BEND_NOTE_3)
+                                                        accents_collect[3] += 1
+                                                    elif note.effect.bend.type == gp.BendType.prebend:
+                                                        points = note.effect.bend.points
+                                                        if len(points) < 2:
+                                                            training_src.append(cfg.BEND_NOTE_5)
+                                                            accents_collect[5] += 1
+                                                        start_val = points[0].value
+                                                        next_val = points[1].value
 
-                                        if beat.effect.isTremoloBar is True:
-                                            if beat.effect.tremoloBar.type.value == 1:
-                                                training_src.append(cfg.TREM_BAR_1)
-                                                accents_collect[8] += 1
-                                            elif beat.effect.tremoloBar.type.value == 2:
-                                                training_src.append(cfg.TREM_BAR_2)
-                                                accents_collect[9] += 1
-                                            elif beat.effect.tremoloBar.type.value == 3:
-                                                training_src.append(cfg.TREM_BAR_3)
-                                                accents_collect[10] += 1
-                                            elif beat.effect.tremoloBar.type.value == 4:
-                                                training_src.append(cfg.TREM_BAR_4)
-                                                accents_collect[11] += 1
-                                            elif beat.effect.tremoloBar.type.value == 5:
-                                                training_src.append(cfg.TREM_BAR_5)
-                                                accents_collect[12] += 1
-                                            L = min(L + 1, L_MAX)
+                                                        # Check if first point starts bent and next one bends higher
+                                                        if start_val > 0 and next_val > start_val:
+                                                            training_src.append(cfg.BEND_NOTE_6)
+                                                            accents_collect[6] += 1
+                                                        else:
+                                                            training_src.append(cfg.BEND_NOTE_5)
+                                                            accents_collect[5] += 1
+                                                    elif note.effect.bend.type == gp.BendType.prebendRelease:
+                                                        training_src.append(cfg.BEND_NOTE_7)
+                                                        accents_collect[7] += 1
+                                                    L = min(L + 1, L_MAX)
+                                                
+                                                if note.type.name == 'dead':
+                                                    training_src.append(cfg.DEAD_NOTE)
+                                                    accents_collect[19] += 1
+                                                    L = min(L + 1, L_MAX)
 
-                                        if note.effect.slides:
-                                            if note.effect.slides[0].name == 'legatoSlideTo':
-                                                training_src.append(cfg.SLIDE_NOTE_1)
-                                                accents_collect[14] += 1
-                                            elif note.effect.slides[0].name == 'shiftSlideTo':
-                                                training_src.append(cfg.SLIDE_NOTE_2)
-                                                accents_collect[15] += 1
-                                            elif note.effect.slides[0].name == 'intoFromBelow':
-                                                training_src.append(cfg.SLIDE_NOTE_3)
-                                                accents_collect[16] += 1
-                                            elif note.effect.slides[0].name == 'intoFromAbove':
-                                                training_src.append(cfg.SLIDE_NOTE_4)
-                                                accents_collect[17] += 1
-                                            elif note.effect.slides[0].name == 'outDownwards':
-                                                training_src.append(cfg.SLIDE_NOTE_5)
-                                                accents_collect[18] += 1
-                                            elif note.effect.slides[0].name == 'outUpwards':
-                                                training_src.append(cfg.SLIDE_NOTE_6)
-                                                accents_collect[19] += 1
-                                            L = min(L + 1, L_MAX)
-                                        
-                                        if note.effect.hammer == True:
-                                            training_src.append(cfg.HAMMER)
-                                            accents_collect[20] += 1
-                                            L = min(L + 1, L_MAX)
+                                                if beat.effect.isTremoloBar is True:
+                                                    points = beat.effect.tremoloBar.points
+                                                    if points:
+                                                        start_value = points[0].value
+                                                        end_value = points[-1].value
 
-                                        if note.effect.vibrato == True:
-                                            training_src.append(cfg.VIBRATO)
-                                            accents_collect[21] += 1
-                                            L = min(L + 1, L_MAX)
+                                                    if start_value == 0 and end_value < 0:
+                                                        training_src.append(cfg.TREM_BAR_1)
+                                                        accents_collect[8] += 1
 
-                                        if note.effect.isHarmonic == True:
-                                            training_src.append(cfg.HARMONIC_1)
-                                            accents_collect[22] += 1
-                                            L = min(L + 1, L_MAX)
-                                        
-                                training_src.append(cfg.BAR)
-                                L = min(L + 1, L_MAX)                      
+                                                    # Dip: starts neutral, dips, returns to neutral
+                                                    elif start_value == 0 and end_value == 0 and any(p.value < 0 for p in points[1:-1]):
+                                                        training_src.append(cfg.TREM_BAR_2)
+                                                        accents_collect[9] += 1
+
+                                                    # Pre-dive: starts low, returns to neutral
+                                                    elif start_value < 0 and end_value != 0:
+                                                        training_src.append(cfg.TREM_BAR_4)
+                                                        accents_collect[11] += 1
+
+                                                    elif start_value < 0 and end_value == 0:
+                                                        training_src.append(cfg.TREM_BAR_5)
+                                                        accents_collect[12] += 1
+                                                    else:
+                                                        training_src.append(cfg.TREM_BAR_3)
+                                                        accents_collect[10] += 1
+                                                        
+                                                    L = min(L + 1, L_MAX)
+
+                                                if note.effect.slides:
+                                                    if note.effect.slides[0].name == 'legatoSlideTo':
+                                                        training_src.append(cfg.SLIDE_NOTE_1)
+                                                        accents_collect[13] += 1
+                                                    elif note.effect.slides[0].name == 'shiftSlideTo':
+                                                        training_src.append(cfg.SLIDE_NOTE_2)
+                                                        accents_collect[14] += 1
+                                                    elif note.effect.slides[0].name == 'intoFromBelow':
+                                                        training_src.append(cfg.SLIDE_NOTE_3)
+                                                        accents_collect[15] += 1
+                                                    elif note.effect.slides[0].name == 'intoFromAbove':
+                                                        training_src.append(cfg.SLIDE_NOTE_4)
+                                                        accents_collect[16] += 1
+                                                    elif note.effect.slides[0].name == 'outDownwards':
+                                                        training_src.append(cfg.SLIDE_NOTE_5)
+                                                        accents_collect[17] += 1
+                                                    elif note.effect.slides[0].name == 'outUpwards':
+                                                        training_src.append(cfg.SLIDE_NOTE_6)
+                                                        accents_collect[18] += 1
+                                                    L = min(L + 1, L_MAX)
+                                                
+                                                if note.effect.hammer == True:
+                                                    training_src.append(cfg.HAMMER)
+                                                    accents_collect[20] += 1
+                                                    L = min(L + 1, L_MAX)
+
+                                                if note.effect.vibrato == True:
+                                                    training_src.append(cfg.VIBRATO)
+                                                    accents_collect[21] += 1
+                                                    L = min(L + 1, L_MAX)
+
+                                                if note.effect.isHarmonic == True:
+                                                    training_src.append(cfg.HARMONIC_1)
+                                                    accents_collect[22] += 1
+                                                    L = min(L + 1, L_MAX)
+
+                                                if note.effect.palmMute:
+                                                    accents_collect[23] += 1
+
+                                                if N == cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH - 1:
+                                                    END_SEQ = True
+                                                    print("Max number of sequences reached!", N)
+                                                    break
+
+                                    training_src.append(cfg.BAR)
+                                    L = min(L + 1, L_MAX)
+                                                   
                 if cfg.EOS_TRUE:
                     training_src.append(cfg.EOS)
                     remainder = len(training_src) % 32
@@ -254,24 +317,24 @@ if __name__ == '__main__':
         bincountsbeats = np.bincount(training_beat_encoder_1, minlength=15)[1:]
         bincountsaccents = np.bincount(accents_collect, minlength=23)[1:]
 
-        writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
-        plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.pdf')
-        del training_note_encoder_1
+        if cfg.MODE != 4:
+            writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
+            plotbar(labelsnotes, 'Occurance of Notes', bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.pdf')
+            del training_note_encoder_1
 
-        writebincount(bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
-        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.pdf')
-        del training_beat_encoder_1
+            writebincount(bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
+            plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.pdf')
+            del training_beat_encoder_1
 
-        writebincount(accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
-        plotbar(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.pdf')
-        del accents_collect
+            writebincount(accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
+            plotbarlog(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.pdf')
+            del accents_collect
 
-        top_indices = sorted_indices[:10]
-        top_values = start_collect[top_indices]
-        top_labels = [str(i) for i in top_indices]
-        writebincount(start_collect[sorted_indices[:10]], './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt')
-        plotbar(top_labels, 'Occurance of First note', top_values, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.pdf')
-        
+            top_indices = sorted_indices[:10]
+            top_values = start_collect[top_indices]
+            top_labels = [str(i) for i in top_indices]
+            writebincount2(top_labels, start_collect[sorted_indices[:10]], './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.txt')
+            plotbar(top_labels, 'Occurance of First note', top_values, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_startprobability.pdf')
 
         ITERATION = 0
         lossplot = []
@@ -305,9 +368,9 @@ if __name__ == '__main__':
             optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
             embedding_layer.load_state_dict(checkpoint['embedding_state_dict'])
             ITERATION = checkpoint['epoch']
-        print(cfg.EPOCHS)
+        print("\nTotal epochs : ", cfg.EPOCHS)
         
-        while ITERATION <= cfg.EPOCHS:
+        while ITERATION < cfg.EPOCHS:
             decoder.train()
             epoch_loss = 0.0  # track epoch loss
             epoch_rep_loss = 0.0
@@ -370,7 +433,7 @@ if __name__ == '__main__':
                 print("Convergence criteria reached!")
                 break
 
-            if ITERATION % cfg.SAVE_EVERY == 0:
+            if ITERATION + 1 % cfg.SAVE_EVERY == 0 and cfg.MODE != 4:
                 checkpoint = {
                 'model_state_dict': decoder.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
@@ -392,9 +455,11 @@ if __name__ == '__main__':
         'loss': loss     # Optionally save the loss value
         }
         torch.save(checkpoint, './RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth')
-        plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot, seq_lossplot], ["Total loss", "Training loss", "Repetition loss", "Validation_loss", "Sequence loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.pdf')
+        if cfg.MODE != 4:
+            plot_multiple([lossplot, ce_lossplot, rep_lossplot, val_lossplot, seq_lossplot], ["Total loss", "Training loss", "Repetition loss", "Validation_loss", "Sequence loss"],loss.item(), './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_loss.pdf')
 
     if cfg.MODE in (1, 2):
+        create_dir('./RESULTS/' + cfg.BACKUP + "/gp5")
         checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth', map_location=torch.device(DEVICE_TYPE))
         decoder.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -402,64 +467,80 @@ if __name__ == '__main__':
         print(f"Loss : ', {checkpoint['loss'].item()}")
         print(f"Epochs : ', {checkpoint['epoch']}")
         decoder.eval()
-        dummy_in = inference(device, decoder, embedding_layer, pos_enc, casualmask)
+        embedding_layer.eval()
 
-        m = 0
-        song = gp.models.Song()
-        song.title = cfg.SAVE
-        song.artist = "DjentleViBe"
-        song.tempo = 120  # Set the tempo
-        song.tracks[0].name = "Guitar"
-        song.tracks[0].channel.instrument = 30
-        song_collect = []
-        song_notes = []
-        song_beats = []
+        song_notes_collect = []
+        song_beats_collect = []
+        for sid, startid in enumerate(first_values):
+            if sid >= cfg.TEST_NUM:
+                break
+            print("\nTesting with start-id :",startid)
+            dummy_in = inference(startid, device, decoder, embedding_layer, pos_enc, casualmask)
 
-        while m < cfg.TEST_TRIES:
-            noteval = []
-            notetypeval = []
-            stringnum = []
-            beatval = []
-            palmval = []
+            m = 0
+            song = gp.models.Song()
+            song.title = cfg.SAVE
+            song.artist = "DjentleViBe"
+            song.tempo = 120  # Set the tempo
+            song.tracks[0].name = "Guitar"
+            song.tracks[0].channel.instrument = 30
+            song_collect = []
+            song_notes = []
+            song_beats = []
 
-            for ind, dummy in enumerate(dummy_in[m]):
-                if cfg.VERBOSE == 1:
-                    print(f"{ind + 1:02}", end=' ')
-                note, notetype, string, beat, palm, beatnum = detokenizer_1(dummy)
-                noteval.append(note)
-                notetypeval.append(notetype)
-                stringnum.append(string)
-                beatval.append(beat)
-                palmval.append(palm)
-                song_notes.append(note_prob(note, string))
-                song_beats.append(beatnum)
-            song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
-            song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
-            song.tracks[0].strings[0].value = cfg.TUNING[0]
-            song.tracks[0].strings[1].value = cfg.TUNING[1]
-            song.tracks[0].strings[2].value = cfg.TUNING[2]
-            song.tracks[0].strings[3].value = cfg.TUNING[3]
-            song.tracks[0].strings[4].value = cfg.TUNING[4]
-            song.tracks[0].strings[5].value = cfg.TUNING[5]
-            if m == 0:
-                del song.tracks[0].measures[0]
-            m += 1
-            # print("")
-            writegpro(cfg.SAVE, song)
-        song_notes = [value for value in song_notes if value != 100]
-        bincounts_inf = np.bincount(song_notes, minlength=13)[1:]
-        bincountsbeats_inf = np.bincount(song_beats, minlength=15)[1:]
+            while m < cfg.TEST_TRIES:
+                noteval = []
+                notetypeval = []
+                stringnum = []
+                beatval = []
+                palmval = []
+
+                for ind, dummy in enumerate(dummy_in[m]):
+                    if cfg.VERBOSE == 1:
+                        print(f"{ind + 1:02}", end=' ')
+                    note, notetype, string, beat, palm, beatnum = detokenizer_1(dummy)
+                    noteval.append(note)
+                    notetypeval.append(notetype)
+                    stringnum.append(string)
+                    beatval.append(beat)
+                    palmval.append(palm)
+                    song_notes.append(note_prob(note, string))
+                    song_beats.append(beatnum)
+                song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
+                song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
+                song.tracks[0].strings[0].value = cfg.TUNING[0]
+                song.tracks[0].strings[1].value = cfg.TUNING[1]
+                song.tracks[0].strings[2].value = cfg.TUNING[2]
+                song.tracks[0].strings[3].value = cfg.TUNING[3]
+                song.tracks[0].strings[4].value = cfg.TUNING[4]
+                song.tracks[0].strings[5].value = cfg.TUNING[5]
+                if m == 0:
+                    del song.tracks[0].measures[0]
+                m += 1
+                writegpro(cfg.SAVE + "_" + str(startid), song)
+                song_notes_collect.append(song_notes)
+                song_beats_collect.append(song_beats)
+        flattened_notes = [
+                note
+                for song_notes in song_notes_collect
+                for note in song_notes
+                if note != 100
+            ]
+        flattened_beats = [beat for song_beats in song_beats_collect for beat in song_beats]
+        bincounts_inf = np.bincount(flattened_notes, minlength=13)[1:]
+        bincountsbeats_inf = np.bincount(flattened_beats, minlength=15)[1:]
         writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobability.pdf')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         bincountsbeats_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
-        plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitynotes.pdf')
-        plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeats.pdf')
+        if cfg.MODE != 4:
+            plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitynotes.pdf')
+            plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeats.pdf')
         
-        KLD = KLDivergence(bincounts_train, bincounts_inf)
-        plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf')
+            KLD = KLDivergence(bincounts_train, bincounts_inf)
+            plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf')
         
-        KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
-        plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf')
+            KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
+            plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf')
         
         #combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf',
         #           './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf',

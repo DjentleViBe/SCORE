@@ -1,0 +1,39 @@
+Dear Editors,
+
+I am submitting the manuscript titled "Transformer Riffage" for consideration in the Journal of Machine Learning Research (JMLR).
+
+1. Prior Publications:
+This manuscript is original and has not been published or submitted elsewhere.
+
+2. Author Consent:
+All authors are aware of this submission and consent to its review by JMLR.
+
+3. Conflicts of Interest:
+I declare no potential conflicts of interest.
+
+4. Suggested Action Editors:
+I suggest the following Action Editors, who we believe are well-suited to handle our submission and with whom we have no conflicts of interest:
+
+Dr. [Action Editor 1]
+Dr. [Action Editor 2]
+Dr. [Action Editor 3]
+(Optional) Dr. [Action Editor 4]
+(Optional) Dr. [Action Editor 5]
+
+5. Suggested Reviewers:
+I suggest the following reviewers with appropriate expertise and no conflicts of interest:
+
+Dr. [Reviewer 1]
+Dr. [Reviewer 2]
+Dr. [Reviewer 3]
+(Optional) Dr. [Reviewer 4]
+(Optional) Dr. [Reviewer 5]
+6. Keywords:
+Transformer models, Music, Generative, Sequence modelling, Attention mechanism
+
+Thank you for your consideration.
+
+Sincerely,
+Vishakh Begari
+Independent Researcher
+djentlevibe32168@gmail.com
