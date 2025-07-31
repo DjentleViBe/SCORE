@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
-from postprocess import combinepng, plot, plot_multiple, plotbar, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, writebincount2, readbincount, KLDivergence
+from postprocess import combinepng, plot, plot_multiple, plotbar, plotbarlog, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, writebincount2, readbincount, KLDivergence
 from encoding import tokenizer_1, note_prob, beat_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
@@ -25,11 +25,13 @@ from fileutils import get_all_files_recursive
 import random
 
 if __name__ == '__main__':
+    
     parser = argparse.ArgumentParser(description="Run script with mode and optional start_id.")
     parser.add_argument("--mode", type=str, required=True, choices=["train", "eval", "test", "gridsearch"], help="Mode to run")
     parser.add_argument("--start_id", type=int, help="Start ID for processing (required for eval)")
 
     args = parser.parse_args()
+    
     print(f"Mode: {args.mode}")
     first_values = []
     if args.mode == "eval":
@@ -53,7 +55,7 @@ if __name__ == '__main__':
     elif args.mode == "gridsearch":
         cfg.MODE = 4
         print("Grid Search")
-
+    
     os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
     os_type = platform.system()
     if os_type == 'Darwin':
@@ -325,7 +327,7 @@ if __name__ == '__main__':
             del training_beat_encoder_1
 
             writebincount(accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
-            plotbar(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.pdf')
+            plotbarlog(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.pdf')
             del accents_collect
 
             top_indices = sorted_indices[:10]

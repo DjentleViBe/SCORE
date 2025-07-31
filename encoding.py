@@ -93,4 +93,6 @@ def note_prob(note, string):
     if note > EOS:
         return 100
     else:
+        if string > 6:
+            print("String error : ", string)
         return (note + (cfg.TUNING[string - 1] % 12)) % 12 + 1
