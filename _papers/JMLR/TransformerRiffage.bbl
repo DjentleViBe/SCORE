@@ -17,21 +17,15 @@ Vishakh Begari.
 \newblock \url{https://github.com/DjentleViBe/SCORE-SET}, 2025{\natexlab{b}}.
 \newblock Accessed: 2025-07-11.
 
-\bibitem[Dai et~al.(2019{\natexlab{a}})Dai, Yang, Yang, Carbonell, Le, and
-  Salakhutdinov]{XL}
-Zihang Dai, Zhilin Yang, Yiming Yang, Jaime~G. Carbonell, Quoc~V. Le, and
-  Ruslan Salakhutdinov.
-\newblock Transformer-xl: Attentive language models beyond a fixed-length
-  context.
+\bibitem[Dai et~al.(2019{\natexlab{a}})Dai, Yang, Yang, Carbonell, Le, and Salakhutdinov]{XL}
+Zihang Dai, Zhilin Yang, Yiming Yang, Jaime~G. Carbonell, Quoc~V. Le, and Ruslan Salakhutdinov.
+\newblock Transformer-xl: Attentive language models beyond a fixed-length context.
 \newblock \emph{CoRR}, abs/1901.02860, 2019{\natexlab{a}}.
 \newblock URL \url{http://arxiv.org/abs/1901.02860}.
 
-\bibitem[Dai et~al.(2019{\natexlab{b}})Dai, Yang, Yang, Carbonell, Le, and
-  Salakhutdinov]{transformerXL}
-Zihang Dai, Zhilin Yang, Yiming Yang, Jaime~G. Carbonell, Quoc~V. Le, and
-  Ruslan Salakhutdinov.
-\newblock Transformer-xl: Attentive language models beyond a fixed-length
-  context.
+\bibitem[Dai et~al.(2019{\natexlab{b}})Dai, Yang, Yang, Carbonell, Le, and Salakhutdinov]{transformerXL}
+Zihang Dai, Zhilin Yang, Yiming Yang, Jaime~G. Carbonell, Quoc~V. Le, and Ruslan Salakhutdinov.
+\newblock Transformer-xl: Attentive language models beyond a fixed-length context.
 \newblock \emph{CoRR}, abs/1901.02860, 2019{\natexlab{b}}.
 \newblock URL \url{http://arxiv.org/abs/1901.02860}.
 
@@ -44,35 +38,26 @@ Yann~N. Dauphin, Angela Fan, Michael Auli, and David Grangier.
 \bibitem[Hu et~al.(2022)Hu, Ma, Liu, Chen, and Liu]{Hu_2022}
 Zhejing Hu, Xiao Ma, Yan Liu, Gong Chen, and Yongxu Liu.
 \newblock The beauty of repetition in machine composition scenarios.
-\newblock In \emph{Proceedings of the 30th ACM International Conference on
-  Multimedia}, MM ’22, page 1223–1231. ACM, October 2022.
+\newblock In \emph{Proceedings of the 30th ACM International Conference on Multimedia}, MM ’22, page 1223–1231. ACM, October 2022.
 \newblock \doi{10.1145/3503161.3548130}.
 \newblock URL \url{http://dx.doi.org/10.1145/3503161.3548130}.
 
-\bibitem[Huang et~al.(2018)Huang, Vaswani, Uszkoreit, Shazeer, Hawthorne, Dai,
-  Hoffman, and Eck]{Vaswani2}
-Cheng{-}Zhi~Anna Huang, Ashish Vaswani, Jakob Uszkoreit, Noam Shazeer, Curtis
-  Hawthorne, Andrew~M. Dai, Matthew~D. Hoffman, and Douglas Eck.
-\newblock An improved relative self-attention mechanism for transformer with
-  application to music generation.
+\bibitem[Huang et~al.(2018)Huang, Vaswani, Uszkoreit, Shazeer, Hawthorne, Dai, Hoffman, and Eck]{Vaswani2}
+Cheng{-}Zhi~Anna Huang, Ashish Vaswani, Jakob Uszkoreit, Noam Shazeer, Curtis Hawthorne, Andrew~M. Dai, Matthew~D. Hoffman, and Douglas Eck.
+\newblock An improved relative self-attention mechanism for transformer with application to music generation.
 \newblock \emph{CoRR}, abs/1809.04281, 2018.
 \newblock URL \url{http://arxiv.org/abs/1809.04281}.
 
-\bibitem[Keskar et~al.(2019)Keskar, McCann, Varshney, Xiong, and
-  Socher]{reppenalty}
-Nitish~Shirish Keskar, Bryan McCann, Lav~R. Varshney, Caiming Xiong, and
-  Richard Socher.
-\newblock {CTRL:} {A} conditional transformer language model for controllable
-  generation.
+\bibitem[Keskar et~al.(2019)Keskar, McCann, Varshney, Xiong, and Socher]{reppenalty}
+Nitish~Shirish Keskar, Bryan McCann, Lav~R. Varshney, Caiming Xiong, and Richard Socher.
+\newblock {CTRL:} {A} conditional transformer language model for controllable generation.
 \newblock \emph{CoRR}, abs/1909.05858, 2019.
 \newblock URL \url{http://arxiv.org/abs/1909.05858}.
 
 \bibitem[ml\ glossary(2017)]{mlglossary}
 ml\ glossary.
 \newblock Machine learning glossary.
-\newblock
-  \url{https://ml-cheatsheet.readthedocs.io/en/latest/loss_functions.html},
-  2017.
+\newblock \url{https://ml-cheatsheet.readthedocs.io/en/latest/loss_functions.html}, 2017.
 
 \bibitem[Randel(1986)]{randel:86}
 Don~Michael Randel.
@@ -82,62 +67,42 @@ Don~Michael Randel.
 \bibitem[Shamoon(2024)]{midi_short}
 Evan Shamoon.
 \newblock What's wrong with midi?
-\newblock \url{https://www.perfectcircuit.com/signal/whats-wrong-with-midi},
-  2024.
+\newblock \url{https://www.perfectcircuit.com/signal/whats-wrong-with-midi}, 2024.
 
 \bibitem[Song et~al.(2024)Song, Wang, Li, and Lin]{song2024}
 Yifan Song, Guoyin Wang, Sujian Li, and Bill~Yuchen Lin.
-\newblock The good, the bad, and the greedy: Evaluation of llms should not
-  ignore non-determinism, 2024.
+\newblock The good, the bad, and the greedy: Evaluation of llms should not ignore non-determinism, 2024.
 \newblock URL \url{https://arxiv.org/abs/2407.10457}.
 
-\bibitem[Suresh et~al.(2020)Suresh, Muhamed, Li, Cavins, Rezapoor, Chi, and
-  Yaddanapudi]{aws_deepcomposer}
-Rahul Suresh, Aashiq Muhamed, Liang Li, Patrick Cavins, Maryam Rezapoor, Wayne
-  Chi, and Suri Yaddanapudi.
+\bibitem[Suresh et~al.(2020)Suresh, Muhamed, Li, Cavins, Rezapoor, Chi, and Yaddanapudi]{aws_deepcomposer}
+Rahul Suresh, Aashiq Muhamed, Liang Li, Patrick Cavins, Maryam Rezapoor, Wayne Chi, and Suri Yaddanapudi.
 \newblock Using transformers to create music in aws deepcomposer music studio.
-\newblock
-  \url{https://aws.amazon.com/blogs/machine-learning/using-transformers-to-create-music-in-aws-deepcomposer-music-studio/},
-  2020.
+\newblock \url{https://aws.amazon.com/blogs/machine-learning/using-transformers-to-create-music-in-aws-deepcomposer-music-studio/}, 2020.
 
-\bibitem[Vaswani et~al.(2017)Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez,
-  Kaiser, and Polosukhin]{Vaswani}
-Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones,
-  Aidan~N. Gomez, Lukasz Kaiser, and Illia Polosukhin.
+\bibitem[Vaswani et~al.(2017)Vaswani, Shazeer, Parmar, Uszkoreit, Jones, Gomez, Kaiser, and Polosukhin]{Vaswani}
+Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan~N. Gomez, Lukasz Kaiser, and Illia Polosukhin.
 \newblock Attention is all you need.
 \newblock \emph{CoRR}, abs/1706.03762, 2017.
 \newblock URL \url{http://arxiv.org/abs/1706.03762}.
 
-\bibitem[Yamada et~al.(2021)Yamada, Grandi, Muñoz-Gil, Barbiero, Aloy, and
-  Lewenstein]{yamada_grandi_munoz-gil_barbiero_aloy_lewenstein_2021}
-Reiko Yamada, Samuele Grandi, Gorka Muñoz-Gil, Luca Barbiero, Albert Aloy, and
-  Maciej Lewenstein.
-\newblock Applications of quantum randomness: From rabi oscillations to fourier
-  axis controlling the musical timbre.
-\newblock \emph{International Journal of Music Science, Technology and Art},
-  3\penalty0 (2):\penalty0 17–25, August 2021.
+\bibitem[Yamada et~al.(2021)Yamada, Grandi, Muñoz-Gil, Barbiero, Aloy, and Lewenstein]{yamada_grandi_munoz-gil_barbiero_aloy_lewenstein_2021}
+Reiko Yamada, Samuele Grandi, Gorka Muñoz-Gil, Luca Barbiero, Albert Aloy, and Maciej Lewenstein.
+\newblock Applications of quantum randomness: From rabi oscillations to fourier axis controlling the musical timbre.
+\newblock \emph{International Journal of Music Science, Technology and Art}, 3\penalty0 (2):\penalty0 17–25, August 2021.
 \newblock ISSN 2612-2146.
 \newblock \doi{10.48293/ijmsta-77}.
 \newblock URL \url{https://doi.org/10.48293/ijmsta-77}.
 
-\bibitem[Yang et~al.(2019)Yang, Dai, Yang, Carbonell, Salakhutdinov, and
-  Le]{chunking}
-Zhilin Yang, Zihang Dai, Yiming Yang, Jaime~G. Carbonell, Ruslan Salakhutdinov,
-  and Quoc~V. Le.
-\newblock Xlnet: Generalized autoregressive pretraining for language
-  understanding.
+\bibitem[Yang et~al.(2019)Yang, Dai, Yang, Carbonell, Salakhutdinov, and Le]{chunking}
+Zhilin Yang, Zihang Dai, Yiming Yang, Jaime~G. Carbonell, Ruslan Salakhutdinov, and Quoc~V. Le.
+\newblock Xlnet: Generalized autoregressive pretraining for language understanding.
 \newblock \emph{CoRR}, abs/1906.08237, 2019.
 \newblock URL \url{http://arxiv.org/abs/1906.08237}.
 
 \bibitem[Zhang et~al.(2023)Zhang, Pan, Li, Liu, Chen, Liu, and Wang]{kldiv}
-Yufeng Zhang, Jialu Pan, Li~Ken Li, Wanwei Liu, Zhenbang Chen, Xinwang Liu, and
-  J~Wang.
-\newblock On the properties of kullback-leibler divergence between multivariate
-  gaussian distributions.
-\newblock In A.~Oh, T.~Naumann, A.~Globerson, K.~Saenko, M.~Hardt, and
-  S.~Levine, editors, \emph{Advances in Neural Information Processing Systems},
-  volume~36, pages 58152--58165. Curran Associates, Inc., 2023.
-\newblock URL
-  \url{https://proceedings.neurips.cc/paper_files/paper/2023/file/b5b4d92374323c53c24bbbc8ee0e715c-Paper-Conference.pdf}.
+Yufeng Zhang, Jialu Pan, Li~Ken Li, Wanwei Liu, Zhenbang Chen, Xinwang Liu, and J~Wang.
+\newblock On the properties of kullback-leibler divergence between multivariate gaussian distributions.
+\newblock In A.~Oh, T.~Naumann, A.~Globerson, K.~Saenko, M.~Hardt, and S.~Levine, editors, \emph{Advances in Neural Information Processing Systems}, volume~36, pages 58152--58165. Curran Associates, Inc., 2023.
+\newblock URL \url{https://proceedings.neurips.cc/paper_files/paper/2023/file/b5b4d92374323c53c24bbbc8ee0e715c-Paper-Conference.pdf}.
 
 \end{thebibliography}
