@@ -1,34 +1,25 @@
 Dear Editors,
 
 I am submitting the manuscript titled "Transformer Riffage" for consideration in the Journal of Machine Learning Research (JMLR).
+This manuscript is original and has not been published or submitted elsewhere. All authors are aware of this submission and consent to its review by JMLR.
+I suggest the following Action Editors, who I believe are well suited to handle thid submission and with whom I have no conflicts of interest:
 
-1. Prior Publications:
-This manuscript is original and has not been published or submitted elsewhere.
+Joan Bruna for statistics and signal processing. Although the paper does not handle signals directly,
+analysis and synthesis of musical notes is addressed through abstract representations such as pitch, duration, and timbre.
+Kai-Wei Chang for Large Language Models and Vision based systems which I believe is relatable to music.
+Quanquan Gu for their proficieny in LLM and statistics
+Honglak Lee for their expertise on generative models.
+Brian Kulis for his work on audio applications.
 
-2. Author Consent:
-All authors are aware of this submission and consent to its review by JMLR.
+This paper relies on a custom dataset, which I have made publicly available (https://github.com/DjentleViBe/SCORE-SET). 
+A separate paper describing this dataset has also been submitted for review a few days ago. 
+The core motivation for this paper was that language functions much like music. Its structured by rhythm, shaped by melody, and delivered with emotional nuance. 
+Just as music conveys meaning through patterns of sound, language uses pitch, stress, and timing to enhance or alter interpretation. 
+If we accept that language is a form of music, then advances in modeling musical perception, structure, and generation can directly 
+inform the development of LLMs. This perspective opens new possibilities for capturing prosody, emotion, and 
+rhythm in text generation, enabling LLMs to better mirror human communication not only in semantics but in expressiveness and style.
 
-3. Conflicts of Interest:
-I declare no potential conflicts of interest.
-
-4. Suggested Action Editors:
-I suggest the following Action Editors, who we believe are well-suited to handle our submission and with whom we have no conflicts of interest:
-
-Dr. [Action Editor 1]
-Dr. [Action Editor 2]
-Dr. [Action Editor 3]
-(Optional) Dr. [Action Editor 4]
-(Optional) Dr. [Action Editor 5]
-
-5. Suggested Reviewers:
-I suggest the following reviewers with appropriate expertise and no conflicts of interest:
-
-Dr. [Reviewer 1]
-Dr. [Reviewer 2]
-Dr. [Reviewer 3]
-(Optional) Dr. [Reviewer 4]
-(Optional) Dr. [Reviewer 5]
-6. Keywords:
+Keywords:
 Transformer models, Music, Generative, Sequence modelling, Attention mechanism
 
 Thank you for your consideration.
@@ -36,4 +27,4 @@ Thank you for your consideration.
 Sincerely,
 Vishakh Begari
 Independent Researcher
-djentlevibe32168@gmail.com
+vibedjentle@gmail.com
