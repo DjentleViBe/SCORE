@@ -16,8 +16,8 @@ A separate paper describing this dataset has also been submitted for review a fe
 The core motivation for this paper was to devise a method to train the various musical expressions that are used in guitar playing 
 and to capture the continuity of themes between sequences, when they are split across batches during training. 
 Until now most of the work has been with using MIDI notes as tokens which does not come encoded with accentuation. 
-Using expression + note as a unique combination would result in an absurd number of vocabulary. An alternative approach is introduced that avoids high 
-vocabulary needs while still delivering meaningful results.
+Using expression + note as a unique combination would result in an absurd number of vocabulary. A new tokenisation approach is introduced that avoids high 
+vocabulary needs and a cross sequence attention matrix aims to retain musical context when sequences are grouped across batches.
 
 If we accept that language is a form of music, then advances in modeling musical perception, structure, and generation could directly 
 inform the development of LLMs. This perspective could open new possibilities for text generation, 
