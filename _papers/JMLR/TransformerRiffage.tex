@@ -86,7 +86,7 @@ demands capturing not only note patterns but also the associated expressions.
 
 \section{Encoding}
 The original Transformer model \cite{Vaswani} used a vocabulary of tokens derived from the input language corpus, with each token 
-represented as an integer index. A note is represented by multiplying the guitar’s fret number by the string number to 
+represented as an integer index. In this paper, a note is represented by multiplying the guitar's fret number by the string number to 
 generate a unique index. This approach not only helps the model learn the patterns of movement on the fretboard 
 but also provides flexibility to accommodate alternative tunings, which are increasingly common in modern guitar playing.
 With 6 strings and 23 frets per string, the instrument offers 138 distinct fretboard positions. The rhythmic structure is 
@@ -221,7 +221,7 @@ A collection of measures making a song is separated by an EOS token.
 \section{Embedding}
 A bar consists of a fixed number of beats, composed of musical notes that were tokenised as described in the previous section. Each bar is treated like a sentence.
 The tokens representing the accents or expression in riff are placed next to each note in the sentence. An example of 
-a riff and its tokenisation is given in Figure~\ref{fig:bend} . It has been demonstrated that the transformer equipped with relative attention is very well-suited for generative modelling of symbolic music. \cite{Vaswani2}. The chunking strategy used to carry over context between sequences during training follows the approach introduced in \cite{chunking}, which builds upon Transformer-XL’s segment-level recurrence mechanism. This method enables the model to capture longer-range dependencies by reusing hidden states from previous token chunks across segments.
+a riff and its tokenisation is given in Figure~\ref{fig:bend} . It has been demonstrated that the transformer equipped with relative attention is very well-suited for generative modelling of symbolic music. \cite{Vaswani2}. The chunking strategy used to carry over context between sequences during training follows the approach introduced in \cite{chunking}, which builds upon Transformer-XL's segment-level recurrence mechanism. This method enables the model to capture longer-range dependencies by reusing hidden states from previous token chunks across segments.
 
 \section{Training}
 \subsection{Model}
@@ -308,7 +308,7 @@ Repetition helps organise musical ideas, making pieces more
 coherent and memorable. It gives listeners reference points and expectations, 
 aiding in the recognition and recall of themes or motifs. \cite{Hu_2022}
 Composers have long used stochastic (probability-based) methods to inject randomness into repeated motifs, 
-sometimes even employing quantum randomness for truly unpredictable results. \cite{yamada_grandi_munoz-gil_barbiero_aloy_lewenstein_2021} This demands careful consideration, as it relies on the listener’s inherent ability to recognise patterns and their natural inclination toward novelty. 
+sometimes even employing quantum randomness for truly unpredictable results. \cite{yamada_grandi_munoz-gil_barbiero_aloy_lewenstein_2021} This demands careful consideration, as it relies on the listener's inherent ability to recognise patterns and their natural inclination toward novelty. 
 Since it is already known that tokens listed in Appendix A cannot repeat, it is penalised through repetition loss making them less likely to be selected again in subsequent steps. 
 A variant of the repetition penalty introduced in \cite{reppenalty} is employed; however, instead of greedy decoding, multinomial sampling is used to generate tokens to get semantically different output sequences \cite{song2024}. Including this loss during training eliminates the need to explicitly handle constraints for generating valid sequences at inference time
 \begin{align}
