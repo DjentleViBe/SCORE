@@ -4,20 +4,24 @@ I am submitting the manuscript titled "Transformer Riffage" for consideration in
 This manuscript is original and has not been published or submitted elsewhere. All authors are aware of this submission and consent to its review by JMLR.
 I suggest the following Action Editors, who I believe are well suited to handle thid submission and with whom I have no conflicts of interest:
 
-Joan Bruna for statistics and signal processing. Although the paper does not handle signals directly,
+- Joan Bruna for statistics and signal processing. Although the paper does not handle signals directly,
 analysis and synthesis of musical notes is addressed through abstract representations such as pitch, duration, and timbre.
-Kai-Wei Chang for Large Language Models and Vision based systems which I believe is relatable to music.
-Quanquan Gu for their proficieny in LLM and statistics
-Honglak Lee for their expertise on generative models.
-Brian Kulis for his work on audio applications.
+- Kai-Wei Chang for Large Language Models and Vision based systems which I believe is relatable to music.
+- Quanquan Gu for their proficieny in LLM and statistics
+- Honglak Lee for their expertise on generative models.
+- Brian Kulis for his work on audio applications.
 
 This paper relies on a custom dataset, which I have made publicly available (https://github.com/DjentleViBe/SCORE-SET). 
 A separate paper describing this dataset has also been submitted for review a few days ago. 
-The core motivation for this paper was that language functions much like music. Its structured by rhythm, shaped by melody, and delivered with emotional nuance. 
-Just as music conveys meaning through patterns of sound, language uses pitch, stress, and timing to enhance or alter interpretation. 
-If we accept that language is a form of music, then advances in modeling musical perception, structure, and generation can directly 
-inform the development of LLMs. This perspective opens new possibilities for capturing prosody, emotion, and 
-rhythm in text generation, enabling LLMs to better mirror human communication not only in semantics but in expressiveness and style.
+The core motivation for this paper was to devise a method to train the various musical expressions that are used in guitar playing 
+and to capture the continuity of themes between sequences, when they are split across batches during training. 
+Until now most of the work has been with using MIDI notes as tokens which does not come encoded with accentuation. 
+Using expression + note as a unique combination would result in an absurd number of vocabulary. An alternative approach is introduced that avoids high 
+vocabulary needs while still delivering meaningful results.
+
+If we accept that language is a form of music, then advances in modeling musical perception, structure, and generation could directly 
+inform the development of LLMs. This perspective could open new possibilities for text generation, 
+enabling LLMs to better mirror human communication not only in semantics but in expressiveness and style.
 
 Keywords:
 Transformer models, Music, Generative, Sequence modelling, Attention mechanism
