@@ -164,7 +164,7 @@ def plotbar_dual(title, labels, counts1, counts2, KLD, filename, label1='Trainin
         Patch(facecolor='black', edgecolor='black', label=label1),
         Patch(facecolor='lightgray', edgecolor='black', label=label2)
     ]
-    ax1.legend(handles=legend_patches, loc='center left', bbox_to_anchor=(1.05, 0.5))
+    ax1.legend(handles=legend_patches, loc='center left', bbox_to_anchor=(1.1, 0.5))
     # Grid on primary axis
     ax1.grid(axis='y', linestyle='--', alpha=0.7)
 
