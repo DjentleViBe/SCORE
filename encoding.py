@@ -81,6 +81,24 @@ def beat_prob(duration):
     
     return beatvalue
 
+def beattype_prob(duration):
+    beattypevalue = 1
+    if duration == 1:
+        beattypevalue = 1
+    elif duration == 2:
+        beattypevalue = 2
+    elif duration == 4:
+        beattypevalue = 3
+    elif duration == 8:
+        beattypevalue = 4
+    elif duration == 16:
+        beattypevalue = 5
+    elif duration == 32:
+        beattypevalue = 6
+    elif duration == 64:
+        beattypevalue = 7
+    return beattypevalue
+
 def note_prob(note, string):
     # tuning D#
     # 6: D# 

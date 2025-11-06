@@ -108,7 +108,7 @@ def plotbarlog(labels, title, counts, filename):
 
     return 0
 
-def plotbar_dual(labels, counts1, counts2, KLD, filename, label1='Training', label2='Inference'):
+def plotbar_dual(title, labels, counts1, counts2, KLD, filename, label1='Training', label2='Inference'):
     plt.figure(figsize=(12, 6))
     x = np.arange(len(labels))  # label positions
     width = 0.4  # width of the bars
@@ -121,7 +121,7 @@ def plotbar_dual(labels, counts1, counts2, KLD, filename, label1='Training', lab
     ax1.tick_params(axis='y')
     ax1.set_xticks(x)
     ax1.set_xticklabels(labels)
-    fig.suptitle('Occurrences', fontsize=18)      # Title for the Axes
+    fig.suptitle(title, fontsize=18)      # Title for the Axes
     ax1.set_title('KL_Divergence = ' + str(round(KLD, 4)), fontsize = 14)      # Subtitle for the entire figure
     plt.xticks(rotation=45)
     # Annotate primary bars

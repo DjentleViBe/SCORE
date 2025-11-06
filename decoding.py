@@ -42,7 +42,8 @@ def detokenizer_1(dummy):
     beat_type = {"duration": 0,      # e.g., 4 for quarter
                 "tuplet": None,     # e.g., 3, 5, 6, etc.
                 "dotted": False}
-    beat_kind = 0
+    accent_type = 0
+    beat_kind = 1
     if dummy == EOS:
         if VERBOSE == 1:
             print(f"-------EOS-------")
@@ -59,31 +60,39 @@ def detokenizer_1(dummy):
         if VERBOSE == 1:
             print("--------Barred Note--------")
         note_val = BARRE_NOTE
+        accent_type = 1
     elif BEND_NOTE_7 >= dummy >= BEND_NOTE_1:
+        accent_type = dummy - BEND_NOTE_1 + 1
         if VERBOSE == 1:
             print("-------Accent_Bend----------")
         note_val = dummy
     elif TREM_BAR_5 >= dummy >= TREM_BAR_1:
+        accent_type = dummy - TREM_BAR_1 + 9
         if VERBOSE == 1:
             print("-------Accent_Trem----------")
         note_val = dummy
     elif SLIDE_NOTE_6 >= dummy >= SLIDE_NOTE_1:
+        accent_type = dummy - SLIDE_NOTE_1 + 14
         if VERBOSE == 1:
             print("-------Accent_Slide----------")
         note_val = dummy
     elif dummy == DEAD_NOTE:
+        accent_type = 20
         if VERBOSE == 1:
             print("-------Dead note----------")
         note_val = dummy
     elif dummy == HAMMER:
+        accent_type = 21
         if VERBOSE == 1:
             print("-------Hammer----------")
         note_val = dummy
     elif dummy == VIBRATO:
+        accent_type = 22
         if VERBOSE == 1:
             print("-------Vibrato----------")
         note_val = dummy
     elif dummy == HARMONIC_1:
+        accent_type = 23
         if VERBOSE == 1:
             print("-------Harmonic----------")
         note_val = dummy
@@ -102,6 +111,7 @@ def detokenizer_1(dummy):
                         "dotted": bt_1}
             
             if note_type > 138:
+                accent_type = 24
                 # Palm mute
                 note_type -= 138
                 palm_mute = True
@@ -116,4 +126,4 @@ def detokenizer_1(dummy):
             print(f"Beat : {beat_type_cleaned} String : {string_num} Note : {note_val} PalmMute : {palm_mute}")
 
 
-    return note_val, note_type, string_num, beat_type, palm_mute, beat_kind
+    return note_val, note_type, string_num, beat_type, palm_mute, beat_kind, accent_type

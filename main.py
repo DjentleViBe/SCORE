@@ -8,7 +8,7 @@ import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
 from postprocess import combinepng, plot, plot_multiple, plotbar, plotbarlog, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, writebincount2, readbincount, KLDivergence
-from encoding import tokenizer_1, note_prob, beat_prob
+from encoding import tokenizer_1, note_prob, beat_prob, beattype_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
 import config as cfg
@@ -78,6 +78,7 @@ if __name__ == '__main__':
     'D - Septuplet',
     'D - 9_Tuplets',
     'D - 11_Tuplets']
+    labelsbeattype = ['1', '2', '4', '8', '16', '32', '64']
     labelsaccents = ['BARRE_NOTE', 'BEND_NOTE_1', 'BEND_NOTE_2', 'BEND_NOTE_3', 'BEND_NOTE_4', 'BEND_NOTE_5', 'BEND_NOTE_6', 'BEND_NOTE_7', 
                      'TREM_BAR_1', 'TREM_BAR_2', 'TREM_BAR_3', 'TREM_BAR_4', 'TREM_BAR_5', 
                      'SLIDE_NOTE_1', 'SLIDE_NOTE_2', 'SLIDE_NOTE_3', 'SLIDE_NOTE_4', 'SLIDE_NOTE_5', 'SLIDE_NOTE_6',
@@ -109,6 +110,7 @@ if __name__ == '__main__':
         training_src_encoder_1 = np.zeros((1 * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         training_note_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         training_beat_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
+        training_beattype_encoder_1 = np.zeros((cfg.NUM_SEQUENCE * cfg.MAX_SEQ_LENGTH), dtype = 'int32')
         GPROFOLDER = './gprofiles/'
         L = 0
         L_MAX = cfg.MAX_SEQ_LENGTH * cfg.NUM_SEQUENCE - 1
@@ -152,6 +154,7 @@ if __name__ == '__main__':
                                                         start_collect[training_src[L]] += 1
                                                 training_note_encoder_1[N] = note_prob(note.value, note.string)
                                                 training_beat_encoder_1[N] = beat_prob(note.beat.duration)
+                                                training_beattype_encoder_1[N] = beattype_prob(note.beat.duration.value)
                                                 N += 1
                                                 L = min(L + 1, L_MAX)
                                                 if note_index != 0:
@@ -313,8 +316,10 @@ if __name__ == '__main__':
         # plot notes
         training_note_encoder_1 = training_note_encoder_1[training_note_encoder_1 != 0]
         training_beat_encoder_1 = training_beat_encoder_1[training_beat_encoder_1 != 0]
+        training_beattype_encoder_1 = training_beattype_encoder_1[training_beattype_encoder_1 != 0]
         bincounts = np.bincount(training_note_encoder_1, minlength=13)[1:]
         bincountsbeats = np.bincount(training_beat_encoder_1, minlength=15)[1:]
+        bincountsbeattype = np.bincount(training_beattype_encoder_1, minlength=8)[1:]
         bincountsaccents = np.bincount(accents_collect, minlength=23)[1:]
 
         if cfg.MODE != 4:
@@ -325,6 +330,10 @@ if __name__ == '__main__':
             writebincount(bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
             plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.pdf')
             del training_beat_encoder_1
+
+            writebincount(bincountsbeattype, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeattypeprobability.txt')
+            plotbar(labelsbeattype, 'Occurance of Beat Type', bincountsbeattype, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeattypeprobability.pdf')
+            del training_beattype_encoder_1
 
             writebincount(accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
             plotbarlog(labelsaccents, 'Occurance of Accents', accents_collect, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.pdf')
@@ -471,6 +480,8 @@ if __name__ == '__main__':
 
         song_notes_collect = []
         song_beats_collect = []
+        song_accent_collect = []
+        song_beattype_collect = []
         for sid, startid in enumerate(first_values):
             if sid >= cfg.TEST_NUM:
                 break
@@ -487,6 +498,8 @@ if __name__ == '__main__':
             song_collect = []
             song_notes = []
             song_beats = []
+            song_accent = []
+            song_beattype = []
 
             while m < cfg.TEST_TRIES:
                 noteval = []
@@ -494,18 +507,21 @@ if __name__ == '__main__':
                 stringnum = []
                 beatval = []
                 palmval = []
+                accentval = []
 
                 for ind, dummy in enumerate(dummy_in[m]):
                     if cfg.VERBOSE == 1:
                         print(f"{ind + 1:02}", end=' ')
-                    note, notetype, string, beat, palm, beatnum = detokenizer_1(dummy)
+                    note, notetype, string, beat, palm, beatnum, accent = detokenizer_1(dummy)
                     noteval.append(note)
                     notetypeval.append(notetype)
                     stringnum.append(string)
                     beatval.append(beat)
                     palmval.append(palm)
+                    song_accent.append(accent)
                     song_notes.append(note_prob(note, string))
                     song_beats.append(beatnum)
+                    song_beattype.append(beattype_prob(beat["duration"]))
                 song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
                 song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
                 song.tracks[0].strings[0].value = cfg.TUNING[0]
@@ -520,27 +536,42 @@ if __name__ == '__main__':
                 writegpro(cfg.SAVE + "_" + str(startid), song)
                 song_notes_collect.append(song_notes)
                 song_beats_collect.append(song_beats)
-        flattened_notes = [
-                note
-                for song_notes in song_notes_collect
-                for note in song_notes
-                if note != 100
-            ]
+                song_accent_collect.append(song_accent)
+                song_beattype_collect.append(song_beattype)
+
+        flattened_notes = [note for song_notes in song_notes_collect for note in song_notes if note != 100]
         flattened_beats = [beat for song_beats in song_beats_collect for beat in song_beats]
+        flattened_accents = [accent for song_accent in song_accent_collect for accent in song_accent]
+        flattened_beattype = [bt for song_beattype in song_beattype_collect for bt in song_beattype]
+        
         bincounts_inf = np.bincount(flattened_notes, minlength=13)[1:]
         bincountsbeats_inf = np.bincount(flattened_beats, minlength=15)[1:]
+        bincountsaccent_inf = np.bincount(flattened_accents, minlength=25)[1:]
+        bincountsbeattype_inf = np.bincount(flattened_beattype, minlength=8)[1:]
+        
         writebincount(bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobability.pdf')
         bincounts_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
         bincountsbeats_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeatprobability.txt')
+        bincountsbeattype_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingbeattypeprobability.txt')
+        bincountsaccents_train = readbincount('./RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingaccentprobability.txt')
+        
         if cfg.MODE != 4:
             plotbar(labelsnotes, 'Occurance of Notes', bincounts_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitynotes.pdf')
             plotbar(labelsbeats, 'Occurance of Beats', bincountsbeats_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeats.pdf')
+            plotbar(labelsaccents, 'Occurance of Accents', bincountsaccent_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilityaccent.pdf')
+            plotbar(labelsbeattype, 'Occurance of Beat Type', bincountsbeattype_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeattype.pdf')
         
             KLD = KLDivergence(bincounts_train, bincounts_inf)
-            plotbar_dual(labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf')
+            plotbar_dual('Notes', labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf')
         
             KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
-            plotbar_dual(labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf')
+            plotbar_dual('Beats', labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf')
+
+            KLD = KLDivergence(bincountsaccents_train, bincountsaccent_inf)
+            plotbar_dual('Accents', labelsaccents, bincountsaccents_train, bincountsaccent_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilityaccent.pdf')
+
+            KLD = KLDivergence(bincountsbeattype_train, bincountsbeattype_inf)
+            plotbar_dual('Beat type', labelsbeattype, bincountsbeattype_train, bincountsbeattype_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeattype.pdf')
         
         #combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf',
         #           './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf',
