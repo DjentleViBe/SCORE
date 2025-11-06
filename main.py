@@ -320,7 +320,7 @@ if __name__ == '__main__':
         bincounts = np.bincount(training_note_encoder_1, minlength=13)[1:]
         bincountsbeats = np.bincount(training_beat_encoder_1, minlength=15)[1:]
         bincountsbeattype = np.bincount(training_beattype_encoder_1, minlength=8)[1:]
-        bincountsaccents = np.bincount(accents_collect, minlength=23)[1:]
+        bincountsaccents = np.bincount(accents_collect, minlength=24)[1:]
 
         if cfg.MODE != 4:
             writebincount(bincounts, './RESULTS/' + cfg.BACKUP + "/" + cfg.BACKUP + '_trainingprobability.txt')
@@ -541,7 +541,7 @@ if __name__ == '__main__':
 
         flattened_notes = [note for song_notes in song_notes_collect for note in song_notes if note != 100]
         flattened_beats = [beat for song_beats in song_beats_collect for beat in song_beats]
-        flattened_accents = [accent for song_accent in song_accent_collect for accent in song_accent]
+        flattened_accents = [accent for song_accent in song_accent_collect for accent in song_accent if accent != 0]
         flattened_beattype = [bt for song_beattype in song_beattype_collect for bt in song_beattype]
         
         bincounts_inf = np.bincount(flattened_notes, minlength=13)[1:]
