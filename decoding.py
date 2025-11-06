@@ -62,7 +62,7 @@ def detokenizer_1(dummy):
         note_val = BARRE_NOTE
         accent_type = 1
     elif BEND_NOTE_7 >= dummy >= BEND_NOTE_1:
-        accent_type = dummy - BEND_NOTE_1 + 1
+        accent_type = dummy - BEND_NOTE_1 + 2
         if VERBOSE == 1:
             print("-------Accent_Bend----------")
         note_val = dummy
