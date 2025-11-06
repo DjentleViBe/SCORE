@@ -541,9 +541,9 @@ if __name__ == '__main__':
 
         flattened_notes = [note for song_notes in song_notes_collect for note in song_notes if note != 100]
         flattened_beats = [beat for song_beats in song_beats_collect for beat in song_beats]
-        flattened_accents = [accent for song_accent in song_accent_collect for accent in song_accent if accent != 0]
+        flattened_accents = [accent - 1 for song_accent in song_accent_collect for accent in song_accent if accent != 0]
         flattened_beattype = [bt for song_beattype in song_beattype_collect for bt in song_beattype]
-        
+
         bincounts_inf = np.bincount(flattened_notes, minlength=13)[1:]
         bincountsbeats_inf = np.bincount(flattened_beats, minlength=15)[1:]
         bincountsaccent_inf = np.bincount(flattened_accents, minlength=25)[1:]
