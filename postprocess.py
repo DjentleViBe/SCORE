@@ -123,12 +123,21 @@ def plotbar_dual(title, labels, counts1, counts2, KLD, filename, label1='Trainin
     ax1.set_xticklabels(labels)
     fig.suptitle(title, fontsize=18)      # Title for the Axes
     ax1.set_title('KL_Divergence = ' + str(round(KLD, 4)), fontsize = 14)      # Subtitle for the entire figure
-    plt.xticks(rotation=45)
+    plt.xticks(rotation=90)
     # Annotate primary bars
     for bar in bars1:
         yval = bar.get_height()
-        ax1.text(bar.get_x() + bar.get_width()/2, yval, int(yval), ha='center', va='bottom', fontsize=9)
-
+        if yval != 0:
+            ax1.text(
+                bar.get_x() + bar.get_width() / 2,    # horizontal center
+                yval / 2,                             # halfway inside the bar
+                int(yval),                            # the label
+                ha='center', va='center',             # centered inside
+                fontsize=8,
+                rotation=90,                          # rotate text
+                color='white',                        # use contrasting color
+                fontweight='bold'
+            )
     # Secondary axis
     ax2 = ax1.twinx()
     bars2 = ax2.bar(x + width/2, counts2, width, label=label2, color='lightgray', edgecolor='black')
@@ -138,16 +147,24 @@ def plotbar_dual(title, labels, counts1, counts2, KLD, filename, label1='Trainin
     # Annotate secondary bars
     for bar in bars2:
         yval = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width()/2, yval, int(yval), ha='center', va='bottom', fontsize=9)
-
+        if yval != 0:
+            ax2.text(
+                bar.get_x() + bar.get_width() / 2,    # horizontal center
+                yval / 2,                             # halfway inside the bar
+                int(yval),                            # the label
+                ha='center', va='center',             # centered inside
+                fontsize=8,
+                rotation=90,                          # rotate text
+                color='black',                        # use contrasting color
+                fontweight='bold'
+            )
     # Combine legends
     labels = [label1, label2]
     legend_patches = [
         Patch(facecolor='black', edgecolor='black', label=label1),
         Patch(facecolor='lightgray', edgecolor='black', label=label2)
     ]
-    ax1.legend(handles=legend_patches, loc='upper right')
-
+    ax1.legend(handles=legend_patches, loc='center left', bbox_to_anchor=(1.05, 0.5))
     # Grid on primary axis
     ax1.grid(axis='y', linestyle='--', alpha=0.7)
 
