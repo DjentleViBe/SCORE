@@ -396,8 +396,8 @@ Composers have long used stochastic (probability-based) methods to inject random
 sometimes even employing quantum randomness for truly unpredictable results. \cite{yamada_grandi_munoz-gil_barbiero_aloy_lewenstein_2021} 
 This demands careful consideration, as it relies on the listener's inherent 
 ability to recognise patterns and their natural inclination toward novelty. 
-Since it is already known that tokens listed in \cite{begari2025scoresetdatasetguitarprofiles} 
-cannot repeat, it is penalised through repetition loss making them less likely to 
+Since it is already known that accent tokens\textsuperscript{~\ref{note:tokens}}
+cannot repeat, it is penalised through repetition loss, making them less likely to 
 be selected again in subsequent steps. 
 A variant of the repetition penalty introduced in \cite{reppenalty} is employed; 
 however, instead of greedy decoding, multinomial sampling is used to generate 
@@ -539,11 +539,13 @@ mechanism captures phrase segmentation,
 enabling variable-length batching while preserving musical coherence. 
 The model demonstrates strong performance in generating guitar riffs with
 expressive details, as evidenced by low KL divergence scores across pitch,
-beat, and beat type distributions. Future work could explore extending the
+beat, and beat type distributions. By incorporating a repetition penalty loss, 
+the model naturally reduces redundancy without requiring explicit inference constraints.
+Future work could explore extending the
 approach to other instruments and incorporating additional musical attributes.
 \begin{figure}[H]
   \centering
-  \includegraphics[trim={20 230 0 100}, clip, width=0.98\linewidth]{test_all.pdf}
+  \includegraphics[trim={20 230 0 100}, clip, width=0.89\linewidth]{test_all.pdf}
   \caption{Test results showing 4 musical measures with TEMPERATURE = 0.7}
 \label{fig:sheet}
 \end{figure}
