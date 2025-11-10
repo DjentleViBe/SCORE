@@ -496,6 +496,8 @@ DELTA  & 0.001 \\
 \end{table}
 
 \subsection{KL Divergence Evaluation}
+To quantitatively assess the model's generative quality, the predicted token distributions were compared with the true distributions using KL divergence.
+Table~\ref{tab:kldiv} summarizes the divergence values, and Figures~\ref{fig:noteskl}-\ref{fig:beattypekl} visualize the results.
 Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
 distribution of starting notes of musical measures in the training data yields more consistent generation
 as shown in Table~\ref{tab:kldiv}. The results were averaged over 10 generated phrases per prompt.
@@ -518,19 +520,19 @@ as shown in Table~\ref{tab:kldiv}. The results were averaged over 10 generated p
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.9\linewidth]{0_test_all_T10_compareprobabilitynotes.pdf}
+  \includegraphics[width=1.0\linewidth]{0_test_all_T10_compareprobabilitynotes.pdf}
   \caption{KL divergence between generated and true distributions of musical notes, indicating accurate note prediction by the model.}
 \label{fig:noteskl}
 \end{figure}
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.9\linewidth]{0_test_all_T10_compareprobabilitybeats.pdf}
+  \includegraphics[width=1.0\linewidth]{0_test_all_T10_compareprobabilitybeats.pdf}
   \caption{KL divergence for beat tokens with start token 15528, showing the model preserves rhythmic structure.}
 \label{fig:beatskl}
 \end{figure}
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.9\linewidth]{0_test_all_T10_compareprobabilitybeattype.pdf}
+  \includegraphics[width=1.0\linewidth]{0_test_all_T10_compareprobabilitybeattype.pdf}
   \caption{KL divergence for beat types with start token 15528, demonstrating correct modeling of musical subdivisions.}
 \label{fig:beattypekl}
 \end{figure}
