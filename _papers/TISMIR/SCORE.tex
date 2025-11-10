@@ -18,7 +18,6 @@
 \usepackage{url}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{lipsum}
 \usepackage{float}
 \usepackage{orcidlink}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -28,7 +27,7 @@
 \title{SCORE: Tokenization-Aware Transformer for Symbolic Music Generation with Expressions}
 %
 \author{%
-Vishakh Begari\thanks{Independent Researcher\orcidlink{0009-0008-9399-8581}, Bavaria, Germany}%
+Anonymous Author(s)\thanks{Affiliation withheld for double-blind review}%
 %~Second Author2\thanks{Research Institute Two, Campus Rd. 4, 12345 Flatland},%
 %~and Third Author3
 \protect\footnotemark[1]}
@@ -47,7 +46,7 @@ Vishakh Begari\thanks{Independent Researcher\orcidlink{0009-0008-9399-8581}, Bav
 %
 % "Mandatory" (if missing will print the complete list of authors,
 % including the \thanks symbols)
-\authorref{Vishakh Begari}
+\authorref{Anonymous Author(s)}
 %
 % (Optional)
 % \journalyear{2017}
@@ -58,8 +57,8 @@ Vishakh Begari\thanks{Independent Researcher\orcidlink{0009-0008-9399-8581}, Bav
 
 % Remaining Pages (Optional)
 %
-\authorshort{Vishakh Begari} %or, e.g., \authorshort{Author1 et al}
-% \titleshort{Template for TISMIR}
+\authorshort{Anonymous Author(s)} %or, e.g., \authorshort{Author1 et al}
+\titleshort{Tokenization-Aware Transformer for Music}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Document Content
@@ -79,12 +78,12 @@ Vishakh Begari\thanks{Independent Researcher\orcidlink{0009-0008-9399-8581}, Bav
 Ever since the electrification of guitar, there has been an explosion in rhythmic complexity,
 tone experimentation and playing techniques. In this paper, a novel tokenisation method is proposed,
 which encapsulates the various guitar techniques and a sequence level attention component for the transformer architecture, 
-which tries to capture the segmentation between different musical phrases. The given approach enables 
+which captures segmentation between different musical phrases. The given approach enables 
 efficient batching of variable length musical phrases while preserving their contextual coherence.
 \end{abstract}
 %
 \begin{keywords}
-motif generation, symbolic music, transformers, sequence modelling, KL divergence.
+motif generation, symbolic music generation, transformers, sequence modelling, KL divergence.
 \end{keywords}
 }]
 \saythanks{}
@@ -120,7 +119,7 @@ expressive elements of modern music, a score based format is preferable over sim
 The proposed method requires a tokenisation scheme that represents notes, beats, beat types and their associated accents, 
 necessitating a dataset that includes expressive performance details.
 
-In the context of symoblic music, notes are represented as sequences of discrete tokens. This requires a tokenisation scheme which directly affects how effectively a 
+In the context of symbolic music, notes are represented as sequences of discrete tokens. This requires a tokenisation scheme which directly affects how effectively a 
 model can learn and generate coherent musical structures. Most existing approaches rely on methods similar to text 
 processing such as BPE (Byte Pair Encoding) \cite{sennrich2016neuralmachinetranslationrare}, WordPiece \cite{sentencepiece}
 and SentencePiece \cite{kudo2018sentencepiecesimplelanguageindependent}. Although subword tokenization improves 
@@ -135,7 +134,9 @@ unique chord as a separate token, resulting in a large vocabulary that may inclu
 representing all possible chords in the dataset \cite{harmony} \cite{Chordinator}. 
 \cite{chen2020automatic} proposes a pre-defined set of rhythmic groove patterns. This limits the model's ability to generate novel rhythms. 
 
-To address these limitations, a tokenisation scheme is proposed, that captures single and multiple musical notes efficiently and 
+Despite the growing body of work on symbolic music generation, there is little to no prior work 
+specifically addressing expressive guitar music that captures techniques such as bends, slides, 
+and chords in a tokenized representation. To address these limitations, a tokenisation scheme is proposed, that captures single and multiple musical notes efficiently and 
 their associated accentuated elements. Furthermore, a sequence level attention mechanism is introduced to capture the segmentation
 between different musical phrases, facilitating batching of variable length phrases while maintaining musical context.
 The modified architecture is trained and evaluated on a dataset \cite{SCORESET} that includes guitar specific techniques.
@@ -198,7 +199,7 @@ where, $f_n$ = fret number, $s_n$ = string number and $n_{val}$ = 1 for palm mut
 
 \subsubsection{Accent representation}
 A description of expressive elements is provided in ~\cite{begari2025scoresetdatasetguitarprofiles}.
-An accent token is appened to the note token from Section~\ref{sec:note} to indicate the presence of an expressive element. 
+An accent token is append to the note token from Section~\ref{sec:note} to indicate the presence of an expressive element. 
 For chords, the accent token is added before the next consecutive note token.
 A C major chord as shown in Figure~\ref{fig:chord} comprises of 3 notes - root note [C] played on the 
 fret 2 / 5th string , major third [G] on fret 1 / 4th string and perfect fifth [E] on 
@@ -208,14 +209,14 @@ depicted in Figure~\ref{fig:bend}, the tokenization is: \textit{15461, 27052}. H
   \begin{figure}[htbp]
   \centering
   \includegraphics[trim={0 980 650 150}, clip, width=0.6\linewidth]{Cmajor.pdf}
-  \caption{C major chord shape on a 6 string.}
+  \caption{C major chord shape on a 6 string. The diagram illustrates muscial notation along with guitar tablature.}
 \label{fig:chord}
 \end{figure}
 
 \begin{figure}[htbp]
   \centering
   \includegraphics[trim={0 950 650 150}, clip, width=0.6\linewidth]{Note5bend1.pdf}
-  \caption{Fret 5 string 5 quarter note full bend.}
+  \caption{Musical notation and guitar tablature showing full note bend on fret 5, string 5.}
 \label{fig:bend}
 \end{figure}
 \subsubsection{Phrases}
@@ -270,7 +271,7 @@ An example of a riff is shown in is given in Figure~\ref{fig:riff}.
   \begin{figure}[H]
   \centering
   \includegraphics[trim={0 650 0 40}, clip, width=1.0\linewidth]{Riff_example.pdf}
-  \caption{Guitar riff tablature.}
+  \caption{Example guitar riff showing a sequence of notes in combination with accents like pinch harmonic, barre chord and palm mute.}
 \label{fig:riff}
 \end{figure}
 With 16 tokens per sequence, embedding is as follows: 
@@ -287,7 +288,7 @@ This padding ensures that all input sequences are of uniform length, while still
 \subsubsection{Dataset}
 The guitar tracks were obtained from \cite{SCORESET}.
 The dataset consists of files in .gp5 \cite{GuitarProFormatInfo2025} format in standard tuning. 
-From the full set, a total of 6208 sequences were selected via random sampling to allow efficient training on a standard personal computer.
+From the full set, 6208 sequences were randomly sampled to enable efficient training on standard desktop hardware.
 The common practice of 80/20 split was used to create the training and validation sets \cite{Goodfellow2016DeepLearning}. 
 For testing, top 10 first notes of each measure in the training set were selected as 
 prompts for sequence generation and evaluation.
@@ -296,13 +297,13 @@ Relavant statistics about the dataset used for training and evaluation are provi
 \begin{figure}[H]
   \centering
 \includegraphics[clip, width=1.0\linewidth]{trainingaccentprobability.pdf}
-\caption{Accent occurrences in training data for a random seed.}
+\caption{Distribution of accent tokens in the training data after random sampling, highlighting common expressive elements that the model learns to reproduce.}
   \label{fig:accentnote}
 \end{figure}
 \begin{figure}[H]
   \centering
 \includegraphics[clip, width=1.0\linewidth]{startprobability.pdf}
-\caption{Token occurrences of first note of a musical measure after random seed.}
+\caption{Distribution of starting notes for musical measures, used to select initial tokens for more consistent generation.}
   \label{fig:firstnote}
 \end{figure}
 \subsubsection{Model}
@@ -402,8 +403,8 @@ be selected again in subsequent steps.
 A variant of the repetition penalty introduced in \cite{reppenalty} is employed; 
 however, instead of greedy decoding, multinomial sampling is used to generate 
 tokens to get semantically different output sequences \cite{song2024}. 
-Including this loss during training eliminates the need to explicitly 
-handle constraints for generating valid sequences at inference time.
+Including this loss during training removes the need for explicit constraints during 
+inference for generating valid sequences.
 \begin{align}
 \text{Let } p_{b,t,v} = \text{softmax}\left( \frac{\text{logits}_{b,t,v}}{T} \right)
 \end{align}
@@ -478,10 +479,6 @@ DELTA  & 0.001 \\
   \caption{Hyper-parameter values used for training.}
 \label{tab:hyperparam}
 \end{table}
-Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
-distribution of starting notes of musical measures in the training data yields more consistent generation
-as shown in Table~\ref{tab:kldiv}. The results were averaged over 10 generated phrases per prompt.
-
 \begin{table}[H]
 \centering
   \begin{tabular}{lll}
@@ -497,6 +494,9 @@ as shown in Table~\ref{tab:kldiv}. The results were averaged over 10 generated p
   \caption{Loss values.}
 \label{tab:loss}
 \end{table}
+Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
+distribution of starting notes of musical measures in the training data yields more consistent generation
+as shown in Table~\ref{tab:kldiv}. The results were averaged over 10 generated phrases per prompt.
 
 \begin{table}[H]
 \centering
@@ -517,19 +517,19 @@ as shown in Table~\ref{tab:kldiv}. The results were averaged over 10 generated p
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\linewidth]{0_test_all_T10_compareprobabilitynotes.pdf}
-  \caption{KL Divergence for musical notes with start token 15528.}
+  \caption{KL divergence between generated and true distributions of musical notes, indicating accurate note prediction by the model.}
 \label{fig:noteskl}
 \end{figure}
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\linewidth]{0_test_all_T10_compareprobabilitybeats.pdf}
-  \caption{KL Divergence for beat with start token 15528.}
+  \caption{KL divergence for beat tokens with start token 15528, showing the model preserves rhythmic structure.}
 \label{fig:beatskl}
 \end{figure}
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\linewidth]{0_test_all_T10_compareprobabilitybeattype.pdf}
-  \caption{KL Divergence for beat type with start token 15528.}
+  \caption{KL divergence for beat types with start token 15528, demonstrating correct modeling of musical subdivisions.}
 \label{fig:beattypekl}
 \end{figure}
 \section{Conclusions}\label{sec:conclusions}
@@ -545,10 +545,11 @@ Future work could explore extending the
 approach to other instruments and incorporating additional musical attributes.
 \begin{figure}[H]
   \centering
-  \includegraphics[trim={20 230 0 100}, clip, width=0.88\linewidth]{test_all.pdf}
-  \caption{Test results showing 4 musical measures generated with TEMPERATURE = 0.7}
+  \includegraphics[trim={20 230 0 100}, clip, width=1.0\linewidth]{test_all.pdf}
+  \caption{Four generated musical measures demonstrating the model's ability to maintain musical coherence and expressive details at TEMPERATURE 0.7.}
 \label{fig:sheet}
 \end{figure}
+\newpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Please do not touch.
 % Print Endnotes
