@@ -150,8 +150,8 @@ divergence across pitch, beat, beat type, and expression similarity. The source 
 \subsection{Tokenisation}\label{sec:tokenisation}
 \subsubsection{Note representation}\label{sec:note}
 In place of absolute pitch indices, both fret and string numbers are employed to represent notes.  This approach allows for a more compact representation of notes, 
-as the same pitch can be played on different strings and frets. This is particularly useful for guitar music, where the same note can be played in multiple positions 
-on the fretboard, like a chord. The model focuses on learning the relative motion of notes across frets, emphasizing positional 
+as the same pitch can be played on different strings and frets. This is particularly relevant to guitar music, where notes can be produced at multiple 
+fretboard positions, often resembling chord shapes. The model focuses on learning the relative motion of notes across frets, emphasizing positional 
 changes rather than absolute pitch representation. This provides flexibility to accommodate alternative
 tunings \cite{Weissman2006GuitarTunings}. The formula for note encodings for fretted string instrument is given by: 
 \begin{align}
@@ -534,7 +534,7 @@ as shown in Table~\ref{tab:kldiv}. The results were averaged over 10 generated p
 \end{figure}
 \section{Conclusions}\label{sec:conclusions}
 The proposed tokenisation scheme efficiently incorporates expressive elements 
-without needing an explicit chord vocabulary. The sequence-level attention 
+without needing an explicit representation like chord vocabulary. The sequence-level attention 
 mechanism captures phrase segmentation,
 enabling variable-length batching while preserving musical coherence. 
 The model demonstrates strong performance in generating guitar riffs with
@@ -545,8 +545,8 @@ Future work could explore extending the
 approach to other instruments and incorporating additional musical attributes.
 \begin{figure}[H]
   \centering
-  \includegraphics[trim={20 230 0 100}, clip, width=0.89\linewidth]{test_all.pdf}
-  \caption{Test results showing 4 musical measures with TEMPERATURE = 0.7}
+  \includegraphics[trim={20 230 0 100}, clip, width=0.88\linewidth]{test_all.pdf}
+  \caption{Test results showing 4 musical measures generated with TEMPERATURE = 0.7}
 \label{fig:sheet}
 \end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
