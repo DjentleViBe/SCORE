@@ -127,7 +127,7 @@ the structure \cite{kumar2023wordsmusicstudysubword} \cite{bpe-symbolic-music},
 it becomes limited when dealing with the expressive element combinations of modern music. Recent studies 
 \cite{gardin2024musiclang} have explored modeling chords based on scale degree, tonality and octave, and 
 notes encoded relative to the current chord. This approach, however, is unable to produce every possible chord, 
-particularly when dissonance is involved, which is becoming increasing popular in modern metal. 
+particularly when dissonance is involved, which is becoming increasingly popular in modern metal. 
 Most prior studies use absolute pitch values \cite{aws_deepcomposer}, some \cite{kermarec2022tokenization} investigate the use of pitch intervals.
 This introduces an additional processing step, increasing inference time. Another common strategy treats each 
 unique chord as a separate token, resulting in a large vocabulary that may include thousands of tokens 
@@ -274,7 +274,7 @@ An example of a riff is shown in is given in Figure~\ref{fig:riff}.
   \caption{Example guitar riff showing a sequence of notes in combination with accents like pinch harmonic, barre chord and palm mute.}
 \label{fig:riff}
 \end{figure}
-With 16 tokens per sequence, embedding is as follows: 
+An example 16 tokens per sequence embedding is as follows: 
 
 [27049, 7985, 11849, 11849, 7985, 11849, 11849, 7985, 11849, 11849, 7985, 11849, 11849, 27049, 17485, 17506]
 
@@ -494,6 +494,8 @@ DELTA  & 0.001 \\
   \caption{Loss values.}
 \label{tab:loss}
 \end{table}
+
+\subsection{KL Divergence Evaluation}
 Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
 distribution of starting notes of musical measures in the training data yields more consistent generation
 as shown in Table~\ref{tab:kldiv}. The results were averaged over 10 generated phrases per prompt.
