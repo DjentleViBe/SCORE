@@ -3,7 +3,9 @@ import config as cfg
 from postprocess import decoder_inference
 import torch
 import numpy as np
+from masking import create_combined_mask
 from config import EOS, BAR
+import torch.nn.functional as F
 
 def inference(start, device, decoder, embedding_layer, pos_enc, mask):
     """Run inference"""
@@ -61,3 +63,27 @@ def inference(start, device, decoder, embedding_layer, pos_enc, mask):
                 t += 1
                 
     return dummy_out
+def testing(loader_test, device, embedding_layer, decoder, pos_enc):
+    decoder.eval()
+    with torch.no_grad():
+        epoch_loss = 0
+        batch_count = 0
+        for batch_token_ids, batch_target in loader_test:
+            batch_token_ids = batch_token_ids.to(device)
+            batch_target = batch_target.to(device)
+            
+            mask = create_combined_mask(batch_token_ids, device, seq_length=cfg.MAX_SEQ_LENGTH, num_heads=cfg.NUM_HEADS)
+            embeddings = embedding_layer(batch_token_ids)
+            input_embeddings = embeddings + pos_enc[:batch_token_ids.size(1)]
+            
+            logits, *_ = decoder(input_embeddings, mask)
+            logits = logits.view(-1, logits.size(-1))
+            targets = batch_target.view(-1)
+
+            # Cross-entropy per token
+            loss = F.cross_entropy(logits, targets)
+            epoch_loss += loss.item()
+            batch_count += 1
+
+        avg_loss = epoch_loss / batch_count
+    return avg_loss
