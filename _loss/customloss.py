@@ -115,20 +115,10 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         if prev_sequence_embedding is not None and sequence_embedding.shape[0] == cfg.BATCH:
             mu_curr, sigma_curr = compute_sequence_gaussians(sequence_embedding)
             mu_prev, sigma_prev = compute_sequence_gaussians(prev_sequence_embedding.detach())
-            # print(sigma_curr.max().item())
             kl_loss = kl_divergence_gaussians_loss(mu_curr, sigma_curr, mu_prev, sigma_prev)
-            kl_loss = self.sequence_penalty_weight * kl_loss.mean() / cfg.BATCH
-            # kl_loss = min(5.0, steps / cfg.EPOCHS) 
-            kl_loss = torch.clamp(kl_loss * steps / cfg.EPOCHS, max=0.2)
-            
-            # print(kl_loss)
-            
+            kl_loss = self.sequence_penalty_weight * kl_loss.mean()
         else:
             kl_loss = torch.tensor(0.0, device=sequence_embedding.device)
-        
-        #with torch.no_grad():
-        #    sampled_tokens = generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, seq_len=logits.size(1), temperature=cfg.TEMPERATURE)
-        #repetition_loss = self.compute_repetition_penalty(sampled_tokens)
         repetition_loss = self.repetition_penalty_weight * soft_repetition_penalty(logits, temperature=cfg.TEMPERATURE)
         total_loss = ce_loss + repetition_loss +  kl_loss
         return total_loss, ce_loss, repetition_loss, kl_loss, sequence_embedding.detach()
@@ -159,3 +149,7 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
 
         repetition_loss = batch_penalty / total_ngrams_count
         return torch.tensor(repetition_loss, device=generated_tokens.device)
+
+class ValidationLoss(nn.Module):
+    def forward(self, logits, targets):
+        return F.cross_entropy(logits, targets, ignore_index=0)
