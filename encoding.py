@@ -113,4 +113,5 @@ def note_prob(note, string):
     else:
         if string > 6:
             print("String error : ", string)
+            string -= 1
         return (note + (cfg.TUNING[string - 1] % 12)) % 12 + 1
