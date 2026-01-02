@@ -472,7 +472,13 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
 
                 # Re-check after changing to avoid accidental collisions again (optional safeguard)
                 if stringnum[n] in used_strings:
-                    raise ValueError(f"Could not resolve string conflict for note {noteval[n]} at position {n}")
+                    if noteval[n] <= 0:
+                        continue  # skip assignment for rests
+                    else:
+                        print("Used strings:", used_strings)
+                        print("All candidate strings:", stringnum)
+                        print("Current note:", noteval[n])
+                        raise ValueError(f"Could not resolve string conflict for note {noteval[n]} at position {n}")
                 current_beat = reused_beat
                 current_beat.status = gp.models.BeatStatus.normal
                 reuse_last_beat = False
