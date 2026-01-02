@@ -23,6 +23,7 @@ from validation import validation
 import argparse
 from fileutils import get_all_files_recursive
 import random
+from testing import testing
 
 if __name__ == '__main__':
     
@@ -298,16 +299,24 @@ if __name__ == '__main__':
         full_pad_mask = full_pad_mask.expand(NUM_SEQUENCE, 1, cfg.MAX_SEQ_LENGTH, cfg.MAX_SEQ_LENGTH)
         full_pad_mask = full_pad_mask.to(dtype=torch.float32) * float('-1e9')  # use -1e9 instead of -inf
         full_pad_mask = full_pad_mask.to(device)
-        train_src, val_src, train_tgt, val_tgt = train_test_split(
+        train_src, temp_src, train_tgt, temp_tgt = train_test_split(
             training_src_encoder_1,
             training_tgt_notes,
-            test_size=0.1,
-            random_state=42  # for reproducibility
+            test_size=0.2,  # 20% reserved for val+test
+            random_state=42
+        )
+        val_src, test_src, val_tgt, test_tgt = train_test_split(
+            temp_src,
+            temp_tgt,
+            test_size=0.5,  # split the 20% evenly → 10% val, 10% test
+            random_state=42
         )
         train_src_tensor = train_src.detach().clone()
         train_tgt_tensor = train_tgt.detach().clone()
         val_src_tensor = val_src.detach().clone()
         val_tgt_tensor = val_tgt.detach().clone()
+        test_src_tensor = test_src.detach().clone()
+        test_tgt_tensor = test_tgt.detach().clone()
         del training_tgt_decoder_1
 
         sorted_indices = np.argsort(-start_collect)
@@ -370,6 +379,9 @@ if __name__ == '__main__':
         dataset_val = TensorDataset(val_src_tensor, val_tgt_tensor)
         loader_val = DataLoader(dataset_val, batch_size=cfg.BATCH, shuffle=True)
 
+        dataset_test = TensorDataset(test_src_tensor, test_tgt_tensor)
+        loader_test = DataLoader(dataset_test, batch_size=cfg.BATCH, shuffle=True)
+
         if cfg.MODE == 3:
             print("Loading saved file", cfg.SAVE)
             checkpoint = torch.load('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth', map_location=torch.device(DEVICE_TYPE))
@@ -387,6 +399,7 @@ if __name__ == '__main__':
             epoch_ce_loss = 0.0
             batch_count = 0
             kl_loss = 0.0
+            total_tokens = 0
             prev_sequence_embedding = None
             for batch_idx, (batch_token_ids, batch_target) in enumerate(loader):
                 #if len(batch_token_ids) != cfg.BATCH:
@@ -416,21 +429,28 @@ if __name__ == '__main__':
                 optimizer.step()
 
                 # Log and accumulate loss
+                num_tokens = (batch_target != 0).sum().item()
                 epoch_loss += loss.item()
-                epoch_ce_loss += ce_loss.item()
+                epoch_ce_loss += ce_loss.item() * num_tokens
                 epoch_rep_loss += rep_loss.item()
                 epoch_seq_loss += kl_loss.item()
                 batch_count += 1
+                total_tokens += num_tokens
                 # print("batch count : ", batch_count)
             
             avg_loss = epoch_loss / batch_count
-            avg_ce_loss = epoch_ce_loss / batch_count
+            avg_ce_loss = epoch_ce_loss / total_tokens
             avg_rep_loss = epoch_rep_loss / batch_count
             avg_seq_loss = epoch_seq_loss / batch_count
             val_loss = validation(loader_val, device, optimizer, embedding_layer, decoder, criterion, pos_enc)
             if cfg.SCHEDULER == 1:
                     scheduler.step(val_loss)
-            print(f"{ITERATION + 1} : main :{round(avg_loss, 4)}, ce :{round(avg_ce_loss, 4)}, rep :{round(avg_rep_loss, 4)}, seq :{round(avg_seq_loss, 4)}, validation :{round(val_loss, 4)}")
+            if ITERATION % 5 == 0:
+                test_loss = testing(loader_test, device, embedding_layer, decoder, pos_enc)
+            print(f"{ITERATION + 1} : main :{round(avg_loss, 4)}, ce :{round(avg_ce_loss, 4)}, "
+                  f"rep :{round(avg_rep_loss, 4)}, seq :{round(avg_seq_loss, 4)}, "
+                  f"validation :{round(val_loss, 4)}, "
+                  f"testing :{round(test_loss, 4)}")
             ITERATION += 1
             lossplot.append(avg_loss)
             ce_lossplot.append(avg_ce_loss)
