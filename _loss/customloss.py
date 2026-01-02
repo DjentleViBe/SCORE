@@ -9,7 +9,17 @@ import numpy as np
 import sys
 np.set_printoptions(threshold=sys.maxsize)
 import torch.nn.functional as F
-from models import compute_sequence_gaussians, kl_divergence_gaussians_loss
+from models import pairwise_l2
+
+class SequenceMemory(nn.Module):
+    def __init__(self):
+        super().__init__()
+        num_sequences = cfg.NUM_SEQUENCE
+        embedding_dim = cfg.BATCH
+        self.seq_embed = nn.Embedding(num_sequences, embedding_dim)
+
+    def forward(self, seq_ids):
+        return self.seq_embed(seq_ids)
 
 def generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, seq_len, temperature=1.0):
     """
@@ -98,30 +108,30 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         self.ngram_size = ngram_size
         self.penalize_tokens = penalize_tokens if penalize_tokens else []
 
-    def forward(self, logits, targets, prev_sequence_embedding, steps):
+    def forward(self, logits, targets, prev_sequence_embedding, seq_mem):
         """
         Args:
             logits: (batch_size, seq_len, vocab_size)
             targets: (batch_size, seq_len)
         """
-        # batch_size, seq_len, _ = logits.size()
-        logits, _, _ = logits  # unpack the tuple
-        probs = torch.softmax(logits, dim=-1)
-        sequence_embedding = probs
+        logits, hidden_states, _ = logits  # unpack the tuple
+         
         logits_flat = logits.view(-1, logits.size(-1))
         targets_flat = targets.view(-1)
-
         ce_loss = self.ce_loss(logits_flat, targets_flat)
+
+        hidden_tensor = hidden_states[0]
+        sequence_embedding = hidden_tensor.mean(dim=1) + seq_mem  # (B, seq_len*H1*H2)
+        
         if prev_sequence_embedding is not None and sequence_embedding.shape[0] == cfg.BATCH:
-            mu_curr, sigma_curr = compute_sequence_gaussians(sequence_embedding)
-            mu_prev, sigma_prev = compute_sequence_gaussians(prev_sequence_embedding.detach())
-            kl_loss = kl_divergence_gaussians_loss(mu_curr, sigma_curr, mu_prev, sigma_prev)
-            kl_loss = self.sequence_penalty_weight * kl_loss.mean()
+            D_curr = pairwise_l2(sequence_embedding)   # distances
+            D_prev = pairwise_l2(prev_sequence_embedding)
+            rel_loss = F.mse_loss(D_curr, D_prev.detach()) * self.sequence_penalty_weight
         else:
-            kl_loss = torch.tensor(0.0, device=sequence_embedding.device)
+            rel_loss = torch.tensor(0.0, device=sequence_embedding.device)
         repetition_loss = self.repetition_penalty_weight * soft_repetition_penalty(logits, temperature=cfg.TEMPERATURE)
-        total_loss = ce_loss + repetition_loss +  kl_loss
-        return total_loss, ce_loss, repetition_loss, kl_loss, sequence_embedding.detach()
+        total_loss = ce_loss + repetition_loss +  rel_loss
+        return total_loss, ce_loss, repetition_loss, rel_loss, sequence_embedding.detach()
 
     def compute_repetition_penalty(self, generated_tokens):
         """

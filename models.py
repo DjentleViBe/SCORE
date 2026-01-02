@@ -59,3 +59,10 @@ def kl_divergence_gaussians_loss(mu_q, sigma_q, mu_k, sigma_k, eps=1e-8):
 
     kl = 0.5 * torch.sum(log_term + frac_term + mean_term - 1, dim=-1)  # sum over d, result [B]
     return kl
+
+def pairwise_l2(x):
+    # x: (B, D)
+    # returns vector of pairwise distances (same shape as torch.pdist)
+    diff = x.unsqueeze(1) - x.unsqueeze(0)   # (B, B, D)
+    dist = torch.sqrt((diff ** 2).sum(dim=-1) + 1e-8)  # (B, B)
+    return dist

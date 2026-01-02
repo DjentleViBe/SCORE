@@ -41,7 +41,8 @@ def plot_multiple(plot_collect, labels, text, filename):
     plt.yscale('log')
     for i in range(0, len(plot_collect)):
         plt.plot(plot_collect[i], label=labels[i])
-    plt.legend()
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.tight_layout()
     plt.savefig(filename, dpi = 200)
 
     return 0
