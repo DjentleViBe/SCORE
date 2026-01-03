@@ -59,12 +59,10 @@ def plot(lossplot, text, filename):
     return 0
 
 def plotbar(labels, title, counts, filename):
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(5, 3))
     bars = plt.bar(labels, counts, color='black', edgecolor='black')
-    # plt.xlabel('Notes', fontsize=12)
     plt.ylabel('Occurrences', fontsize=12)
     plt.title(title, fontsize=14)
-    #plt.xticks(range(1, 13))
     plt.xticks(rotation=90) 
 
     for bar in bars:
