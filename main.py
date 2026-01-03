@@ -288,6 +288,7 @@ if __name__ == '__main__':
                 training_src_encoder_1 = np.concatenate((training_src_encoder_1, overlapping_sequences), axis=0)
         
         NUM_SEQUENCE = len(training_src_encoder_1)
+        print(f"Sequence after overlap : {NUM_SEQUENCE}")
         training_tgt_decoder_1 = training_src_encoder_1.copy().astype(np.int64)
         training_tgt_notes = np.roll(training_tgt_decoder_1, shift=-1)
         training_tgt_notes = np.zeros_like(training_tgt_decoder_1)
@@ -371,7 +372,7 @@ if __name__ == '__main__':
             ngram_size=3, 
             penalize_tokens=penalize_tokens
         )
-        sequence_memory = SequenceMemory().to(device)
+        sequence_memory = SequenceMemory(NUM_SEQUENCE).to(device)
 
         # Wrap your full data into a TensorDataset
         dataset = TensorDataset(train_src_tensor, train_tgt_tensor)

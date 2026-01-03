@@ -12,11 +12,10 @@ import torch.nn.functional as F
 from models import pairwise_l2
 
 class SequenceMemory(nn.Module):
-    def __init__(self):
+    def __init__(self, NUM_SEQUENCE):
         super().__init__()
-        num_sequences = cfg.NUM_SEQUENCE
         embedding_dim = cfg.D_MODEL
-        self.seq_embed = nn.Embedding(num_sequences, embedding_dim)
+        self.seq_embed = nn.Embedding(NUM_SEQUENCE, embedding_dim)
 
     def forward(self, seq_ids):
         return self.seq_embed(seq_ids)

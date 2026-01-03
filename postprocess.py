@@ -59,7 +59,7 @@ def plot(lossplot, text, filename):
     return 0
 
 def plotbar(labels, title, counts, filename):
-    plt.figure(figsize=(5, 3))
+    plt.figure(figsize=(6, 4))
     bars = plt.bar(labels, counts, color='black', edgecolor='black')
     plt.ylabel('Occurrences', fontsize=12)
     plt.title(title, fontsize=14)
