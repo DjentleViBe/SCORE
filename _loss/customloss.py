@@ -15,7 +15,7 @@ class SequenceMemory(nn.Module):
     def __init__(self):
         super().__init__()
         num_sequences = cfg.NUM_SEQUENCE
-        embedding_dim = cfg.BATCH
+        embedding_dim = cfg.D_MODEL
         self.seq_embed = nn.Embedding(num_sequences, embedding_dim)
 
     def forward(self, seq_ids):
@@ -121,6 +121,10 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         ce_loss = self.ce_loss(logits_flat, targets_flat)
 
         hidden_tensor = hidden_states[0]
+        #print(hidden_tensor.shape) # BATCH, H, SEQ_LEN, HIDDEN
+        #print(seq_mem.shape) # BATCH, SEQ_LEN
+        B, H, T, d = hidden_tensor.shape
+        hidden_tensor = hidden_tensor.permute(0, 2, 1, 3).reshape(B, T, H * d)
         sequence_embedding = hidden_tensor.mean(dim=1) + seq_mem  # (B, seq_len*H1*H2)
         
         if prev_sequence_embedding is not None and sequence_embedding.shape[0] == cfg.BATCH:
