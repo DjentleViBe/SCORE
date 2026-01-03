@@ -17,3 +17,4 @@ log.txt
 *.fdb*
 *.ent
 *.synctex.gz
+*.bak

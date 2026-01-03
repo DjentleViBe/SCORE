@@ -14,7 +14,7 @@ from _decoder.decoder import DecoderAPE
 import config as cfg
 from testing import inference
 import guitarpro as gp
-from _loss.customloss import RepetitionPenaltyLossForSpecificTokens
+from _loss.customloss import RepetitionPenaltyLossForSpecificTokens, SequenceMemory
 np.set_printoptions(threshold=sys.maxsize)
 import platform
 from torch.utils.data import DataLoader, TensorDataset
@@ -371,10 +371,12 @@ if __name__ == '__main__':
             ngram_size=3, 
             penalize_tokens=penalize_tokens
         )
+        sequence_memory = SequenceMemory().to(device)
 
         # Wrap your full data into a TensorDataset
         dataset = TensorDataset(train_src_tensor, train_tgt_tensor)
         loader = DataLoader(dataset, batch_size=cfg.BATCH, shuffle=True, drop_last=True)
+        sequence_ids = torch.arange(len(dataset))
 
         dataset_val = TensorDataset(val_src_tensor, val_tgt_tensor)
         loader_val = DataLoader(dataset_val, batch_size=cfg.BATCH, shuffle=True)
@@ -421,9 +423,10 @@ if __name__ == '__main__':
                 logits = decoder(input_embeddings, mask)
                 # Flatten target
                 batch_target = batch_target.view(-1)
-
+                batch_seq_ids = sequence_ids[start:end].to(device)
+                seq_mem = sequence_memory(batch_seq_ids)
                 # Compute loss
-                loss, ce_loss, rep_loss, kl_loss, prev_sequence_embedding = criterion(logits, batch_target, prev_sequence_embedding, ITERATION)
+                loss, ce_loss, rep_loss, kl_loss, prev_sequence_embedding = criterion(logits, batch_target, prev_sequence_embedding, seq_mem)
 
                 loss.backward()
                 optimizer.step()

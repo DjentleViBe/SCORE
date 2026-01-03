@@ -41,7 +41,8 @@ def plot_multiple(plot_collect, labels, text, filename):
     plt.yscale('log')
     for i in range(0, len(plot_collect)):
         plt.plot(plot_collect[i], label=labels[i])
-    plt.legend()
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.tight_layout()
     plt.savefig(filename, dpi = 200)
 
     return 0
@@ -58,12 +59,10 @@ def plot(lossplot, text, filename):
     return 0
 
 def plotbar(labels, title, counts, filename):
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(5, 3))
     bars = plt.bar(labels, counts, color='black', edgecolor='black')
-    # plt.xlabel('Notes', fontsize=12)
     plt.ylabel('Occurrences', fontsize=12)
     plt.title(title, fontsize=14)
-    #plt.xticks(range(1, 13))
     plt.xticks(rotation=90) 
 
     for bar in bars:
