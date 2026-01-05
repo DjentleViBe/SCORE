@@ -1,4 +1,7 @@
-import torch 
+"""
+Models related functions
+"""
+import torch
 
 def compute_sequence_gaussians(embedded_sequences, eps=1e-8):
     """
@@ -23,9 +26,6 @@ def kl_divergence_gaussians(mu_q, sigma_q, mu_k, sigma_k, eps=1e-8):
     Returns:
         kl_matrix: [N, M] with KL divergence between sequence q_i and k_j
     """
-    N, d = mu_q.shape
-    M = mu_k.shape[0]
-
     mu_q = mu_q.unsqueeze(1)         # [N, 1, d]
     sigma_q = sigma_q.unsqueeze(1)   # [N, 1, d]
 
@@ -61,6 +61,11 @@ def kl_divergence_gaussians_loss(mu_q, sigma_q, mu_k, sigma_k, eps=1e-8):
     return kl
 
 def pairwise_l2(x):
+    """
+    Compute pairwise L2 distances
+    
+    :param x: x values
+    """
     # x: (B, D)
     # returns vector of pairwise distances (same shape as torch.pdist)
     diff = x.unsqueeze(1) - x.unsqueeze(0)   # (B, B, D)
