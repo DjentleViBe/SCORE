@@ -121,16 +121,19 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         ce_loss = self.ce_loss(logits_flat, targets_flat)
 
         hidden_tensor = hidden_states[0]
-        #print(hidden_tensor.shape) # BATCH, H, SEQ_LEN, HIDDEN
-        #print(seq_mem.shape) # BATCH, SEQ_LEN
         b_val, h_val, t_val, d = hidden_tensor.shape
         hidden_tensor = hidden_tensor.permute(0, 2, 1, 3).reshape(b_val, t_val, h_val * d)
         sequence_embedding = hidden_tensor.mean(dim=1) + seq_mem  # (B, seq_len*H1*H2)
 
         if prev_sequence_embedding is not None and sequence_embedding.shape[0] == cfg.BATCH:
-            d_curr = pairwise_l2(sequence_embedding)   # distances
-            d_prev = pairwise_l2(prev_sequence_embedding)
-            rel_loss = F.mse_loss(d_curr, d_prev.detach()) * self.sequence_penalty_weight
+            #d_curr = pairwise_l2(sequence_embedding)   # distances
+            #d_prev = pairwise_l2(prev_sequence_embedding)
+            pos = F.mse_loss(sequence_embedding, seq_mem)
+
+            neg = pairwise_l2(sequence_embedding).mean()
+
+            rel_loss = (pos + cfg.ALPHA * (1.0 / (neg + 1e-6))) * self.sequence_penalty_weight
+            #rel_loss = F.mse_loss(d_curr, d_prev.detach()) * self.sequence_penalty_weight
         else:
             rel_loss = torch.tensor(0.0, device=sequence_embedding.device)
         repetition_loss = self.logits_penalized_token_adjacency(logits, temperature=cfg.TEMPERATURE)\
