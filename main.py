@@ -402,7 +402,7 @@ if __name__ == '__main__':
             label_smoothing=cfg.SMOOTHING,
             repetition_penalty_weight=cfg.LAMBDA,
             sequence_penalty_weight=cfg.DELTA,
-            ngram_size=3,
+            ngram_size=cfg.NGRAM_SIZE,
             penalize_tokens=penalize_tokens
         )
         sequence_memory = SequenceMemory(NUM_SEQUENCE).to(device)

@@ -1,14 +1,14 @@
 #pylint: disable
 """Defines parameters required for training and inference"""
-TUNING              = [64, 59, 55, 50, 45, 40]
+TUNING              = [53, 48, 44, 39, 34, 27]
 ################################ transformers #################################
 # 0: train,
 # 1 : eval
 # 2 : both
 # 3 : load from file
 MODE                =   2
-BACKUP				 = "3_test_all"
-SAVE				 = "3_test_all_T"
+BACKUP				 = "CB_Large_5"
+SAVE				 = "CB_L"
 BOS_TRUE            =   0
 EOS_TRUE            =   1
 # 0 - Vanilla
@@ -26,14 +26,14 @@ TEST_NUM            =   3
 # 4 - Multinomial Sampling - manual
 PREDICTION_CRITERIA =   3
 ########## Params ##############
-EPOCHS          =   200
+EPOCHS          =   125
 SAVE_EVERY      =   20
 VOCAB_SIZE      =   27076
 FFN_HIDDEN      =   1024
 MAX_SEQ_LENGTH  =   32
-NUM_HEADS       =   4
+NUM_HEADS       =   8
 DROP_PROB       =   0.3
-NUM_LAYERS      =   2
+NUM_LAYERS      =   6
 D_MODEL         =   256
 SCHEDULER       =   1
 SCHEDULER_SIZE  =   30
@@ -41,7 +41,7 @@ LEARNING_RATE   =   0.0001
 SMOOTHING       =   0.1
 PATCH           =   1
 STRIDE          =   1
-TRAINING        =   ["maestro-v3.0.0"]
+TRAINING        =   ["CB"]
 NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
 TEMPERATURE		=   1.0
@@ -50,7 +50,7 @@ OVERLAP         =   8
 LAMBDA          =   1.5
 ALPHA           =   0.1
 DELTA           =   1.0
-
+NGRAM_SIZE      =   3
 BAR             =   27049
 BOS             =   27050
 BARRE_NOTE      =   27051
