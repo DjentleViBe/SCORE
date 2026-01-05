@@ -446,7 +446,7 @@ if __name__ == '__main__':
             avg_ce_loss = epoch_ce_loss / total_tokens
             avg_rep_loss = epoch_rep_loss / batch_count
             avg_seq_loss = epoch_seq_loss / batch_count
-            val_loss = validation(loader_val, device, optimizer, embedding_layer, decoder, criterion, pos_enc)
+            val_loss = validation(loader_val, device, optimizer, embedding_layer, decoder, pos_enc)
             if cfg.SCHEDULER == 1:
                     scheduler.step(val_loss)
             if ITERATION % 5 == 0:
