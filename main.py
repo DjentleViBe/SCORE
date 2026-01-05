@@ -427,7 +427,7 @@ if __name__ == '__main__':
             embedding_layer.load_state_dict(checkpoint['embedding_state_dict'])
             ITERATION = checkpoint['epoch']
         print("\nTotal epochs : ", cfg.EPOCHS)
-
+        test_loss = 0.0
         while ITERATION < cfg.EPOCHS:
             decoder.train()
             epoch_loss = 0.0  # track epoch loss
@@ -484,7 +484,6 @@ if __name__ == '__main__':
             avg_rep_loss = epoch_rep_loss / batch_count
             avg_seq_loss = epoch_seq_loss / batch_count
             val_loss = validation(loader_val, device, optimizer, embedding_layer, decoder, pos_enc)
-            test_loss = 0.0
             if cfg.SCHEDULER == 1:
                 scheduler.step(val_loss)
             if ITERATION % 5 == 0:
