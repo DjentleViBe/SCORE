@@ -55,8 +55,8 @@ def test_cases(args):
     plt.yscale('log')
     plt.legend(loc="center left",bbox_to_anchor=(1.0, 0.5))
     plt.tight_layout()
-    plt.savefig('./../_papers/ICLR/Loss.pdf')
+    plt.savefig('./_papers/ICLR/Loss.pdf')
 
 #findmin("./gridsearch.txt")
-test_cases(["2_test_all", "3_test_all", "4_test_all"])
+test_cases(["CB_Large_5"])
 
