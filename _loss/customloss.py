@@ -128,11 +128,11 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         if prev_sequence_embedding is not None and sequence_embedding.shape[0] == cfg.BATCH:
             #d_curr = pairwise_l2(sequence_embedding)   # distances
             #d_prev = pairwise_l2(prev_sequence_embedding)
-            pos = F.mse_loss(sequence_embedding, seq_mem)
+            #pos = F.mse_loss(sequence_embedding, seq_mem)
 
-            neg = pairwise_l2(sequence_embedding).mean()
+            #neg = pairwise_l2(sequence_embedding).mean()
 
-            rel_loss = (pos + cfg.ALPHA * (1.0 / (neg + 1e-6))) * self.sequence_penalty_weight
+            rel_loss = F.mse_loss(sequence_embedding, seq_mem) * self.sequence_penalty_weight
             #rel_loss = F.mse_loss(d_curr, d_prev.detach()) * self.sequence_penalty_weight
         else:
             rel_loss = torch.tensor(0.0, device=sequence_embedding.device)
