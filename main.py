@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch import nn
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
-from postprocess import combinepng, plot, plot_multiple, plotbar, plotbarlog, plotbar_dual, decoder_inference, makegpro, writegpro, writebincount, writebincount2, readbincount, KLDivergence
+from postprocess import combinepng, plot, plot_multiple, plotbar, plotbarlog, plotbar_dual, makegpro, writegpro, writebincount, writebincount2, readbincount, kldivergence
 from encoding import tokenizer_1, note_prob, beat_prob, beattype_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
@@ -585,16 +585,16 @@ if __name__ == '__main__':
             plotbar(labelsaccents, 'Occurance of Accents', bincountsaccent_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilityaccent.pdf')
             plotbar(labelsbeattype, 'Occurance of Beat Type', bincountsbeattype_inf, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_inferenceprobabilitybeattype.pdf')
         
-            KLD = KLDivergence(bincounts_train, bincounts_inf)
+            KLD = kldivergence(bincounts_train, bincounts_inf)
             plotbar_dual('Notes', labelsnotes, bincounts_train, bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf')
         
-            KLD = KLDivergence(bincountsbeats_train, bincountsbeats_inf)
+            KLD = kldivergence(bincountsbeats_train, bincountsbeats_inf)
             plotbar_dual('Beats', labelsbeats, bincountsbeats_train, bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf')
 
-            KLD = KLDivergence(bincountsaccents_train, bincountsaccent_inf)
+            KLD = kldivergence(bincountsaccents_train, bincountsaccent_inf)
             plotbar_dual('Accents', labelsaccents, bincountsaccents_train, bincountsaccent_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilityaccent.pdf')
 
-            KLD = KLDivergence(bincountsbeattype_train, bincountsbeattype_inf)
+            KLD = kldivergence(bincountsbeattype_train, bincountsbeattype_inf)
             plotbar_dual('Beat type', labelsbeattype, bincountsbeattype_train, bincountsbeattype_inf, KLD, './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeattype.pdf')
         
         #combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf',

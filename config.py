@@ -101,3 +101,19 @@ labelsaccents = ['BARRE_NOTE', 'BEND_NOTE_1', 'BEND_NOTE_2', 'BEND_NOTE_3', 'BEN
                     'TREM_BAR_1', 'TREM_BAR_2', 'TREM_BAR_3', 'TREM_BAR_4', 'TREM_BAR_5', 
                     'SLIDE_NOTE_1', 'SLIDE_NOTE_2', 'SLIDE_NOTE_3', 'SLIDE_NOTE_4', 'SLIDE_NOTE_5', 'SLIDE_NOTE_6',
                     'DEAD_NOTE', 'HAMMER', 'VIBRATO', 'HARMONIC_1', 'PALM_MUTE']
+DEMAPPING_BEAT_DETYPE = {
+    'Base---------------' : 1,
+    'Triplet------------' : 2,
+    'Quintuplet---------' : 3,
+    'Sextuplet----------' : 4,
+    'Septuplet----------' : 5,
+    '9_Tuplets----------' : 6,
+    '11_Tuplets---------' : 7,
+    'Dotted - Base------' : 8,
+    'Dotted - Triplet---' : 9,
+    'Dotted - Quintuplet' : 10,
+    'Dotted - Sextuplet-' : 11,
+    'Dotted - Septuplet-' : 12,
+    'Dotted - 9_Tuplets-' : 13,
+    'Dotted - 11_Tuplets' : 14,
+}
