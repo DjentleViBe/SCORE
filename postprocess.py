@@ -402,66 +402,62 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     duration_sum = 0
     reuse_last_beat = False
     for n, note in enumerate(noteval):
+        
         dotted = False
         base_duration = 0
         if note == EOS:
             reuse_last_beat = False
             # print("-----EOS-----")
             continue
-        if note == BOS:
+        elif note == BOS:
             reuse_last_beat = False
             # print("-----BOS-----")
             continue
-        if note == BAR:
+        elif note == BAR:
             reuse_last_beat = False
             continue
-        if note == BARRE_NOTE:
+        elif note == BARRE_NOTE:
             if k_val != 0:
                 reuse_last_beat = True
                 reused_beat = beat_collect[k_val - 1]
             continue
-        if note == DEAD_NOTE:
+        elif note == DEAD_NOTE:
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
                 note_collect[l_val - 1].type = dead_beat.notes[0].type
                 continue
-        if note == HAMMER:
+        elif note == HAMMER:
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
                 note_collect[l_val - 1].effect.hammer = hammer_beat.notes[0].effect.hammer
                 continue
-        if note == VIBRATO:
+        elif note == VIBRATO:
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
                 note_collect[l_val - 1].effect.vibrato = vibrato_beat.notes[0].effect.vibrato
                 continue
-        if note == HARMONIC_1:
+        elif note == HARMONIC_1:
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
                 note_collect[l_val - 1].effect.harmonic = harmonic_1_beat.notes[0].effect.harmonic
                 continue
-        if TREM_BAR_1 <= note <= TREM_BAR_5:
+        elif TREM_BAR_1 <= note <= TREM_BAR_5:
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
                 if note == TREM_BAR_1:
-                    beat_collect[k_val - 1].effect.tremoloBar = \
-                    trem1_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[k_val - 1].effect.tremoloBar = trem1_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_2:
-                    beat_collect[k_val - 1].effect.tremoloBar = \
-                        trem2_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[k_val - 1].effect.tremoloBar = trem2_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_3:
-                    beat_collect[k_val - 1].effect.tremoloBar = \
-                        trem3_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[k_val - 1].effect.tremoloBar = trem3_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_4:
-                    beat_collect[k_val - 1].effect.tremoloBar = \
-                        trem4_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[k_val - 1].effect.tremoloBar = trem4_beat.notes[0].beat.effect.tremoloBar
                 elif note == TREM_BAR_5:
-                    beat_collect[k_val - 1].effect.tremoloBar = \
-                        trem5_beat.notes[0].beat.effect.tremoloBar
+                    beat_collect[k_val - 1].effect.tremoloBar = trem5_beat.notes[0].beat.effect.tremoloBar
                 note_collect[l_val - 1].effect.isTremoloBar = True
                 continue
-
-        if BEND_NOTE_1 <= note <= BEND_NOTE_7:
+            
+        elif BEND_NOTE_1 <= note <= BEND_NOTE_7:
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
                 if k_val != 0:
@@ -482,7 +478,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     note_collect[l_val - 1].effect.bend = bend7_beat.notes[0].effect.bend
                 continue
 
-        if SLIDE_NOTE_1 <= note <= SLIDE_NOTE_6:
+        elif SLIDE_NOTE_1 <= note <= SLIDE_NOTE_6:
             reuse_last_beat = False
             if note_collect and noteval[n - 1] < BAR:
                 if note == SLIDE_NOTE_1:
@@ -508,33 +504,31 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 # If the current string is already used in this chord, find a new one
                 if stringnum[n] in used_strings:
                     if VERBOSE == 1:
-                        print(f"String {stringnum[n]} already used in chord"
-                              f"— finding alternate for note {noteval[n]}")
+                        print(f"String {stringnum[n]} already used in chord — finding alternate for note {noteval[n]}")
                     noteval[n], stringnum[n] = findnewstring(noteval[n], stringnum[n])
 
                 # Re-check after changing to avoid accidental collisions again (optional safeguard)
                 if stringnum[n] in used_strings:
-                    if noteval[n] <= 0:
-                        continue  # skip assignment for rests
                     print("Used strings:", used_strings)
                     print("All candidate strings:", stringnum)
                     print("Current note:", noteval[n])
-                    raise ValueError(f"Could not resolve string conflict"
-                                        f"for note {noteval[n]} at position {n}")
+                    continue  # skip assignment for rests
                 current_beat = reused_beat
                 current_beat.status = gp.models.BeatStatus.normal
                 reuse_last_beat = False
+                
             else:
                 current_beat = gp.Beat(voice=voice)
                 current_beat.status = gp.models.BeatStatus.normal
                 beat_collect.append(current_beat)
                 voice.beats.append(current_beat)
+                
                 # Duration comes from beatval[n]
                 base_duration = 4.0 / beatval[n].get("duration")
-
+                
                 if beatval[n].get("dotted"):
                     base_duration *= 1.5
-
+                
                 enters = beatval[n].get("tuplet")
                 times = beatval[n].get("duration")
                 if (enters, times) in valid_tuplets:
@@ -548,8 +542,8 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             note_collect[l_val].effect.palmMute = palmval[n]
             note_collect[l_val].string = max(stringnum[n], 1)
             note_collect[l_val].beat.duration.value = beatval[n].get("duration")
-
-            if beatval[n].get("dotted") is True:
+            
+            if beatval[n].get("dotted") == True:
                 note_collect[l_val].beat.duration.isDotted = True
                 dotted = True
 
@@ -560,17 +554,15 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 note_collect[l_val].beat.duration.tuplet.times = times
 
             current_beat.notes.append(note_collect[l_val])
-
+            
             if l_val != MAX_SEQ_LENGTH - 1:
                 l_val += 1
 
             if check_measure(duration_sum, n):
-                song.tracks[0].measures[0].timeSignature.numerator = \
-                    min(32, math.ceil(duration_sum))
+                song.tracks[0].measures[0].timeSignature.numerator = min(32, math.ceil(duration_sum))
                 return song
         if VERBOSE == 1:
-            print(f"Beat : {beatval[n].get("duration")}, Tuplet : {enters}, "
-                  f"Dotted : {dotted}, Duration_sum : {round(duration_sum, 2)}")
+            print(f"Beat : {beatval[n].get("duration")}, Tuplet : {enters}, Dotted : {dotted}, Duration_sum : {round(duration_sum, 2)}")
     # print("total duration : ", math.ceil(duration_sum))
     song.tracks[0].measures[0].timeSignature.numerator = min(32, math.ceil(duration_sum))
     return song
