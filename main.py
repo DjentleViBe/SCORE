@@ -115,6 +115,7 @@ if __name__ == '__main__':
         FILE_IND = 0
         start_value = None
         end_value = None
+        nseq = 0
         for f in cfg.TRAINING:
             filenamelist = get_all_files_recursive(GPROFOLDER + f)
             for filename in filenamelist:
@@ -270,11 +271,10 @@ if __name__ == '__main__':
                                                 if note.effect.palmMute:
                                                     accents_collect[23] += 1
 
-                                                if nval == cfg.NUM_SEQUENCE * \
-                                                            cfg.MAX_SEQ_LENGTH - 1:
+                                                if nseq >= cfg.NUM_SEQUENCE:
                                                     end_seq = True
                                                     print(f"Max number of sequences"
-                                                          f"reached!{nval}")
+                                                          f" reached! = {nseq}")
                                                     break
 
                                     training_src.append(cfg.BAR)
@@ -296,8 +296,7 @@ if __name__ == '__main__':
                         overlapping_sequences[i] = long_tokens[start:end]
                 training_src_encoder_1 = np.concatenate((training_src_encoder_1,
                                                           overlapping_sequences), axis=0)
-                nval = training_src_encoder_1.shape[0]
-
+                nseq = len(training_src_encoder_1)
         NUM_SEQUENCE = len(training_src_encoder_1)
         print(f"Sequence after overlap : {NUM_SEQUENCE}")
         training_tgt_decoder_1 = training_src_encoder_1.copy().astype(np.int64)
