@@ -1,3 +1,4 @@
+#pylint: disable=too-many-arguments, too-many-locals, too-many-positional-arguments, too-many-branches
 """various inference methods"""
 import random
 import torch
