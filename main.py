@@ -389,21 +389,12 @@ if __name__ == '__main__':
         rep_lossplot =[]
         val_lossplot = []
         seq_lossplot = []
-        penalize_tokens = [cfg.BEND_NOTE_1, cfg.BEND_NOTE_2, cfg.BEND_NOTE_3,
-                           cfg.BEND_NOTE_4,
-                           cfg.BEND_NOTE_5, cfg.BEND_NOTE_6, cfg.BEND_NOTE_7,
-                           cfg.TREM_BAR_1, cfg.TREM_BAR_2, cfg.TREM_BAR_3,
-                           cfg.TREM_BAR_4, cfg.TREM_BAR_5,
-                           cfg.DEAD_NOTE, cfg.SLIDE_NOTE_1, cfg.SLIDE_NOTE_2,
-                           cfg.SLIDE_NOTE_3,
-                           cfg.SLIDE_NOTE_4, cfg.SLIDE_NOTE_5, cfg.SLIDE_NOTE_6,
-                           cfg.BOS, cfg.VIBRATO, cfg.HAMMER, cfg.HARMONIC_1]
         criterion = RepetitionPenaltyLossForSpecificTokens(
             label_smoothing=cfg.SMOOTHING,
             repetition_penalty_weight=cfg.LAMBDA,
             sequence_penalty_weight=cfg.DELTA,
             ngram_size=cfg.NGRAM_SIZE,
-            penalize_tokens=penalize_tokens
+            penalize_tokens=cfg.PENALIZE_TOKENS
         )
         sequence_memory = SequenceMemory(NUM_SEQUENCE).to(device)
 
