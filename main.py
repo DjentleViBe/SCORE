@@ -296,6 +296,7 @@ if __name__ == '__main__':
                         overlapping_sequences[i] = long_tokens[start:end]
                 training_src_encoder_1 = np.concatenate((training_src_encoder_1,
                                                           overlapping_sequences), axis=0)
+                nval = training_src_encoder_1.shape[0]
 
         NUM_SEQUENCE = len(training_src_encoder_1)
         print(f"Sequence after overlap : {NUM_SEQUENCE}")
