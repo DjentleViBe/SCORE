@@ -16,10 +16,10 @@ class SequenceMemory(nn.Module):
     """
     Sequence Memory Module to maintain embeddings of sequences.
     """
-    def __init__(self, NUM_SEQUENCE):
+    def __init__(self, num_sequence):
         super().__init__()
-        embedding_dim = cfg.D_MODEL
-        self.seq_embed = nn.Embedding(NUM_SEQUENCE, embedding_dim)
+        embedding_dim = cfg.D_MODEL    
+        self.seq_embed = nn.Embedding(num_sequence, embedding_dim)
 
     def forward(self, seq_ids):
         """Forward pass"""
@@ -71,38 +71,6 @@ def generate_sampled_sequence(decoder, inputs, embedding_layer,
 
     return generated_tokens
 
-def soft_repetition_penalty(logits, temperature=1.0):
-    """
-    logits: (batch_size, seq_len, vocab_size)
-    Penalize high probability on tokens that already appeared earlier in the sequence.
-    """
-    probs = torch.softmax(logits / temperature, dim=-1)  # (B, T, V)
-    batch_size, seq_len, vocab_size = probs.size()
-
-    # Compute cumulative sum of probs along time dimension excluding current step
-    # We'll use cumsum to get sum of all previous probs at each time step:
-    cumsum_probs = probs.cumsum(dim=1)  # (B, T, V)
-
-    # For each step t, previous sum = cumsum_probs at t-1
-    # Pad a zero vector at the start for indexing convenience
-    zero_pad = torch.zeros((batch_size, 1, vocab_size), device=probs.device, dtype=probs.dtype)
-    prev_cumsum = torch.cat([zero_pad, cumsum_probs[:, :-1, :]], dim=1)  # (B, T, V)
-
-    # Compute average previous probs at each time step t:
-    counts = torch.arange(seq_len, device=probs.device).unsqueeze(0).unsqueeze(-1)  # (1, T, 1)
-    counts = counts.clamp(min=1)  # avoid division by zero at t=0 (will be ignored anyway)
-    avg_prev_prob = prev_cumsum / counts  # (B, T, V)
-
-    # Dot product between current probs and avg previous probs for each time step:
-    repeat_scores = (probs * avg_prev_prob).sum(dim=-1)  # (B, T)
-
-    # Ignore the first time step since it has no previous tokens
-    repeat_scores = repeat_scores[:, 1:]  # (B, T-1)
-
-    penalty = repeat_scores.mean()
-
-    return penalty
-
 class RepetitionPenaltyLossForSpecificTokens(nn.Module):
     """Repetition Penalty Loss for Specific Tokens 
     with Sequence Embedding Regularization"""
@@ -115,6 +83,24 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         self.sequence_penalty_weight = sequence_penalty_weight
         self.ngram_size = ngram_size
         self.penalize_tokens = penalize_tokens if penalize_tokens else []
+
+    def ngram_repetition_loss(self, target_sequences, ngram_size=None):
+        """Compute n-gram repetition loss for specific tokens in the target sequences."""
+        seq = target_sequences.tolist()
+        if len(seq) < ngram_size:
+            return torch.tensor(0.0)
+        ngrams = [tuple(seq[i:i+ngram_size]) for i in range(len(seq)-ngram_size+1)]
+        ngram_counts = Counter(ngrams)
+        batch_penalty = 0.0
+        total_ngrams = len(ngrams)
+
+        for ngram, count in ngram_counts.items():
+            if count > 1:
+                if self.penalize_tokens is None or any(tok in self.penalize_tokens
+                                                       for tok in ngram):
+                    batch_penalty += (count - 1)
+
+        return torch.tensor(batch_penalty / total_ngrams)
 
     def forward(self, logits, targets, prev_sequence_embedding, seq_mem):
         """
@@ -141,38 +127,11 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
             rel_loss = F.mse_loss(d_curr, d_prev.detach()) * self.sequence_penalty_weight
         else:
             rel_loss = torch.tensor(0.0, device=sequence_embedding.device)
-        repetition_loss = self.repetition_penalty_weight * \
-                        soft_repetition_penalty(logits, temperature=cfg.TEMPERATURE)
-        total_loss = ce_loss + repetition_loss +  rel_loss
+        repetition_loss = self.ngram_repetition_loss(target_sequences=targets,
+                                               ngram_size=self.ngram_size) *\
+                                               self.repetition_penalty_weight
+        total_loss = ce_loss + repetition_loss + rel_loss
         return total_loss, ce_loss, repetition_loss, rel_loss, sequence_embedding.detach()
-
-    def compute_repetition_penalty(self, generated_tokens):
-        """
-        Calculates repetition penalty based on repeated n-grams for specific tokens,
-        normalized by total number of n-grams.
-        """
-        batch_penalty = 0.0
-        total_ngrams_count = 0  # Total ngrams in batch
-        for seq in generated_tokens:
-            seq_list = seq.tolist()
-            ngrams = [tuple(seq_list[i:i+self.ngram_size]) for
-                      i in range(len(seq_list) - self.ngram_size + 1)]
-            total_ngrams_count += len(ngrams)
-
-            ngram_counts = Counter(ngrams)
-
-            repetition_count = sum(
-                count - 1
-                for ngram, count in ngram_counts.items()
-                if count > 1 and any(tok in self.penalize_tokens for tok in ngram)
-            )
-            batch_penalty += repetition_count
-
-        if total_ngrams_count == 0:
-            return torch.tensor(0.0, device=generated_tokens.device)
-
-        repetition_loss = batch_penalty / total_ngrams_count
-        return torch.tensor(repetition_loss, device=generated_tokens.device)
 
 class ValidationLoss(nn.Module):
     """Validation Loss using standard Cross Entropy"""
