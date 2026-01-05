@@ -1,9 +1,10 @@
+#pylint: disable
 """Defines parameters required for training and inference"""
 TUNING              = [64, 59, 55, 50, 45, 40]
 ################################ transformers #################################
-# 0: train, 
+# 0: train,
 # 1 : eval
-# 2 : both 
+# 2 : both
 # 3 : load from file
 MODE                =   2
 BACKUP				 = "3_test_all"
@@ -14,7 +15,7 @@ EOS_TRUE            =   1
 # 1 - Disregard any note > BARRE_NOTE
 # 2 - n bars of generation, n = TEST_TRIES
 # 3 - Same as above + last note of every bar is fed to firt note of next bar
-# 4 - Same as above + loop until no repeatitive notes > BOS 
+# 4 - Same as above + loop until no repeatitive notes > BOS
 TEST_CRITERIA       =   3
 TEST_TRIES          =   12
 # Total number of start_id to try with testing
@@ -97,9 +98,11 @@ labelsbeats = ['Base',
 'D - 9_Tuplets',
 'D - 11_Tuplets']
 labelsbeattype = ['1', '2', '4', '8', '16', '32', '64']
-labelsaccents = ['BARRE_NOTE', 'BEND_NOTE_1', 'BEND_NOTE_2', 'BEND_NOTE_3', 'BEND_NOTE_4', 'BEND_NOTE_5', 'BEND_NOTE_6', 'BEND_NOTE_7', 
+labelsaccents = ['BARRE_NOTE', 'BEND_NOTE_1', 'BEND_NOTE_2', 'BEND_NOTE_3', 'BEND_NOTE_4',
+                 'BEND_NOTE_5', 'BEND_NOTE_6', 'BEND_NOTE_7', 
                     'TREM_BAR_1', 'TREM_BAR_2', 'TREM_BAR_3', 'TREM_BAR_4', 'TREM_BAR_5', 
-                    'SLIDE_NOTE_1', 'SLIDE_NOTE_2', 'SLIDE_NOTE_3', 'SLIDE_NOTE_4', 'SLIDE_NOTE_5', 'SLIDE_NOTE_6',
+                    'SLIDE_NOTE_1', 'SLIDE_NOTE_2', 'SLIDE_NOTE_3', 'SLIDE_NOTE_4', 
+                    'SLIDE_NOTE_5', 'SLIDE_NOTE_6',
                     'DEAD_NOTE', 'HAMMER', 'VIBRATO', 'HARMONIC_1', 'PALM_MUTE']
 DEMAPPING_BEAT_DETYPE = {
     'Base---------------' : 1,
