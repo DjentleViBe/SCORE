@@ -1,26 +1,32 @@
+#pylint: disable=too-many-arguments, too-many-locals, too-many-positional-arguments, too-many-branches
+"""
+Custom loss functions for sequence modeling with repetition penalties.
+"""
+import sys
+from collections import Counter
+import numpy as np
 import torch
-import torch.nn as nn
+from torch import nn
 import torch.nn.functional as F
 import config as cfg
-from collections import Counter
-from postprocess import decoder_search
-from inference import multinomial_sample_2
-import numpy as np
-import sys
-np.set_printoptions(threshold=sys.maxsize)
-import torch.nn.functional as F
 from models import pairwise_l2
+np.set_printoptions(threshold=sys.maxsize)
 
 class SequenceMemory(nn.Module):
+    """
+    Sequence Memory Module to maintain embeddings of sequences.
+    """
     def __init__(self, NUM_SEQUENCE):
         super().__init__()
         embedding_dim = cfg.D_MODEL
         self.seq_embed = nn.Embedding(NUM_SEQUENCE, embedding_dim)
 
     def forward(self, seq_ids):
+        """Forward pass"""
         return self.seq_embed(seq_ids)
 
-def generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, seq_len, temperature=1.0):
+def generate_sampled_sequence(decoder, inputs, embedding_layer,
+                              pos_enc, seq_len, temperature=1.0):
     """
     Generate a sequence by sampling tokens multinomially from the decoder output at each step.
     Args:
@@ -32,10 +38,9 @@ def generate_sampled_sequence(decoder, inputs, embedding_layer, pos_enc, mask, s
         sampled_seq: (batch_size, seq_len) tensor of sampled token indices
     """
     batch_size = inputs.size(0)
-    device = inputs.device
-    
+
     generated_tokens = inputs.clone()
-    
+
     # Initialize KV caches as lists of None for each layer
     key_caches = None
     value_caches = None
@@ -99,9 +104,13 @@ def soft_repetition_penalty(logits, temperature=1.0):
     return penalty
 
 class RepetitionPenaltyLossForSpecificTokens(nn.Module):
-    def __init__(self, label_smoothing=0.0, repetition_penalty_weight=1.0, ngram_size=1, penalize_tokens=None, sequence_penalty_weight=1.0):
-        super(RepetitionPenaltyLossForSpecificTokens, self).__init__()
-        self.ce_loss = nn.CrossEntropyLoss(label_smoothing=label_smoothing, ignore_index=0)  # Assuming 0 is pad_token_id
+    """Repetition Penalty Loss for Specific Tokens 
+    with Sequence Embedding Regularization"""
+    def __init__(self, label_smoothing=0.0, repetition_penalty_weight=1.0,
+                 ngram_size=1, penalize_tokens=None, sequence_penalty_weight=1.0):
+        super().__init__()
+        # Assuming 0 is pad_token_id
+        self.ce_loss = nn.CrossEntropyLoss(label_smoothing=label_smoothing, ignore_index=0)
         self.repetition_penalty_weight = repetition_penalty_weight
         self.sequence_penalty_weight = sequence_penalty_weight
         self.ngram_size = ngram_size
@@ -114,7 +123,7 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
             targets: (batch_size, seq_len)
         """
         logits, hidden_states, _ = logits  # unpack the tuple
-         
+
         logits_flat = logits.view(-1, logits.size(-1))
         targets_flat = targets.view(-1)
         ce_loss = self.ce_loss(logits_flat, targets_flat)
@@ -122,17 +131,18 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         hidden_tensor = hidden_states[0]
         #print(hidden_tensor.shape) # BATCH, H, SEQ_LEN, HIDDEN
         #print(seq_mem.shape) # BATCH, SEQ_LEN
-        B, H, T, d = hidden_tensor.shape
-        hidden_tensor = hidden_tensor.permute(0, 2, 1, 3).reshape(B, T, H * d)
+        b_val, h_val, t_val, d = hidden_tensor.shape
+        hidden_tensor = hidden_tensor.permute(0, 2, 1, 3).reshape(b_val, t_val, h_val * d)
         sequence_embedding = hidden_tensor.mean(dim=1) + seq_mem  # (B, seq_len*H1*H2)
-        
+
         if prev_sequence_embedding is not None and sequence_embedding.shape[0] == cfg.BATCH:
-            D_curr = pairwise_l2(sequence_embedding)   # distances
-            D_prev = pairwise_l2(prev_sequence_embedding)
-            rel_loss = F.mse_loss(D_curr, D_prev.detach()) * self.sequence_penalty_weight
+            d_curr = pairwise_l2(sequence_embedding)   # distances
+            d_prev = pairwise_l2(prev_sequence_embedding)
+            rel_loss = F.mse_loss(d_curr, d_prev.detach()) * self.sequence_penalty_weight
         else:
             rel_loss = torch.tensor(0.0, device=sequence_embedding.device)
-        repetition_loss = self.repetition_penalty_weight * soft_repetition_penalty(logits, temperature=cfg.TEMPERATURE)
+        repetition_loss = self.repetition_penalty_weight * \
+                        soft_repetition_penalty(logits, temperature=cfg.TEMPERATURE)
         total_loss = ce_loss + repetition_loss +  rel_loss
         return total_loss, ce_loss, repetition_loss, rel_loss, sequence_embedding.detach()
 
@@ -145,7 +155,8 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         total_ngrams_count = 0  # Total ngrams in batch
         for seq in generated_tokens:
             seq_list = seq.tolist()
-            ngrams = [tuple(seq_list[i:i+self.ngram_size]) for i in range(len(seq_list) - self.ngram_size + 1)]
+            ngrams = [tuple(seq_list[i:i+self.ngram_size]) for
+                      i in range(len(seq_list) - self.ngram_size + 1)]
             total_ngrams_count += len(ngrams)
 
             ngram_counts = Counter(ngrams)
@@ -164,5 +175,7 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         return torch.tensor(repetition_loss, device=generated_tokens.device)
 
 class ValidationLoss(nn.Module):
+    """Validation Loss using standard Cross Entropy"""
     def forward(self, logits, targets):
+        """Forward pass"""
         return F.cross_entropy(logits, targets, ignore_index=0)
