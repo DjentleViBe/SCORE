@@ -67,7 +67,7 @@ def plotbar(labels, title, counts, filename):
 
     for bar in bars:
         yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, int(yval), ha='center', va='bottom')
+        plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, int(yval), ha='center', va='bottom', fontsize=7)
 
     plt.grid(axis='y', linestyle='--', alpha=0.7, color = 'k')
     plt.tight_layout()
