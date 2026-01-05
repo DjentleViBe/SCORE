@@ -28,7 +28,7 @@ def plot_multiple(plot_collect, labels, text, filename):
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.yscale('log')
-    for i in enumerate(plot_collect):
+    for i, _ in enumerate(plot_collect):
         plt.plot(plot_collect[i], label=labels[i])
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     plt.tight_layout()
