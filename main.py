@@ -389,6 +389,7 @@ if __name__ == '__main__':
         rep_lossplot =[]
         val_lossplot = []
         seq_lossplot = []
+        test_lossplot = []
         criterion = RepetitionPenaltyLossForSpecificTokens(
             label_smoothing=cfg.SMOOTHING,
             repetition_penalty_weight=cfg.LAMBDA,
@@ -489,6 +490,7 @@ if __name__ == '__main__':
             rep_lossplot.append(avg_rep_loss)
             val_lossplot.append(val_loss)
             seq_lossplot.append(avg_seq_loss)
+            test_lossplot.append(test_loss)
 
             if avg_loss < cfg.CONVERGENCE:
                 print("Convergence criteria reached!")
@@ -508,7 +510,8 @@ if __name__ == '__main__':
         with open('./RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP + '.csv', mode='a',
                   encoding='utf-8',newline='') as lossfile:
             writer = csv.writer(lossfile)
-            writer.writerows(zip(lossplot, ce_lossplot, rep_lossplot, val_lossplot, seq_lossplot))
+            writer.writerows(zip(lossplot, ce_lossplot, rep_lossplot, seq_lossplot, 
+                                 val_lossplot, test_lossplot))
         checkpoint = {
         'model_state_dict': decoder.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
@@ -519,11 +522,12 @@ if __name__ == '__main__':
         torch.save(checkpoint, './RESULTS/'+ cfg.BACKUP + "/" + cfg.BACKUP +'.pth')
         if cfg.MODE != 4:
             plot_multiple([lossplot, ce_lossplot, rep_lossplot,
-                            val_lossplot, seq_lossplot], ["Total loss",
+                            seq_lossplot, val_lossplot, test_lossplot], ["Total loss",
                                                         "Training loss",
                                                         "Repetition loss",
+                                                        "Sequence loss",
                                                         "Validation_loss",
-                                                        "Sequence loss"],loss.item(),
+                                                        "Test_loss"],loss.item(),
                                                         './RESULTS/' + cfg.BACKUP +
                                                         "/" + cfg.BACKUP + '_loss.pdf')
 
