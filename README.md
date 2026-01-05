@@ -56,6 +56,18 @@ To run hyper-parameter grid search sensitivity study:
 ```bash
 ./gridsearch.sh
 ```
+The following ranges for the hyper-parameters were studied:
+|Parameter|Ranges|
+|---|---|
+|FFNHIDDEN|256, 1024|
+|MAXSEQLEN|16, 32|
+|NUMHEADS|4,8|
+|NUMLAYERS|3, 6|
+|DMODEL|256, 512|
+|OVERLAP|4, 8|
+|LAMBDA|0.5, 1.5|
+|ALPHA|0.1, 0.3|
+|DELTA|0.5, 1.0|
 
 To run random-seed test:
 ```bash
