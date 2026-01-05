@@ -84,23 +84,29 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
         self.ngram_size = ngram_size
         self.penalize_tokens = penalize_tokens if penalize_tokens else []
 
-    def ngram_repetition_loss(self, target_sequences, ngram_size=None):
-        """Compute n-gram repetition loss for specific tokens in the target sequences."""
-        seq = target_sequences.tolist()
-        if len(seq) < ngram_size:
-            return torch.tensor(0.0)
-        ngrams = [tuple(seq[i:i+ngram_size]) for i in range(len(seq)-ngram_size+1)]
-        ngram_counts = Counter(ngrams)
-        batch_penalty = 0.0
-        total_ngrams = len(ngrams)
+    def logits_penalized_token_adjacency(self, logits, temperature=1.0):
+        """
+        Penalizes consecutive appearance of penalized tokens,
+        including same-token repetition.
 
-        for ngram, count in ngram_counts.items():
-            if count > 1:
-                if self.penalize_tokens is None or any(tok in self.penalize_tokens
-                                                       for tok in ngram):
-                    batch_penalty += (count - 1)
+        logits: (B, T, V)
+        penalize_tokens: list[int]
+        """
 
-        return torch.tensor(batch_penalty / total_ngrams)
+        probs = torch.softmax(logits / temperature, dim=-1)
+
+        # mask for penalized tokens
+        mask = torch.zeros(probs.size(-1), device=probs.device)
+        mask[self.penalize_tokens] = 1.0
+
+        # sum probability mass over penalized tokens
+        p_prev = (probs[:, :-1, :] * mask).sum(dim=-1)
+        p_curr = (probs[:, 1:, :] * mask).sum(dim=-1)
+
+        # adjacency penalty
+        penalty = p_prev * p_curr
+
+        return penalty.mean()
 
     def forward(self, logits, targets, prev_sequence_embedding, seq_mem):
         """
@@ -127,9 +133,8 @@ class RepetitionPenaltyLossForSpecificTokens(nn.Module):
             rel_loss = F.mse_loss(d_curr, d_prev.detach()) * self.sequence_penalty_weight
         else:
             rel_loss = torch.tensor(0.0, device=sequence_embedding.device)
-        repetition_loss = self.ngram_repetition_loss(target_sequences=targets,
-                                               ngram_size=self.ngram_size) *\
-                                               self.repetition_penalty_weight
+        repetition_loss = self.logits_penalized_token_adjacency(logits, temperature=cfg.TEMPERATURE)\
+                            * self.repetition_penalty_weight
         total_loss = ce_loss + repetition_loss + rel_loss
         return total_loss, ce_loss, repetition_loss, rel_loss, sequence_embedding.detach()
 
