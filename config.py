@@ -6,8 +6,8 @@ TUNING              = [64, 59, 55, 50, 45, 40]
 # 2 : both 
 # 3 : load from file
 MODE                =   2
-BACKUP				 = "CB_Large_3"
-SAVE				 = "CB_L"
+BACKUP				 = "3_test_all"
+SAVE				 = "3_test_all_T"
 BOS_TRUE            =   0
 EOS_TRUE            =   1
 # 0 - Vanilla
@@ -25,14 +25,14 @@ TEST_NUM            =   3
 # 4 - Multinomial Sampling - manual
 PREDICTION_CRITERIA =   3
 ########## Params ##############
-EPOCHS          =   50
+EPOCHS          =   200
 SAVE_EVERY      =   20
 VOCAB_SIZE      =   27076
 FFN_HIDDEN      =   1024
 MAX_SEQ_LENGTH  =   32
-NUM_HEADS       =   8
+NUM_HEADS       =   4
 DROP_PROB       =   0.3
-NUM_LAYERS      =   6
+NUM_LAYERS      =   2
 D_MODEL         =   256
 SCHEDULER       =   1
 SCHEDULER_SIZE  =   30
@@ -40,7 +40,7 @@ LEARNING_RATE   =   0.0001
 SMOOTHING       =   0.1
 PATCH           =   1
 STRIDE          =   1
-TRAINING        =   ["CB"]
+TRAINING        =   ["maestro-v3.0.0"]
 NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
 TEMPERATURE		=   1.0
@@ -80,3 +80,24 @@ EOS             =   27075
 #################################################################################
 MEASURE         =   8
 VERBOSE         =   0
+#################################################################################
+labelsnotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+labelsbeats = ['Base',
+'Triplet',
+'Quintuplet',
+'Sextuplet',
+'Septuplet',
+'9_Tuplets',
+'11_Tuplets',
+'D - Base',
+'D - Triplet',
+'D - Quintuplet',
+'D - Sextuplet',
+'D - Septuplet',
+'D - 9_Tuplets',
+'D - 11_Tuplets']
+labelsbeattype = ['1', '2', '4', '8', '16', '32', '64']
+labelsaccents = ['BARRE_NOTE', 'BEND_NOTE_1', 'BEND_NOTE_2', 'BEND_NOTE_3', 'BEND_NOTE_4', 'BEND_NOTE_5', 'BEND_NOTE_6', 'BEND_NOTE_7', 
+                    'TREM_BAR_1', 'TREM_BAR_2', 'TREM_BAR_3', 'TREM_BAR_4', 'TREM_BAR_5', 
+                    'SLIDE_NOTE_1', 'SLIDE_NOTE_2', 'SLIDE_NOTE_3', 'SLIDE_NOTE_4', 'SLIDE_NOTE_5', 'SLIDE_NOTE_6',
+                    'DEAD_NOTE', 'HAMMER', 'VIBRATO', 'HARMONIC_1', 'PALM_MUTE']
