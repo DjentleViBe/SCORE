@@ -63,6 +63,11 @@ def tokenizer_1(note, string, duration, n_val):
     return encoding
 
 def beat_prob(duration):
+    """
+    Docstring for beat_prob
+    
+    :param duration: Beat duration
+    """
     beatvalue = 1
     if duration.tuplet.enters == 3:
         beatvalue += 1
@@ -78,10 +83,15 @@ def beat_prob(duration):
         beatvalue += 6
     if duration.isDotted:
         beatvalue += 7
-    
+
     return beatvalue
 
 def beattype_prob(duration):
+    """
+    Docstring for beattype_prob
+    
+    :param duration: beat duration
+    """
     beattypevalue = 1
     if duration == 1:
         beattypevalue = 1
@@ -100,18 +110,23 @@ def beattype_prob(duration):
     return beattypevalue
 
 def note_prob(note, string):
+    """
+    Docstring for note_prob
+    
+    :param note: note value
+    :param string: string number
     # tuning D#
-    # 6: D# 
+    # 6: D#
     # 5: A#
     # 4: D#
     # 3: G#
     # 2: C
     # 1: F
     # Notes = C C# D D# E F F# G G# A A# B
+    """
     if note > EOS:
         return 100
-    else:
-        if string > 6:
-            print("String error : ", string)
-            string -= 1
-        return (note + (cfg.TUNING[string - 1] % 12)) % 12 + 1
+    if string > 6:
+        print("String error : ", string)
+        string -= 1
+    return (note + (cfg.TUNING[string - 1] % 12)) % 12 + 1
