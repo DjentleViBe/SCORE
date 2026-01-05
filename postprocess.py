@@ -611,11 +611,11 @@ def kldivergence(train, evaluation):
     d_val = []
     eps = 1E-10
 
-    for p_val in train:
-        p_val.append(p_val / n_tot)
+    for p_value in train:
+        p_val.append(p_value / n_tot)
 
-    for q_val in evaluation:
-        q_val.append(q_val / q_tot)
+    for q_value in evaluation:
+        q_val.append(q_value / q_tot)
 
     for item1, item2 in zip(p_val, q_val):
         if item1 > 0:
