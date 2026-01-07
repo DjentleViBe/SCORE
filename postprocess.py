@@ -196,6 +196,16 @@ def plotbar_dual(title, labels, counts1, counts2, kldiv,
     return 0
 
 def plotbar_quad(labels, counts1, counts2, kldiv, filename):
+    """
+    Docstring for plotbar_quad
+    
+    :param labels: labels for the x-axis
+    :param counts1: counts for training
+    :param counts2: counts for inference
+    :param kldiv: KL divergence values
+    :param filename: filename to export
+    """
+    titles = ["(a)", "(b)", "(c)", "(d)"]
     fig, ax = plt.subplots(2, 2 ,figsize=(14, 10))
     for i, l in enumerate(labels):
         x = np.arange(len(labels[i]))  # label positions
@@ -211,8 +221,8 @@ def plotbar_quad(labels, counts1, counts2, kldiv, filename):
         ax1.set_xticks(x)
         ax1.set_xticklabels(l, fontsize=11, rotation=90)
         #fig.suptitle(title, fontsize=18)      # Title for the Axes
-        ax1.set_title('KL-Divergence = ' + str(round(kldiv[i], 4)), fontsize = 20)
-        # Annotate primary bars
+        ax1.set_title(r"$\bf{" + titles[i] + r"}$" +
+                      " KL-Divergence = " + str(round(kldiv[i], 4)),fontsize=20)# Annotate primary bars
         for barval in bars1:
             yval = barval.get_height()
             if yval != 0:
