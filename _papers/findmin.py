@@ -36,6 +36,8 @@ def readfile(filename):
     return np.array(data)
 
 def test_cases(args):
+    fig, ax1 = plt.subplots(figsize=(8, 4))
+    ax2 = ax1.twinx()
     data_collect = []
     for arg in args:
         print(f"Testing with argument: {arg}")
@@ -44,20 +46,21 @@ def test_cases(args):
         # For example: run_test(arg)
     data_collect = np.array(data_collect)
     median_data = np.median(data_collect, axis=0)
-    plt.figure(figsize=(6, 3))
-    plt.plot(median_data[:, 0], label='Training Loss')
-    plt.plot(median_data[:, 1], label='Cross Entropy Loss')
-    plt.plot(median_data[:, 2], label='Repetition Loss')
-    plt.plot(median_data[:, 3], label='Sequence Loss')
-    plt.plot(median_data[:, 4], label='Validation Loss')
-    plt.plot(median_data[:, 5], label='Test Loss')
+    ax1.plot(median_data[:, 0], label='Training', color ='blue')
+    ax1.plot(median_data[:, 1], label='Cross Entropy', color = 'yellow', linestyle = '--')
+    ax2.plot(median_data[:, 2], label='Repetition', color = 'red')
+    ax2.plot(median_data[:, 3], label='Sequence', color = 'purple')
+    ax1.plot(median_data[:, 4], label='Validation', color = 'brown')
+    ax1.plot(median_data[:, 5], label='Test', color = 'orange')
     plt.xlabel('Epochs')
-    plt.ylabel('Loss')
-    plt.yscale('log')
-    plt.legend(loc="center left",bbox_to_anchor=(1.0, 0.5))
-    plt.tight_layout()
+    ax1.set_ylabel('Loss (Training, Cross Entropy, Validation, Test)')
+    ax2.set_ylabel('Loss (Repetition, Sequence)')
+    ax1.set_yscale('log')
+    ax2.set_yscale('log')
+    fig.legend(loc='center right')
+    plt.tight_layout(rect=[0, 0.0, 0.8, 1])
     plt.savefig('./_papers/ICLR/Loss.pdf')
 
 #findmin("./gridsearch.txt")
-test_cases(["CB_Large_5"])
+test_cases(["2_test_all", "3_test_all", "4_test_all"])
 
