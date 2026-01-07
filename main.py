@@ -15,7 +15,8 @@ from torch.utils.data import DataLoader, TensorDataset
 import config as cfg
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
 from postprocess import plot_multiple, plotbar, plotbarlog, plotbar_dual, \
-                makegpro, writegpro, writebincount, writebincount2, readbincount, kldivergence
+                makegpro, writegpro, writebincount, writebincount2, readbincount, kldivergence,\
+                plotbar_quad
 from encoding import tokenizer_1, note_prob, beat_prob, beattype_prob
 from decoding import detokenizer_1
 from _decoder.decoder import DecoderAPE
@@ -645,26 +646,37 @@ if __name__ == '__main__':
             plotbar(cfg.labelsbeattype, 'Occurance of Beat Type', bincountsbeattype_inf,
                     './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE +
                     '_inferenceprobabilitybeattype.pdf')
-
+            KLD_collect = []
             KLD = kldivergence(bincounts_train, bincounts_inf)
-            plotbar_dual('Notes', cfg.labelsnotes, bincounts_train,
-                         bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP +
-                         "/" + cfg.SAVE + '_compareprobabilitynotes.pdf')
-
-            KLD = kldivergence(bincountsbeats_train, bincountsbeats_inf)
-            plotbar_dual('Beats', cfg.labelsbeats, bincountsbeats_train,
-                         bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP +
-                         "/" + cfg.SAVE + '_compareprobabilitybeats.pdf')
-
-            KLD = kldivergence(bincountsaccents_train, bincountsaccent_inf)
-            plotbar_dual('Accents', cfg.labelsaccents, bincountsaccents_train,
-                         bincountsaccent_inf, KLD, './RESULTS/' + cfg.BACKUP +
-                         "/" + cfg.SAVE + '_compareprobabilityaccent.pdf')
-
+            #plotbar_dual('Notes', cfg.labelsnotes, bincounts_train,
+            #             bincounts_inf, KLD, './RESULTS/' + cfg.BACKUP +
+            #             "/" + cfg.SAVE + '_compareprobabilitynotes.pdf',
+            #             fontsize=20)
+            KLD_collect.append(KLD)
             KLD = kldivergence(bincountsbeattype_train, bincountsbeattype_inf)
-            plotbar_dual('Beat type', cfg.labelsbeattype, bincountsbeattype_train,
-                          bincountsbeattype_inf, KLD, './RESULTS/' + cfg.BACKUP +
-                          "/" + cfg.SAVE + '_compareprobabilitybeattype.pdf')
+            #plotbar_dual('Beat type', cfg.labelsbeattype, bincountsbeattype_train,
+            #              bincountsbeattype_inf, KLD, './RESULTS/' + cfg.BACKUP +
+            #              "/" + cfg.SAVE + '_compareprobabilitybeattype.pdf', 
+            #              fontsize=18)
+            KLD_collect.append(KLD)
+            KLD = kldivergence(bincountsbeats_train, bincountsbeats_inf)
+            #plotbar_dual('Beats', cfg.labelsbeats, bincountsbeats_train,
+            #             bincountsbeats_inf, KLD, './RESULTS/' + cfg.BACKUP +
+            #             "/" + cfg.SAVE + '_compareprobabilitybeats.pdf',
+            #             fontsize=20)
+            KLD_collect.append(KLD)
+            KLD = kldivergence(bincountsaccents_train, bincountsaccent_inf)
+            #plotbar_dual('Accents', cfg.labelsaccents, bincountsaccents_train,
+            #             bincountsaccent_inf, KLD, './RESULTS/' + cfg.BACKUP +
+            #             "/" + cfg.SAVE + '_compareprobabilityaccent.pdf',
+            #             fontsize=14)
+            KLD_collect.append(KLD)
+            plotbar_quad([cfg.labelsnotes, cfg.labelsbeattype, cfg.labelsbeats, cfg.labelsaccents],
+                         [bincounts_train, bincountsbeattype_train, bincountsbeats_train, bincountsaccents_train],
+                         [bincounts_inf, bincountsbeattype_inf, bincountsbeats_inf, bincountsaccent_inf],
+                         KLD_collect,
+                         './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE +
+                         '_compareprobabilityquad.pdf')
 
         #combinepng('./RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitynotes.pdf',
         #           './RESULTS/' + cfg.BACKUP + "/" + cfg.SAVE + '_compareprobabilitybeats.pdf',

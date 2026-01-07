@@ -115,7 +115,8 @@ def plotbarlog(labels, title, counts, filename):
     return 0
 
 def plotbar_dual(title, labels, counts1, counts2, kldiv,
-                 filename, label1='Training', label2='Inference'):
+                 filename, label1='Training', label2='Inference',
+                 fontsize=12):
     """
     Plot bar dual chart and save to file
     
@@ -138,9 +139,9 @@ def plotbar_dual(title, labels, counts1, counts2, kldiv,
     ax1.set_ylabel('Training', fontsize=12)
     ax1.tick_params(axis='y')
     ax1.set_xticks(x)
-    ax1.set_xticklabels(labels)
-    fig.suptitle(title, fontsize=18)      # Title for the Axes
-    ax1.set_title('KL_Divergence = ' + str(round(kldiv, 4)), fontsize = 14)
+    ax1.set_xticklabels(labels, fontsize=fontsize)
+    #fig.suptitle(title, fontsize=18)      # Title for the Axes
+    ax1.set_title('KL-Divergence = ' + str(round(kldiv, 4)), fontsize = 20)
     plt.xticks(rotation=90)
     # Annotate primary bars
     for barval in bars1:
@@ -151,10 +152,9 @@ def plotbar_dual(title, labels, counts1, counts2, kldiv,
                 yval*1.02,                             # halfway inside the bar
                 int(yval),                            # the label
                 ha='center', va='bottom',             # centered inside
-                fontsize=8,
+                fontsize=14,
                 rotation=90,                          # rotate text
-                color='black',                        # use contrasting color
-                fontweight='bold'
+                color='black'                        # use contrasting color
             )
     # Secondary axis
     ax2 = ax1.twinx()
@@ -162,8 +162,8 @@ def plotbar_dual(title, labels, counts1, counts2, kldiv,
                     color='lightgray', edgecolor='black')
     ax2.set_ylabel('Inference', fontsize=12)
     ax2.tick_params(axis='y')
-    ax1.set_ylim(bottom=max(1, min(counts1)*0.1), top = max(counts1)*4)
-    ax2.set_ylim(bottom=max(1, min(counts2)*0.1), top = max(counts2)*4)
+    ax1.set_ylim(bottom=max(1, min(counts1)*0.1), top = max(counts1)*6)
+    ax2.set_ylim(bottom=max(1, min(counts2)*0.1), top = max(counts2)*6)
 
     # Annotate secondary bars
     for barval in bars2:
@@ -174,10 +174,9 @@ def plotbar_dual(title, labels, counts1, counts2, kldiv,
                 yval*1.02,                             # halfway inside the bar
                 int(yval),                            # the label
                 ha='center', va='bottom',             # centered inside
-                fontsize=8,
+                fontsize=14,
                 rotation=90,                          # rotate text
-                color='black',                        # use contrasting color
-                fontweight='bold'
+                color='black'                        # use contrasting colo
             )
     # Combine legends
     labels = [label1, label2]
@@ -195,6 +194,75 @@ def plotbar_dual(title, labels, counts1, counts2, kldiv,
     plt.close()
 
     return 0
+
+def plotbar_quad(labels, counts1, counts2, kldiv, filename):
+    fig, ax = plt.subplots(2, 2 ,figsize=(14, 10))
+    for i, l in enumerate(labels):
+        x = np.arange(len(labels[i]))  # label positions
+        width = 0.4  # width of the bars
+        row = i // 2
+        col = i % 2
+        ax1 = ax[row, col]
+        bars1 = ax1.bar(x - width/2, counts1[i], width, label="Training",
+                        color='black', edgecolor='black')
+        # ax1.set_xlabel('Notes', fontsize=12)
+        ax1.set_ylabel('Training', fontsize=16)
+        ax1.tick_params(axis='y')
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(l, fontsize=11, rotation=90)
+        #fig.suptitle(title, fontsize=18)      # Title for the Axes
+        ax1.set_title('KL-Divergence = ' + str(round(kldiv[i], 4)), fontsize = 20)
+        # Annotate primary bars
+        for barval in bars1:
+            yval = barval.get_height()
+            if yval != 0:
+                ax1.text(
+                    barval.get_x() + barval.get_width() / 2,    # horizontal center
+                    yval*1.02,                             # halfway inside the bar
+                    int(yval),                            # the label
+                    ha='center', va='bottom',             # centered inside
+                    fontsize=10,
+                    rotation=90,                          # rotate text
+                    color='black'                        # use contrasting color
+                )
+        # Secondary axis
+        ax2 = ax1.twinx()
+        bars2 = ax2.bar(x + width/2, counts2[i], width, label="Infrence",
+                        color='lightgray', edgecolor='black')
+        ax2.set_ylabel('Inference', fontsize=16)
+        ax2.tick_params(axis='y')
+        ax1.set_ylim(bottom=max(1, min(counts1[i])*0.1), top = max(counts1[i])*10)
+        ax2.set_ylim(bottom=max(1, min(counts2[i])*0.1), top = max(counts2[i])*10)
+
+        # Annotate secondary bars
+        for barval in bars2:
+            yval = barval.get_height()
+            if yval != 0:
+                ax2.text(
+                    barval.get_x() + barval.get_width() / 2,    # horizontal center
+                    yval*1.02,                             # halfway inside the bar
+                    int(yval),                            # the label
+                    ha='center', va='bottom',             # centered inside
+                    fontsize=10,
+                    rotation=90,                          # rotate text
+                    color='black'                        # use contrasting colo
+                )
+        ax1.set_yscale('log')
+        ax2.set_yscale('log')
+        ax1.set_xlim(left=x[0] - width - 0.01, right=x[-1] + width + 0.01)
+    # Combine legends
+    labels = ["Training", "Inference"]
+    legend_patches = [
+        Patch(facecolor='black', edgecolor='black', label="Training"),
+        Patch(facecolor='lightgray', edgecolor='black', label="Inference")
+    ]
+    fig.legend(handles=legend_patches, loc="lower center",
+            ncol=len(legend_patches),frameon=False,
+            fontsize=16)
+    plt.tight_layout(rect=[0, 0.08, 1, 1])
+    plt.savefig(filename, dpi=200)
+    plt.close()
+
 
 def decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask, e_val):
     """
