@@ -74,7 +74,7 @@ def detokenizer_1(dummy):
             print("-------Accent_Trem----------")
         note_val = dummy
     elif SLIDE_NOTE_6 >= dummy >= SLIDE_NOTE_1:
-        accent_type = dummy - SLIDE_NOTE_1 + 14
+        accent_type = dummy - SLIDE_NOTE_1 + 15
         if VERBOSE == 1:
             print("-------Accent_Slide----------")
         note_val = dummy
