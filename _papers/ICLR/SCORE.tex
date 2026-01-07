@@ -204,13 +204,15 @@ An example of a riff is shown in is given in Figure~\ref{fig:riff}.
   \caption{Example guitar riff showing a sequence of notes in combination with accents like pinch harmonic, barre chord and palm mute.}
 \label{fig:riff}
 \end{figure}
-An example 16 tokens per sequence embedding is as follows: 
-\texttt{[27049, 7985, 11849, 11849, 7985, 11849, 11849, 7985, 11849, 11849, 7985, 11849, 11849, 27049, 17485, 17506]}
-
-\texttt{[11849, 11849,  7985, 11849, 11849, 27049, 17485, 17506, 27051,  7802, 7802, 11848, 11848, 15530, 27074, 27049]}
-
-\texttt{[27051,  7802,  7802, 11848, 11848, 15530, 27074, 27049, 27075, 0, 0, 0, 0, 0, 0, 0]}
-
+An example of 3 sequences with 16 tokens per sequence embedding is as follows: 
+\begin{verbatim}
+[27049, 7985, 11849, 11849, 7985, 11849, 11849, 7985, 11849,
+11849, 7985, 11849, 11849, 27049, 17485, 17506]
+[11849, 11849,  7985, 11849, 11849, 27049, 17485, 17506, 27051,
+7802, 7802, 11848, 11848, 15530, 27074, 27049]
+[27051,  7802,  7802, 11848, 11848, 15530, 27074, 27049, 27075, 0, 
+0, 0, 0, 0, 0, 0]
+\end{verbatim}
 The first two sequences contain musical notes, while the third sequence is padded with zeros to maintain a consistent length of 16 tokens. 
 This padding ensures that all input sequences are of uniform length, while still allowing the flexibility to handle variable-length musical phrases.
 
@@ -225,16 +227,9 @@ prompts for sequence generation and evaluation.
 Relavant statistics about the dataset used for training and evaluation are provided in \citep{begari2025scoresetdatasetguitarprofiles}.
 \begin{figure}[h]
 \centering
-\begin{minipage}{0.48\linewidth}
-\includegraphics[clip, width=0.9\linewidth]{trainingaccentprobability.pdf}
-\caption{Distribution of accent tokens in the training data after random sampling, highlighting common expressive elements that the model learns to reproduce.}
-  \label{fig:accentnote}
-\end{minipage}\hfill
-\begin{minipage}{0.48\linewidth}
-\includegraphics[clip, width=0.9\linewidth]{startprobability.pdf}
-\caption{Distribution of starting notes for musical measures, used to select initial tokens for more consistent generation.}
+\includegraphics[clip, width=0.5\linewidth]{startprobability.pdf}
+\caption{Distribution of starting notes for musical measures, used to select initial tokens at inference time for more consistent generation.}
   \label{fig:firstnote}
-\end{minipage}
 \end{figure}
 
 \subsubsection{Model}
@@ -308,7 +303,7 @@ A weighted sum over relative positional value contributions $V_{\text{rel}}$ is 
 \subsubsection{Loss}
 The model's loss is composed of three components:
 \begin{align}
-\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{CE}} + \mathcal{L}_{\text{rep}} + \mathcal{L}_{\text{seq}}
+\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{CE}} + \lambda \mathcal{L}_{\text{rep}} + \delta \mathcal{L}_{\text{seq}}
 \end{align}
 \paragraph{Cross Entropy loss ($\mathcal{L}_{\text{CE}}$)}
 Cross-entropy loss is the standard choice for training deep neural 
@@ -327,28 +322,45 @@ ability to recognise patterns and their natural inclination toward novelty.
 Since it is already known that accent tokens\textsuperscript{~\ref{app:secA1}}
 cannot repeat, it is penalised through repetition loss, making them less likely to 
 be selected again in subsequent steps. 
-A variant of the repetition penalty introduced in \citep{reppenalty} is employed; 
-however, instead of greedy decoding, multinomial sampling is used to generate 
-tokens to get semantically different output sequences \citep{song2024}. 
-Including this loss during training removes the need for explicit constraints during 
-inference for generating valid sequences.
-\begin{align}
-\text{Let } p_{b,t,v} = \text{softmax}\left( \frac{\text{logits}_{b,t,v}}{T} \right)
-\end{align}
-\quad \text{for } b = 1,\dots,B;\ t = 0,\dots,T - 1;\ v = 1,\dots,V \\[1ex]
-Compute average past probabilities:
-\begin{align}
-\bar{p}_{b,t,v} = \frac{1}{t} \sum_{k=0}^{t-1} p_{b,k,v}, \quad \text{for } t \geq 1
-\end{align}
-Repetition score (dot product of current and average previous probabilities)
-\begin{align}
-R_{b,t} = \sum_{v=1}^{V} p_{b,t,v} \cdot \bar{p}_{b,t,v}, \quad \text{for } t \geq 1
-\end{align}
-Final penalty (mean repetition score across batch and sequence, excluding)
-\begin{align}
-\qquad \mathcal{L}_{\text{rep}} = \frac{\lambda}{B(T - 1)} \sum_{b=1}^{B} \sum_{t=1}^{T-1} R_{b,t}
-\end{align}
-where $\lambda$ is a repetition penalty weight hyper parameter.
+The concept of the repetition penalty introduced in \citep{reppenalty} uses penalised sampling
+at inference time.
+The proposed loss is a logits regulizer which is fully differentiable 
+and does not require autoregressive sampling
+during training, making it compatible with teacher-forced optimization in
+decoder-only architectures.
+For batch element $b \in \{1,\dots,B\}$ and timestep $t \in \{1,\dots,T\}$, let
+$\mathbf{z}_{b,t} \in \mathbb{R}^{V}$ be the output logits of the decoder.
+
+We define the softmax distribution with temperature $\tau > 0$ as:
+\begin{equation}
+P_{b,t}(v)
+=
+\frac{\exp(z_{b,t,v} / \tau)}
+{\sum_{u=1}^{V} \exp(z_{b,t,u} / \tau)} ,
+\end{equation}
+where $v \in \{1,\dots,V\}$.
+
+Let $\mathcal{V}_p \subseteq \{1,\dots,V\}$ denote the set of penalized tokens.
+We define the total probability mass assigned to penalized tokens at timestep $t$ as:
+\begin{equation}
+S_{b,t}
+=
+\sum_{v \in \mathcal{V}_p} P_{b,t}(v) .
+\end{equation}
+
+The logits-based penalized token adjacency loss is then defined as:
+\begin{equation}
+\mathcal{L}_{\text{adj}}
+=
+\frac{1}{B(T-1)}
+\sum_{b=1}^{B}
+\sum_{t=2}^{T}
+S_{b,t-1} \cdot S_{b,t} .
+\end{equation}
+
+This loss penalizes the model for assigning high probability mass to penalized tokens
+at consecutive timesteps, including both identical token repetition and cross-token
+adjacency within $\mathcal{V}_p$.
 
 \paragraph{Sequence loss ($\mathcal{L}_{\text{seq}}$)} 
 
@@ -446,32 +458,18 @@ The best-performing set of hyperparameters was selected based on the lowest vali
 
 \subsection{KL Divergence Evaluation}
 To quantitatively assess the model's generative quality, the predicted token distributions were compared with the true distributions using KL divergence.
-Figures~\ref{fig:noteskl}-\ref{fig:beattypekl} visualize the results.
+Figure~\ref{fig:klplots} visualizes the results.
 Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
 distribution of starting notes of musical measures in the training data yields more consistent generation. The results were averaged over 10 generated phrases per prompt.
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=0.7\linewidth]{3_test_all_T_compareprobabilitynotes.pdf}
-  \caption{KL divergence between generated and true distributions of musical notes, indicating accurate note prediction by the model.}
-\label{fig:noteskl}
+  \includegraphics[width=1.0\linewidth]{3_test_all_T_compareprobabilityquad.pdf}
+  \caption{KL divergence between generated and training distributions of \textbf{(a)} musical notes, 
+  \textbf{(b)} Beats, \textbf{(c)} Beat Types, \textbf{(d)} Accents, indicating prediction by the model.}
+\label{fig:klplots}
 \end{figure}
 
-\begin{figure}[t]
-\centering
-\begin{minipage}{0.48\linewidth}
-  \centering
-  \includegraphics[width=1.0\linewidth]{3_test_all_T_compareprobabilitybeats.pdf}
-  \caption{KL divergence for beat tokens with start token 7729, showing the model preserves rhythmic structure.}
-\label{fig:beatskl}
-\end{minipage}\hfill
-\begin{minipage}{0.48\linewidth}
-  \centering
-  \includegraphics[width=1.0\linewidth]{3_test_all_T_compareprobabilitybeattype.pdf}
-  \caption{KL divergence for beat types with start token 7729, demonstrating correct modeling of musical subdivisions.}
-\label{fig:beattypekl}
-\end{minipage}
-\end{figure}
 
 \section{Conclusions}\label{sec:conclusions}
 The proposed tokenisation scheme efficiently incorporates expressive elements 
