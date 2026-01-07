@@ -608,8 +608,8 @@ if __name__ == '__main__':
                             for note in song_notes if note != 100]
         flattened_beats = [beat for song_beats in song_beats_collect
                             for beat in song_beats]
-        flattened_accents = [accent - 1 for song_accent in song_accent_collect
-                              for accent in song_accent if accent != 0]
+        flattened_accents = [accent for song_accent in song_accent_collect
+                              for accent in song_accent]
         flattened_beattype = [bt for song_beattype in song_beattype_collect
                                for bt in song_beattype]
 
