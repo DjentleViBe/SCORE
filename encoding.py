@@ -92,7 +92,7 @@ def beattype_prob(duration):
     
     :param duration: beat duration
     """
-    beattypevalue = 1
+    beattypevalue = 0
     if duration == 1:
         beattypevalue = 1
     elif duration == 2:
