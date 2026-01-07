@@ -148,12 +148,12 @@ def plotbar_dual(title, labels, counts1, counts2, kldiv,
         if yval != 0:
             ax1.text(
                 barval.get_x() + barval.get_width() / 2,    # horizontal center
-                yval / 2,                             # halfway inside the bar
+                yval*1.02,                             # halfway inside the bar
                 int(yval),                            # the label
-                ha='center', va='center',             # centered inside
+                ha='center', va='bottom',             # centered inside
                 fontsize=8,
                 rotation=90,                          # rotate text
-                color='white',                        # use contrasting color
+                color='black',                        # use contrasting color
                 fontweight='bold'
             )
     # Secondary axis
@@ -162,6 +162,8 @@ def plotbar_dual(title, labels, counts1, counts2, kldiv,
                     color='lightgray', edgecolor='black')
     ax2.set_ylabel('Inference', fontsize=12)
     ax2.tick_params(axis='y')
+    ax1.set_ylim(bottom=max(1, min(counts1)*0.1), top = max(counts1)*4)
+    ax2.set_ylim(bottom=max(1, min(counts2)*0.1), top = max(counts2)*4)
 
     # Annotate secondary bars
     for barval in bars2:
@@ -169,9 +171,9 @@ def plotbar_dual(title, labels, counts1, counts2, kldiv,
         if yval != 0:
             ax2.text(
                 barval.get_x() + barval.get_width() / 2,    # horizontal center
-                yval / 2,                             # halfway inside the bar
+                yval*1.02,                             # halfway inside the bar
                 int(yval),                            # the label
-                ha='center', va='center',             # centered inside
+                ha='center', va='bottom',             # centered inside
                 fontsize=8,
                 rotation=90,                          # rotate text
                 color='black',                        # use contrasting color
@@ -186,7 +188,8 @@ def plotbar_dual(title, labels, counts1, counts2, kldiv,
     ax1.legend(handles=legend_patches, loc='center left', bbox_to_anchor=(1.1, 0.5))
     # Grid on primary axis
     ax1.grid(axis='y', linestyle='--', alpha=0.7)
-
+    ax1.set_yscale('log')
+    ax2.set_yscale('log')
     plt.tight_layout()
     plt.savefig(filename, dpi=200)
     plt.close()
