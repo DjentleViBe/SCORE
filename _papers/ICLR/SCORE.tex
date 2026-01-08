@@ -289,13 +289,13 @@ The pairwise KL divergence between each pair of Gaussians \citep{kldiv}:
 
 This produces a KL matrix:
 \begin{align}
-\text{KL\_matrix} \in \mathbb{R}^{B \times B}, \quad
-[\text{KL\_matrix}]_{i,j} = \text{KL}(\mathcal{N}_i \parallel \mathcal{N}_j)
+\text{KL}_{\text{bias}} \in \mathbb{R}^{B \times B}, \quad
+[\text{KL}_{\text{bias}}]_{i,j} = \text{KL}(\mathcal{N}_i \parallel \mathcal{N}_j)
 \end{align}
 
-A simpler version of the attention matrix from \citet{XL} is used from which the KL divergence-based sequence bias is subtracted:
+A simpler version of the attention matrix from \citet{XL} is used from which the KL divergence-based sequence bias is added:
 \begin{align}
-\text{RA}_{\text{KL}} = \text{softmax} \left( \frac{Q K^\top}{\sqrt{d_k}} + Q R^\top - \alpha \cdot \text{KL}_{\text{bias}} \right)
+\text{RA}_{\text{KL}} = \text{softmax} \left( \frac{Q K^\top}{\sqrt{d_k}} + Q R^\top + \alpha \cdot \text{KL}_{\text{bias}} \right)
 \end{align}
 A weighted sum over relative positional value contributions $V_{\text{rel}}$ is then added:
 \begin{align}

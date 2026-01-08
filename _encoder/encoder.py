@@ -29,7 +29,7 @@ def scaled_dot_product(q_val, k_val, v_val, mask, rel_pos_enc, rel_pos_value_emb
     scaled += torch.einsum('bhqd,qkd->bhqk', q_val, rel_pos_enc.squeeze(0))
     kl_backward_score = klmatrix[:, :].sum(dim=0)
     kl_bias = ALPHA * kl_backward_score[:, None, None, None]
-    scaled = scaled - kl_bias
+    scaled = scaled + kl_bias
 
     if mask is not None:
         scaled += mask
