@@ -53,16 +53,16 @@ in rock, metal, blues, funk and jazz. It is often the main feature that gives ch
 and structure to a song. Developments in Transformers architecture have inspired 
 many to generate sequences by treating musical notes as symbolic language
 \citep{Vaswani2}
-\citep{agostinelli2023musiclmgeneratingmusictext} 
-\citep{copet2024simplecontrollablemusicgeneration} 
-\citep{doi:10.1177/14727978251337904} 
-\citep{symbolic} 
-\citep{app13074543} 
 \citep{10.1145/3394171.3413671}
 \citep{wu2020jazz}
 \citep{ens2020mmm}
-\citep{dong2023multitrack}
+\citep{symbolic}
 \citep{yu2022museformer}. 
+\citep{dong2023multitrack}
+\citep{app13074543}
+\citep{agostinelli2023musiclmgeneratingmusictext} 
+\citep{copet2024simplecontrollablemusicgeneration} 
+\citep{doi:10.1177/14727978251337904}.
 Generating modern music demands capturing not only note patterns but also the associated expressions. 
 
 A widely adopted method for representing musical notes digitally is the MIDI format \citep{craig2025midifileformat}, 
@@ -87,7 +87,7 @@ Most prior studies use absolute pitch values \citep{awsdeepcomposer}, some \cite
 This introduces an additional processing step, increasing inference time. Another common strategy treats each 
 unique chord as a separate token, resulting in a large vocabulary that may include thousands of tokens 
 representing all possible chords in the dataset \citep{harmony} \citep{Chordinator}. 
-\citep{chen2020automatic} proposes a pre-defined set of rhythmic groove patterns. This limits the model's ability to generate novel rhythms. 
+\citet{chen2020automatic} proposes a pre-defined set of rhythmic groove patterns. This limits the model's ability to generate novel rhythms. 
 
 Despite the growing body of work on symbolic music generation, there is little to no prior work 
 specifically addressing expressive guitar music that captures techniques such as bends, slides, 
@@ -161,7 +161,7 @@ where, $f_n$ = fret number, $s_n$ = string number and $n_{val}$ = 1 for palm mut
 
 \subsubsection{Accent representation}
 A description of expressive elements is provided in ~\citep{begari2025scoresetdatasetguitarprofiles}.
-An accent token is append to the note token from Section~\ref{sec:note} to indicate the presence of an expressive element. 
+An accent token is appended to the note token from Section~\ref{sec:note} to indicate the presence of an expressive element. 
 For chords, the accent token is added before the next consecutive note token.
 A C major chord as shown in Figure~\ref{fig:chord} comprises of 3 notes - root note (C) played on the 
 fret 2, 5th string , major third (G) on fret 1, 4th string and perfect fifth (E) on 
@@ -187,13 +187,13 @@ depicted in Figure~\ref{fig:bend}, the tokenization is: \texttt{15461, 27052}. H
 \subsubsection{Phrases}
 A music bar (also called a measure) is a fundamental unit in musical notation that divides
 music into segments of equal time, defined by the time signature \citep{Miller2016MusicTheory3E}. Each measure is separated by
-a BAR\textsuperscript{~\ref{app:secA1}}
+a BAR\textsuperscript{~\ref{app:secA1}} token.
 \subsection{Embedding}
 A bar consists of a fixed number of beats, composed of musical notes that were tokenised as described in Section~\ref{sec:tokenisation}. Each bar is treated like a sentence.
 It has been demonstrated that the transformer equipped with relative attention 
 is very well-suited for generative modelling of symbolic music \citep{Vaswani2} \citep{zhou2023choir} \citep{li2024hrpe}. 
 The chunking strategy used to carry over context between sequences 
-during training follows the approach introduced in \citep{chunking}, 
+during training follows the approach introduced in \citet{chunking}, 
 which builds upon Transformer-XL's \citep{transformerXL} segment-level recurrence mechanism. 
 This method enables the model to capture longer-range dependencies by 
 reusing hidden states from previous token chunks across segments. 
@@ -218,23 +218,23 @@ This padding ensures that all input sequences are of uniform length, while still
 
 \subsection{Training}
 \subsubsection{Dataset}
-The guitar tracks were obtained from \citep{SCORESET}.
+The guitar tracks were obtained from \citet{SCORESET}.
 The dataset consists of files in .gp5 \citep{GuitarProFormatInfo2025} format in standard tuning. 
 From the full set, 6208 sequences were randomly sampled to enable efficient training on standard desktop hardware.
-The common practice of 80/20 split was used to create the training and validation sets \citep{Goodfellow2016DeepLearning}. 
+The common practice of 80/10/10 split was used to create training, validation and test sets \citep{Goodfellow2016DeepLearning}. 
 For testing, top 10 first notes of each measure in the training set were selected as 
 prompts for sequence generation and evaluation.
-Relavant statistics about the dataset used for training and evaluation are provided in \citep{begari2025scoresetdatasetguitarprofiles}.
+Relavant statistics about the dataset used for training and evaluation are provided in \citet{begari2025scoresetdatasetguitarprofiles}.
 \begin{figure}[h]
 \centering
 \includegraphics[clip, width=0.5\linewidth]{startprobability.pdf}
-\caption{Distribution of starting notes for musical measures, used to select initial tokens at inference time for more consistent generation.}
+\caption{Distribution of starting notes in training data for musical measures, used to select initial tokens at inference time for more consistent generation.}
   \label{fig:firstnote}
 \end{figure}
 
 \subsubsection{Model}
 The Transformer is built from a decoder-only stack with masked self 
-attention as described in \citep{Vaswani2}. Although, segment-level 
+attention as described in \citet{Vaswani2}. Although, segment-level 
 recurrence mechanism is captured in Transformer-XL \citep{transformerXL}, 
 its memory is limited to one previous segment at a time. To model dependencies across a whole batch, the gaussian distributions of the sequences are learned through a Multi layer Perceptron layer.
 If the input is a batch of sequences defined by:
@@ -291,7 +291,7 @@ This produces a KL matrix:
 [\text{KL\_matrix}]_{i,j} = \text{KL}(\mathcal{N}_i \parallel \mathcal{N}_j)
 \end{align}
 
-A simpler version of the attention matrix from \citep{XL} is used from which the KL divergence-based sequence bias is subtracted:
+A simpler version of the attention matrix from \citet{XL} is used from which the KL divergence-based sequence bias is subtracted:
 \begin{align}
 \text{RA}_{\text{KL}} = \text{softmax} \left( \frac{Q K^\top}{\sqrt{d_k}} + Q R^\top - \alpha \cdot \text{KL}_{\text{bias}} \right)
 \end{align}
@@ -308,21 +308,21 @@ The model's loss is composed of three components:
 \paragraph{Cross Entropy loss ($\mathcal{L}_{\text{CE}}$)}
 Cross-entropy loss is the standard choice for training deep neural 
 networks and logistic regression models for both binary and multi-class 
-classification tasks. \citep{mlglossary}
+classification tasks \citep{mlglossary}.
 
 
 \paragraph{Repetition loss ($\mathcal{L}_{\text{rep}}$)} 
 Repetition helps organise musical ideas, making pieces more 
 coherent and memorable. It gives listeners reference points and expectations, 
-aiding in the recognition and recall of themes or motifs. \citep{Hu_2022}
+aiding in the recognition and recall of themes or motifs \citep{Hu_2022}.
 Composers have long used stochastic (probability-based) methods to inject randomness into repeated motifs, 
-sometimes even employing quantum randomness for truly unpredictable results. \citep{yamada_grandi_munoz-gil_barbiero_aloy_lewenstein_2021} 
+sometimes even employing quantum randomness for truly unpredictable results \citep{yamada_grandi_munoz-gil_barbiero_aloy_lewenstein_2021}. 
 This demands careful consideration, as it relies on the listener's inherent 
 ability to recognise patterns and their natural inclination toward novelty. 
 Since it is already known that accent tokens\textsuperscript{~\ref{app:secA1}}
 cannot repeat, it is penalised through repetition loss, making them less likely to 
 be selected again in subsequent steps. 
-The concept of the repetition penalty introduced in \citep{reppenalty} uses penalised sampling
+The concept of the repetition penalty introduced in \citet{reppenalty} uses penalised sampling
 at inference time.
 The proposed loss is a logits regulizer which is fully differentiable 
 and does not require autoregressive sampling
@@ -331,7 +331,7 @@ decoder-only architectures.
 For batch element $b \in \{1,\dots,B\}$ and timestep $t \in \{1,\dots,T\}$, let
 $\mathbf{z}_{b,t} \in \mathbb{R}^{V}$ be the output logits of the decoder.
 
-We define the softmax distribution with temperature $\tau > 0$ as:
+The softmax distribution with temperature $\tau > 0$ is defined as:
 \begin{equation}
 P_{b,t}(v)
 =
@@ -341,7 +341,7 @@ P_{b,t}(v)
 where $v \in \{1,\dots,V\}$.
 
 Let $\mathcal{V}_p \subseteq \{1,\dots,V\}$ denote the set of penalized tokens.
-We define the total probability mass assigned to penalized tokens at timestep $t$ as:
+The total probability mass assigned to penalized tokens at timestep $t$ is defined as:
 \begin{equation}
 S_{b,t}
 =
@@ -397,14 +397,14 @@ representation close to the learned sequence memory,
 improving sequence-level consistency across batches.
 
 \section{Results}\label{sec2}
-The idea of context carryover has been well established in \citep{llmgate} \citep{wei2021attentivecontextualcarryovermultiturn} \citep{pmlr-v267-chen25cg}
-\citep{rae2019compressivetransformerslongrangesequence} \citep{beltagy2020longformerlongdocumenttransformer} \citep{zaheer2021bigbirdtransformerslonger}. 
+The idea of context carryover has been well established in \citet{llmgate} \citet{wei2021attentivecontextualcarryovermultiturn} \citet{pmlr-v267-chen25cg}
+\citet{rae2019compressivetransformerslongrangesequence} \citet{beltagy2020longformerlongdocumenttransformer} \citet{zaheer2021bigbirdtransformerslonger}. 
 During inference, the model carries over context from previous sequences by 
 using the last token of the preceding measure as the first token for the 
-subsequent measure, following the approach described in \citep{remi}.
+subsequent measure, following the approach described in \citet{remi}.
 To compare the quality of predicted tokens (P)  from true distributions (Q), 
 relative entropy is calculated using Kullback-Leibler divergence, following the methodology in
-\citep{Seo2016} \citep{zhang2025aestheticshumanpreferencescomparative} \citep{spiliopoulou2011comparingprobabilisticmodelsmelodic}:
+\citet{Seo2016} \citet{zhang2025aestheticshumanpreferencescomparative} \citet{spiliopoulou2011comparingprobabilisticmodelsmelodic}:
 \begin{align}
 D_{\mathrm{KL}}(P \parallel Q) = \sum_{x \in X} P(x) \log \left( \frac{P(x)}{Q(x)} \right)
 \end{align}
