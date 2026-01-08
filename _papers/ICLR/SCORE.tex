@@ -215,7 +215,10 @@ An example of 3 sequences with 16 tokens per sequence embedding is as follows:
 \end{verbatim}
 The first two sequences contain musical notes, while the third sequence is padded with zeros to maintain a consistent length of 16 tokens. 
 This padding ensures that all input sequences are of uniform length, while still allowing the flexibility to handle variable-length musical phrases.
-
+Overlapping input windows with a fixed stride is generated to increase the number of effective 
+training samples and improve context continuity. Such overlapped contexts have been 
+shown to increase sample diversity for next token prediction in language modeling tasks \citep{gu-etal-2025-overlapping}, 
+and improve segmentation performance \citep{abbasi-etal-2025-neural}.
 \subsection{Training}
 \subsubsection{Dataset}
 The guitar tracks were obtained from \citet{SCORESET}.
