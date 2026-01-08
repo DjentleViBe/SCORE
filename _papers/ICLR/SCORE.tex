@@ -221,9 +221,8 @@ This padding ensures that all input sequences are of uniform length, while still
 The guitar tracks were obtained from \citet{SCORESET}.
 The dataset consists of files in .gp5 \citep{GuitarProFormatInfo2025} format in standard tuning. 
 From the full set, 6208 sequences were randomly sampled to enable efficient training on standard desktop hardware.
-The common practice of 80/10/10 split was used to create training, validation and test sets \citep{Goodfellow2016DeepLearning}. 
-For testing, top 10 first notes of each measure in the training set were selected as 
-prompts for sequence generation and evaluation.
+The dataset was split into training, validation, and test sets using the common 80/10/10 ratio \citep{Goodfellow2016DeepLearning}.
+For inference, the first 10 notes of each measure from the training set were selected as prompts for sequence generation and evaluation.
 Relavant statistics about the dataset used for training and evaluation are provided in \citet{begari2025scoresetdatasetguitarprofiles}.
 \begin{figure}[h]
 \centering
@@ -429,11 +428,10 @@ distribution of starting notes of musical measures in the training data yields m
 \begin{figure}[H]
   \centering
   \includegraphics[width=1.0\linewidth]{3_test_all_T_compareprobabilityquad.pdf}
-  \caption{KL divergence between generated and training distributions of \textbf{(a)} musical notes, 
+  \caption{KL divergence between inference and training distributions \textbf{(a)} Musical notes, 
   \textbf{(b)} Beats, \textbf{(c)} Beat Types, \textbf{(d)} Accents, indicating prediction by the model.}
 \label{fig:klplots}
 \end{figure}
-
 
 \section{Conclusions}\label{sec:conclusions}
 The proposed tokenisation scheme efficiently incorporates expressive elements 
