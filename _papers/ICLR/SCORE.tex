@@ -99,7 +99,7 @@ The modified architecture is trained and evaluated on a dataset \citep{SCORESET}
 While direct comparison with existing methods is not feasible due to differences in 
 model compatibility and expressive feature representation, the proposed method is 
 evaluated using quantitative metrics. The model is trained to minimize KL 
-divergence across pitch, beat, beat type, and expression similarity. The source code of this work is available at \url{https://github.com/DjentleViBe/SC0RE}.
+divergence across pitch, beat, beat type, and expression similarity. The source code of this work is available at \url{https://github.com/DjentleViBe/SCORE}.
 
 \section{Methods}\label{sec:proposedmethod}
 
@@ -373,7 +373,7 @@ Given hidden states from a transformer model
 \[
 \mathbf{H} \in \mathbb{R}^{B \times H \times T \times D},
 \]
-where $B$ is the batch size, $H$ is the number of hidden heads, $T$ the sequence length, and $D$ the hidden dimension per head, we permute and flatten the hidden states:
+where $B$ is the batch size, $H$ is the number of hidden heads, $T$ the sequence length, and $D$ the hidden dimension per head, hidden states are permuted and flattened as:
 \begin{align}
 \mathbf{H}_{\text{perm}} &= \mathbf{H}.permute(0, 2, 1, 3) \in \mathbb{R}^{B \times T \times H \times D},\\
 \mathbf{H}_{\text{flat}} &= \mathrm{reshape}(\mathbf{H}_{\text{perm}}) \in \mathbb{R}^{B \times T \times (H \cdot D)}.
@@ -513,7 +513,7 @@ DELTA  & 1.0 \\
 \end{center}
 \end{table}
 The values were obtained after performing a grid search for 10 epochs and selecting values which gave the lowest validation loss. 
-The ranges for the grid search are given in the repository \url{https://github.com/DjentleViBe/SC0RE}.
+The ranges for the grid search are given in the repository \url{https://github.com/DjentleViBe/SCORE}.
 \subsubsection*{Acknowledgments}
 This research received no specific grant from any funding agency in the public, commercial,
 or not-for-profit sectors.
