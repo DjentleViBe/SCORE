@@ -363,73 +363,38 @@ at consecutive timesteps, including both identical token repetition and cross-to
 adjacency within $\mathcal{V}_p$.
 
 \paragraph{Sequence loss ($\mathcal{L}_{\text{seq}}$)} 
-
-Let 
-\(\mathbf{H} \in \mathbb{R}^{B \times H \times T \times d}\) 
-denote the hidden-state tensor produced by the model for a batch of \(B\) sequences, where \(H\) is the number of attention heads, \(T\) is the sequence length, and \(d\) is the per-head hidden dimensionality. 
-The heads are first merged into a single model embedding of dimension \(D = H \cdot d\), then mean-pool is taken over the temporal dimension. 
-A per-sequence memory vector \(\mathbf{m} \in \mathbb{R}^{B \times D}\) is added to obtain the final sequence embedding.
-
+A sequence memory module is defined that maintains embeddings of sequences. 
+Let $N$ denote the number of sequences and $d_{\text{model}}$ the 
+embedding dimension. For a sequence ID $i \in \{1, \dots, N\}$, 
+the embedding is given by:
+\begin{equation}
+\mathbf{s}_i = \mathrm{Embedding}(i) \in \mathbb{R}^{d_{\text{model}}}.
+\end{equation}
+Given hidden states from a transformer model
+\[
+\mathbf{H} \in \mathbb{R}^{B \times H \times T \times D},
+\]
+where $B$ is the batch size, $H$ is the number of hidden heads, $T$ the sequence length, and $D$ the hidden dimension per head, we permute and flatten the hidden states:
 \begin{align}
-\tilde{\mathbf{H}}_b &= \frac{1}{T} \sum_{t=1}^{T} 
-\operatorname{reshape}\big(\mathbf{H}_{b,:,t,:}\big) 
-\in \mathbb{R}^{D}, \quad b = 1, \dots, B \\
-\mathbf{E}_b &= \tilde{\mathbf{H}}_b + \mathbf{m}_b 
-\in \mathbb{R}^{D}, \quad b = 1, \dots, B
+\mathbf{H}_{\text{perm}} &= \mathbf{H}.permute(0, 2, 1, 3) \in \mathbb{R}^{B \times T \times H \times D},\\
+\mathbf{H}_{\text{flat}} &= \mathrm{reshape}(\mathbf{H}_{\text{perm}}) \in \mathbb{R}^{B \times T \times (H \cdot D)}.
 \end{align}
-
-where \(\mathbf{E} \in \mathbb{R}^{B \times D}\) is the batch of final sequence embeddings.
-To encourage structural consistency of the embedding space across successive 
-training steps, a relative distance preservation loss is introduced. 
-Let $\mathbf{E}^{(t)}$ and $\mathbf{E}^{(t-1)}$ denote the sequence 
-embeddings at the current and previous steps, respectively. For each batch, 
-the pairwise squared Euclidean distance matrices \cite{Dokmanic_2015} is computed:
+The sequence-level embedding is then obtained by averaging over time steps and adding the sequence memory embedding:
 \begin{equation}
-\mathbf{D}^{(t)}_{ij}
-=
-\left\lVert
-\mathbf{E}^{(t)}_i - \mathbf{E}^{(t)}_j
-\right\rVert_2^2,
-\quad
-\mathbf{D}^{(t-1)}_{ij}
-=
-\left\lVert
-\mathbf{E}^{(t-1)}_i - \mathbf{E}^{(t-1)}_j
-\right\rVert_2^2,
+\mathbf{h}_{\text{seq}, i}^{\text{final}} = \frac{1}{T} \sum_{t=1}^{T} \mathbf{H}_{\text{flat}, i, t, :} + \mathbf{s}_i,
 \end{equation}
-for all $i,j \in \{1,\dots,B\}$.
-
-The regularization term is an implementation of relational distance preservation objectives 
-used in similarity preserving knowledge distillation \cite{tung2019similaritypreservingknowledgedistillation}. 
-Unlike prior teacher-student formulations, the model's previous embedding state is used as a fixed reference, 
-enforcing temporal consistency via a detached pairwise distance target.
-The relative distance regularization term is defined as:
+for $i = 1, \dots, B$.
+To enforce consistency between the current sequence embedding 
+and the learned sequence memory, the mean squared error (MSE) loss is defined as:
 \begin{equation}
-\mathcal{L}_{\mathrm{rel}}
-=
-\delta
-\cdot
-\frac{1}{B^2}
-\sum_{i=1}^{B}
-\sum_{j=1}^{B}
-\left(
-\mathbf{D}^{(t)}_{ij}
--
-\operatorname{stopgrad}\!\left(
-\mathbf{D}^{(t-1)}_{ij}
-\right)
-\right)^2,
+\mathcal{L}_{\text{seq}} = \lambda \cdot \frac{1}{B} \sum_{i=1}^{B} \left\| \mathbf{h}_{\text{seq}, i}^{\text{final}} - \mathbf{s}_i \right\|_2^2,
 \end{equation}
-where $\delta$ is a scalar weighting 
-coefficient and $\operatorname{stopgrad}(\cdot)$ denotes 
-gradient detachment, making it a fixed reference geometry.
 
-This loss constrains the evolution of the embedding 
-space by preserving pairwise relationships between samples, 
-rather than enforcing absolute alignment of embeddings. 
-As a result, it promotes temporal stability and mitigates 
-representational drift while allowing global transformations 
-of the embedding space.
+where $\lambda$ is a sequence penalty weight hyperparameter.
+
+This loss encourages the model to maintain a 
+representation close to the learned sequence memory, 
+improving sequence-level consistency across batches.
 
 \section{Results}\label{sec2}
 The idea of context carryover has been well established in \citep{llmgate} \citep{wei2021attentivecontextualcarryovermultiturn} \citep{pmlr-v267-chen25cg}
@@ -448,7 +413,6 @@ To determine the optimal configuration, a grid search was performed over a prede
 The search included combinations of key parameters such as learning rate, sequence length, model dimensionality, 
 Each configuration was trained for 10 epochs, and performance was evaluated on a validation set using loss. 
 The best-performing set of hyperparameters was selected based on the lowest validation score.
-
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.8\linewidth]{Loss.pdf}
@@ -457,13 +421,11 @@ The best-performing set of hyperparameters was selected based on the lowest vali
   is computed every 5 epochs.}
 \label{fig:lossplots}
 \end{figure}
-
 \subsection{KL Divergence Evaluation}
 To quantitatively assess the model's generative quality, the predicted token distributions were compared with the true distributions using KL divergence.
 Figure~\ref{fig:klplots} visualizes the results.
 Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
 distribution of starting notes of musical measures in the training data yields more consistent generation. The results were averaged over 10 generated phrases per prompt.
-
 \begin{figure}[H]
   \centering
   \includegraphics[width=1.0\linewidth]{3_test_all_T_compareprobabilityquad.pdf}
