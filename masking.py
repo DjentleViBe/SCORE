@@ -1,7 +1,17 @@
+"""
+Masking operations
+"""
 import torch
-import config as cfg
 
 def create_combined_mask(input_ids, device, seq_length, num_heads):
+    """
+    Docstring for create_combined_mask
+    
+    :param input_ids: input ID
+    :param device: device name
+    :param seq_length: sequence length
+    :param num_heads: number of heads
+    """
     batch_size = input_ids.size(0)
 
     # 1. Causal mask: upper triangle with -inf, shape (1, 1, seq_len, seq_len)
@@ -21,5 +31,3 @@ def create_combined_mask(input_ids, device, seq_length, num_heads):
     combined_mask = combined_mask.expand(batch_size, num_heads, seq_length, seq_length)
 
     return combined_mask
-
-

@@ -1,8 +1,10 @@
+#pylint:disable=too-many-statements
+#pylint:disable=too-many-branches
 """Decoding results"""
+import numpy as np
 from config import EOS, BOS, BARRE_NOTE, BEND_NOTE_1, BEND_NOTE_7, \
                     TREM_BAR_1, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_6, \
                     HAMMER, VIBRATO, HARMONIC_1, VERBOSE, BAR
-import numpy as np
 
 BASE_BEAT_START = {
     0 : 64,
@@ -46,15 +48,15 @@ def detokenizer_1(dummy):
     beat_kind = 1
     if dummy == EOS:
         if VERBOSE == 1:
-            print(f"-------EOS-------")
+            print("-------EOS-------")
         note_val = EOS
     elif dummy == BAR:
         if VERBOSE == 1:
-            print(f"-------BAR-------")
+            print("-------BAR-------")
         note_val = BAR
     elif dummy == BOS:
         if VERBOSE == 1:
-            print(f"-------BOS-------")
+            print("-------BOS-------")
         note_val = BOS
     elif dummy == BARRE_NOTE:
         if VERBOSE == 1:
@@ -72,7 +74,7 @@ def detokenizer_1(dummy):
             print("-------Accent_Trem----------")
         note_val = dummy
     elif SLIDE_NOTE_6 >= dummy >= SLIDE_NOTE_1:
-        accent_type = dummy - SLIDE_NOTE_1 + 14
+        accent_type = dummy - SLIDE_NOTE_1 + 15
         if VERBOSE == 1:
             print("-------Accent_Slide----------")
         note_val = dummy
@@ -97,19 +99,19 @@ def detokenizer_1(dummy):
             print("-------Harmonic----------")
         note_val = dummy
     else:
-        if(dummy < BAR):
+        if dummy < BAR:
             palm_mute = False
             note_type = dummy % 276
-            
+
             beat_kind = (dummy // 276) % 14
             base_beat = BASE_BEAT_START.get((dummy // (276 * 14)) % 7)
-            if(base_beat == 0):
+            if base_beat == 0:
                 print("caution")
             bt_0, bt_1 = demapping_beat(beat_kind)
             beat_type = {"duration": base_beat,      # e.g., 4 for quarter
                         "tuplet": bt_0,     # e.g., 3, 5, 6, etc.
                         "dotted": bt_1}
-            
+
             if note_type > 138:
                 accent_type = 24
                 # Palm mute
@@ -120,10 +122,12 @@ def detokenizer_1(dummy):
             else:
                 string_num = (note_type) // 23 + 1
                 note_val = (note_type) % string_num
- 
+
         if VERBOSE == 1:
-            beat_type_cleaned = {k: int(v) if isinstance(v, np.integer) else v for k, v in beat_type.items()}
-            print(f"Beat : {beat_type_cleaned} String : {string_num} Note : {note_val} PalmMute : {palm_mute}")
+            beat_type_cleaned = {k: int(v) if isinstance(v, np.integer)
+                                 else v for k, v in beat_type.items()}
+            print(f"Beat : {beat_type_cleaned} String : {string_num} "
+                  f"Note : {note_val} PalmMute : {palm_mute}")
 
 
     return note_val, note_type, string_num, beat_type, palm_mute, beat_kind, accent_type

@@ -1,34 +1,23 @@
+#pylint: disable=too-many-statements, too-many-branches
+#pylint: disable=too-many-locals, too-many-arguments, too-many-positional-arguments
 """Post processing"""
+import math
 import matplotlib.pyplot as plt
 import torch
 import torch.nn.functional as F
 import guitarpro as gp
-import math
 import numpy as np
 from matplotlib.patches import Patch
-from config import (BACKUP, MAX_SEQ_LENGTH, EOS, BOS, BARRE_NOTE, MEASURE, BEND_NOTE_1, BEND_NOTE_2, BEND_NOTE_3,
-BEND_NOTE_4, BEND_NOTE_5, BEND_NOTE_6, BEND_NOTE_7, TREM_BAR_1, TREM_BAR_2, TREM_BAR_3,
-TREM_BAR_4, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_2, SLIDE_NOTE_3, SLIDE_NOTE_4, SLIDE_NOTE_5, SLIDE_NOTE_6,
-HAMMER, VIBRATO, HARMONIC_1, BAR, TUNING,
-TEMPERATURE, TEST_CRITERIA, PREDICTION_CRITERIA, VERBOSE)
-from inference import multinomial_sample, multinomial_sample_2, create_causal_mask
-
-DEMAPPING_BEAT_DETYPE = {
-    'Base---------------' : 1,
-    'Triplet------------' : 2,
-    'Quintuplet---------' : 3,
-    'Sextuplet----------' : 4,
-    'Septuplet----------' : 5,
-    '9_Tuplets----------' : 6,
-    '11_Tuplets---------' : 7,
-    'Dotted - Base------' : 8,
-    'Dotted - Triplet---' : 9,
-    'Dotted - Quintuplet' : 10,
-    'Dotted - Sextuplet-' : 11,
-    'Dotted - Septuplet-' : 12,
-    'Dotted - 9_Tuplets-' : 13,
-    'Dotted - 11_Tuplets' : 14,
-}
+from PIL import Image
+from inference import multinomial_sample, create_causal_mask
+from config import (BACKUP, MAX_SEQ_LENGTH, EOS, BOS, BARRE_NOTE,
+                    BEND_NOTE_1, BEND_NOTE_2, BEND_NOTE_3,
+                    BEND_NOTE_4, BEND_NOTE_5, BEND_NOTE_6,
+                    BEND_NOTE_7, TREM_BAR_1, TREM_BAR_2, TREM_BAR_3,
+                    TREM_BAR_4, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1,
+                    SLIDE_NOTE_2, SLIDE_NOTE_3, SLIDE_NOTE_4, SLIDE_NOTE_5,
+                    SLIDE_NOTE_6, HAMMER, VIBRATO, HARMONIC_1, BAR, TUNING,
+                    TEMPERATURE, TEST_CRITERIA, PREDICTION_CRITERIA, VERBOSE)
 
 valid_tuplets = [(1, 1), (3, 2), (5, 4), (6, 4), (7, 4), (9, 8), (10, 8), (11, 8), (12, 8), (13, 8)]
 
@@ -39,13 +28,13 @@ def plot_multiple(plot_collect, labels, text, filename):
     plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.yscale('log')
-    for i in range(0, len(plot_collect)):
+    for i, _ in enumerate(plot_collect):
         plt.plot(plot_collect[i], label=labels[i])
     plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     plt.tight_layout()
     plt.savefig(filename, dpi = 200)
-
     return 0
+
 def plot(lossplot, text, filename):
     "Plots data and saves figure"
     plt.plot(lossplot)
@@ -59,15 +48,24 @@ def plot(lossplot, text, filename):
     return 0
 
 def plotbar(labels, title, counts, filename):
+    """
+    Plot bar chart and save to file
+    
+    :param labels: labels for the x-axis
+    :param title: title of the plot
+    :param counts: bincounts
+    :param filename: filename to export
+    """
     plt.figure(figsize=(6, 4))
     bars = plt.bar(labels, counts, color='black', edgecolor='black')
     plt.ylabel('Occurrences', fontsize=12)
     plt.title(title, fontsize=14)
-    plt.xticks(rotation=90) 
+    plt.xticks(rotation=90)
 
-    for bar in bars:
-        yval = bar.get_height()
-        plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, int(yval), ha='center', va='bottom')
+    for barval in bars:
+        yval = barval.get_height()
+        plt.text(barval.get_x() + barval.get_width()/2, yval + 0.5,
+                 int(yval), ha='center', va='bottom', fontsize=7)
 
     plt.grid(axis='y', linestyle='--', alpha=0.7, color = 'k')
     plt.tight_layout()
@@ -78,6 +76,14 @@ def plotbar(labels, title, counts, filename):
     return 0
 
 def plotbarlog(labels, title, counts, filename):
+    """
+    Plot bar chart with log and save to file
+    
+    :param labels: labels for the x-axis
+    :param title: title of the plot
+    :param counts: bincounts
+    :param filename: filename to export
+    """
     plt.cla()
     plt.figure(figsize=(10, 6))
 
@@ -92,10 +98,11 @@ def plotbarlog(labels, title, counts, filename):
     plt.title(title, fontsize=14)
 
     # Add count labels above bars
-    for bar in bars:
-        yval = bar.get_height()
+    for barval in bars:
+        yval = barval.get_height()
         if yval > 0:
-            plt.text(bar.get_x() + bar.get_width()/2, yval + 0.5, int(yval), ha='center', va='bottom')
+            plt.text(barval.get_x() + barval.get_width()/2,
+                     yval + 0.5, int(yval), ha='center', va='bottom')
         # Set y-axis to log scale
     plt.yscale('log')
     plt.grid(axis='y', linestyle='--', alpha=0.7, color='k')
@@ -107,55 +114,69 @@ def plotbarlog(labels, title, counts, filename):
 
     return 0
 
-def plotbar_dual(title, labels, counts1, counts2, KLD, filename, label1='Training', label2='Inference'):
+def plotbar_dual(title, labels, counts1, counts2, kldiv,
+                 filename, label1='Training', label2='Inference',
+                 fontsize=12):
+    """
+    Plot bar dual chart and save to file
+    
+    :param labels: labels for the x-axis
+    :param title: title of the plot
+    :param counts1-2: bincounts
+    :param filename: filename to export
+    :param KLD: KL divergence values
+    :param label1-2: legend labels
+    """
     plt.figure(figsize=(12, 6))
     x = np.arange(len(labels))  # label positions
     width = 0.4  # width of the bars
 
     # Primary axis
     fig, ax1 = plt.subplots(figsize=(12, 6))
-    bars1 = ax1.bar(x - width/2, counts1, width, label=label1, color='black', edgecolor='black')
+    bars1 = ax1.bar(x - width/2, counts1, width, label=label1,
+                    color='black', edgecolor='black')
     # ax1.set_xlabel('Notes', fontsize=12)
-    ax1.set_ylabel(f'Training', fontsize=12)
+    ax1.set_ylabel('Training', fontsize=12)
     ax1.tick_params(axis='y')
     ax1.set_xticks(x)
-    ax1.set_xticklabels(labels)
-    fig.suptitle(title, fontsize=18)      # Title for the Axes
-    ax1.set_title('KL_Divergence = ' + str(round(KLD, 4)), fontsize = 14)      # Subtitle for the entire figure
+    ax1.set_xticklabels(labels, fontsize=fontsize)
+    #fig.suptitle(title, fontsize=18)      # Title for the Axes
+    ax1.set_title('KL-Divergence = ' + str(round(kldiv, 4)), fontsize = 20)
     plt.xticks(rotation=90)
     # Annotate primary bars
-    for bar in bars1:
-        yval = bar.get_height()
+    for barval in bars1:
+        yval = barval.get_height()
         if yval != 0:
             ax1.text(
-                bar.get_x() + bar.get_width() / 2,    # horizontal center
-                yval / 2,                             # halfway inside the bar
+                barval.get_x() + barval.get_width() / 2,    # horizontal center
+                yval*1.02,                             # halfway inside the bar
                 int(yval),                            # the label
-                ha='center', va='center',             # centered inside
-                fontsize=8,
+                ha='center', va='bottom',             # centered inside
+                fontsize=14,
                 rotation=90,                          # rotate text
-                color='white',                        # use contrasting color
-                fontweight='bold'
+                color='black'                        # use contrasting color
             )
     # Secondary axis
     ax2 = ax1.twinx()
-    bars2 = ax2.bar(x + width/2, counts2, width, label=label2, color='lightgray', edgecolor='black')
-    ax2.set_ylabel(f'Inference', fontsize=12)
+    bars2 = ax2.bar(x + width/2, counts2, width, label=label2,
+                    color='lightgray', edgecolor='black')
+    ax2.set_ylabel('Inference', fontsize=12)
     ax2.tick_params(axis='y')
+    ax1.set_ylim(bottom=max(1, min(counts1)*0.1), top = max(counts1)*6)
+    ax2.set_ylim(bottom=max(1, min(counts2)*0.1), top = max(counts2)*6)
 
     # Annotate secondary bars
-    for bar in bars2:
-        yval = bar.get_height()
+    for barval in bars2:
+        yval = barval.get_height()
         if yval != 0:
             ax2.text(
-                bar.get_x() + bar.get_width() / 2,    # horizontal center
-                yval / 2,                             # halfway inside the bar
+                barval.get_x() + barval.get_width() / 2,    # horizontal center
+                yval*1.02,                             # halfway inside the bar
                 int(yval),                            # the label
-                ha='center', va='center',             # centered inside
-                fontsize=8,
+                ha='center', va='bottom',             # centered inside
+                fontsize=14,
                 rotation=90,                          # rotate text
-                color='black',                        # use contrasting color
-                fontweight='bold'
+                color='black'                        # use contrasting colo
             )
     # Combine legends
     labels = [label1, label2]
@@ -166,14 +187,104 @@ def plotbar_dual(title, labels, counts1, counts2, KLD, filename, label1='Trainin
     ax1.legend(handles=legend_patches, loc='center left', bbox_to_anchor=(1.1, 0.5))
     # Grid on primary axis
     ax1.grid(axis='y', linestyle='--', alpha=0.7)
-
+    ax1.set_yscale('log')
+    ax2.set_yscale('log')
     plt.tight_layout()
     plt.savefig(filename, dpi=200)
     plt.close()
 
     return 0
 
+def plotbar_quad(labels, counts1, counts2, kldiv, filename):
+    """
+    Docstring for plotbar_quad
+    
+    :param labels: labels for the x-axis
+    :param counts1: counts for training
+    :param counts2: counts for inference
+    :param kldiv: KL divergence values
+    :param filename: filename to export
+    """
+    titles = ["(a)", "(b)", "(c)", "(d)"]
+    fig, ax = plt.subplots(2, 2 ,figsize=(14, 10))
+    for i, l in enumerate(labels):
+        x = np.arange(len(labels[i]))  # label positions
+        width = 0.4  # width of the bars
+        row = i // 2
+        col = i % 2
+        ax1 = ax[row, col]
+        bars1 = ax1.bar(x - width/2, counts1[i], width, label="Training",
+                        color='black', edgecolor='black')
+        # ax1.set_xlabel('Notes', fontsize=12)
+        ax1.set_ylabel('Training', fontsize=16)
+        ax1.tick_params(axis='y')
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(l, fontsize=11, rotation=90)
+        #fig.suptitle(title, fontsize=18)      # Title for the Axes
+        ax1.set_title(r"$\bf{" + titles[i] + r"}$" +
+                      " KL-Divergence = " + str(round(kldiv[i], 4)),fontsize=20)# Annotate primary bars
+        for barval in bars1:
+            yval = barval.get_height()
+            if yval != 0:
+                ax1.text(
+                    barval.get_x() + barval.get_width() / 2,    # horizontal center
+                    yval*1.02,                             # halfway inside the bar
+                    int(yval),                            # the label
+                    ha='center', va='bottom',             # centered inside
+                    fontsize=10,
+                    rotation=90,                          # rotate text
+                    color='black'                        # use contrasting color
+                )
+        # Secondary axis
+        ax2 = ax1.twinx()
+        bars2 = ax2.bar(x + width/2, counts2[i], width, label="Infrence",
+                        color='lightgray', edgecolor='black')
+        ax2.set_ylabel('Inference', fontsize=16)
+        ax2.tick_params(axis='y')
+        ax1.set_ylim(bottom=max(1, min(counts1[i])*0.1), top = max(counts1[i])*10)
+        ax2.set_ylim(bottom=max(1, min(counts2[i])*0.1), top = max(counts2[i])*10)
+
+        # Annotate secondary bars
+        for barval in bars2:
+            yval = barval.get_height()
+            if yval != 0:
+                ax2.text(
+                    barval.get_x() + barval.get_width() / 2,    # horizontal center
+                    yval*1.02,                             # halfway inside the bar
+                    int(yval),                            # the label
+                    ha='center', va='bottom',             # centered inside
+                    fontsize=10,
+                    rotation=90,                          # rotate text
+                    color='black'                        # use contrasting colo
+                )
+        ax1.set_yscale('log')
+        ax2.set_yscale('log')
+        ax1.set_xlim(left=x[0] - width - 0.01, right=x[-1] + width + 0.01)
+    # Combine legends
+    labels = ["Training", "Inference"]
+    legend_patches = [
+        Patch(facecolor='black', edgecolor='black', label="Training"),
+        Patch(facecolor='lightgray', edgecolor='black', label="Inference")
+    ]
+    fig.legend(handles=legend_patches, loc="lower center",
+            ncol=len(legend_patches),frameon=False,
+            fontsize=16)
+    plt.tight_layout(rect=[0, 0.08, 1, 1])
+    plt.savefig(filename, dpi=200)
+    plt.close()
+
+
 def decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask, e_val):
+    """
+    Transformer Decoder Search Step
+    
+    :param decoder: decoder model
+    :param dummy_in: output from previous step
+    :param embedding_layer: embedding layer
+    :param pos_enc: positional encoding
+    :param mask: masking
+    :param e_val: current evaluation step
+    """
     embeddings = embedding_layer(dummy_in[:, :e_val])
     pos_enc = pos_enc.unsqueeze(0)
     positional = pos_enc[:, :e_val, :]
@@ -181,10 +292,9 @@ def decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask, e_val):
 
     next_token_logits = output_eval[:, -1, :]
     scaled_logits = next_token_logits / TEMPERATURE
-    
-    probabilities = F.softmax(scaled_logits, dim=-1)
-    
 
+    probabilities = F.softmax(scaled_logits, dim=-1)
+    next_token = None
     # Select the next token (using greedy search here)
     if PREDICTION_CRITERIA == 1:
         next_token = torch.argmax(probabilities, dim=-1).unsqueeze(0)
@@ -192,12 +302,12 @@ def decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask, e_val):
         k = 3  # Specify the beam width
         # Get the top k probabilities and their corresponding indices
         _, next_token = torch.topk(probabilities, k, dim=-1)
-        
+
     elif PREDICTION_CRITERIA == 3:
         next_token = torch.multinomial(probabilities, num_samples=1).unsqueeze(0)
     elif PREDICTION_CRITERIA == 4:
         next_token = multinomial_sample(probabilities, num_samples=40)
-    
+
     return next_token
 
 def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim, device):
@@ -214,13 +324,17 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
                 # For each beam, perform a step in the beam search
                 for i, beam in enumerate(beam_sequences):
                     # Perform decoding step (greedy or other search method)
-                    next_token = decoder_search(decoder, beam, embedding_layer, pos_enc, mask)
+                    next_token = decoder_search(decoder, beam, embedding_layer,
+                                                pos_enc, mask, e_val)
 
                     # Extend each beam with the top k candidates
                     for bw in range(beam_width):
-                        new_beam = beam.clone()  # Copy the current beam
-                        new_beam[0][e_val] = next_token[0][bw]  # Update the token for this position
-                        new_score = beam_scores[i] + next_token[0][bw].log()  # Update the score (log probability)
+                        # Copy the current beam
+                        new_beam = beam.clone()
+                        # Update the token for this position
+                        new_beam[0][e_val] = next_token[0][bw]
+                        # Update the score (log probability)
+                        new_score = beam_scores[i] + next_token[0][bw].log()
                         all_candidates.append((new_beam, new_score))
 
                 # Sort all candidates by score and select the top k
@@ -237,22 +351,23 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
                 dummy_in[0][1:] = EOS
                 for e_val in range (1, seq_lim):
                     casualmask = create_causal_mask(e_val, device)
-                    next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, casualmask, e_val)
+                    next_token = decoder_search(decoder, dummy_in, embedding_layer,
+                                                pos_enc, casualmask, e_val)
                     # generated_sequence = dummy_in
                     if next_token == EOS:
                         print("End detected")
                         break
-                    else:
-                        dummy_in[0][e_val] = next_token
+                    dummy_in[0][e_val] = next_token
             else:
                 e_val = 2
                 trial = 0
                 temperature_var = TEMPERATURE
                 while e_val < seq_lim:
-                    next_token = decoder_search(decoder, dummy_in, embedding_layer, pos_enc, mask)
+                    next_token = decoder_search(decoder, dummy_in, embedding_layer,
+                                                pos_enc, mask, e_val)
 
                     if e_val != 2:
-                        if next_token > BOS and dummy_in[0][e_val - 1] < BOS:
+                        if dummy_in[0][e_val - 1] < BOS < next_token:
                             dummy_in[0][e_val] = next_token
                             e_val +=1
                         elif next_token < BOS:
@@ -260,7 +375,8 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
                             e_val +=1
                         else:
                             temperature_var /= 2
-                            print("Trial -->", e_val, trial, next_token.cpu()[0][0], dummy_in.cpu()[0][e_val - 1])
+                            print("Trial -->", e_val, trial, next_token.cpu()[0][0],
+                                  dummy_in.cpu()[0][e_val - 1])
                             trial += 1
                     else:
                         # generated_sequence = dummy_in
@@ -271,12 +387,20 @@ def decoder_inference(decoder, dummy_in, embedding_layer, pos_enc, mask, seq_lim
     return dummy_in
 
 def check_measure(duration_sum, n):
+    """Check if measure exceeds 4/4 time signature"""
     if math.ceil(duration_sum) > 32:
         print("Exiting early at Token : ", n + 1)
         print("total duration : ", math.ceil(duration_sum))
         return True
+    return False
 
 def findnewstring(note, string):
+    """
+    Find new string for note in chord
+    
+    :param note: note value
+    :param string: string number
+    """
     notepos = TUNING[string - 1] + note
     if string > 4:
         notepos += 12
@@ -284,13 +408,8 @@ def findnewstring(note, string):
         notepos -= 12
     closest_index = min(range(len(TUNING)), key=lambda i: abs(TUNING[i] - notepos))
     return notepos - TUNING[closest_index], closest_index
-    
-def makegpro(titlename, noteval, stringnum, beatval, palmval):
-    # print(noteval)
-    # print(beatval)
-    #print(palmval)
-    # print(stringnum)
 
+def makegpro(titlename, noteval, stringnum, beatval, palmval):
     """Generate gpro file"""
     # read bend and tremolo templates
     song_trem_1 = gp.parse('./gprofiles/gp5_templates/trem_1.gp5')
@@ -353,7 +472,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     song.tracks[0].name = "Guitar"
     song.tracks[0].channel.instrument = 30
 
-    song.tracks[0].measures[0].hasTimeSignature  = True 
+    song.tracks[0].measures[0].hasTimeSignature  = True
     song.tracks[0].measures[0].timeSignature.denominator.value = 4
     voice = song.tracks[0].measures[0].voices[0]
 
@@ -471,13 +590,10 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
 
                 # Re-check after changing to avoid accidental collisions again (optional safeguard)
                 if stringnum[n] in used_strings:
-                    if noteval[n] <= 0:
-                        continue  # skip assignment for rests
-                    else:
-                        print("Used strings:", used_strings)
-                        print("All candidate strings:", stringnum)
-                        print("Current note:", noteval[n])
-                        raise ValueError(f"Could not resolve string conflict for note {noteval[n]} at position {n}")
+                    print("Used strings:", used_strings)
+                    print("All candidate strings:", stringnum)
+                    print("Current note:", noteval[n])
+                    continue  # skip assignment for rests
                 current_beat = reused_beat
                 current_beat.status = gp.models.BeatStatus.normal
                 reuse_last_beat = False
@@ -539,51 +655,62 @@ def writegpro(filename, song):
         gp.write(song, file)
 
 def writebincount(counts, filename):
-    # Write to a text file
-    with open(filename, 'w') as file:
+    """Write to a text file"""
+    with open(filename, 'w', encoding='utf-8') as file:
         for idx, count in enumerate(counts):
             file.write(f"Value {idx}: {count} occurrences\n")
 
 def writebincount2(labels, counts, filename):
-    # Write to a text file
-    with open(filename, 'w') as file:
+    """Write to a text file"""
+    with open(filename, 'w', encoding='utf-8') as file:
         for idx, count in enumerate(counts):
             file.write(f"Value {labels[idx]}: {count} occurrences\n")
 
 def readbincount(filename):
-    # Read the counts from the text file
+    """Read the counts from the text file"""
     counts = []
-    with open(filename, 'r') as file:
+    with open(filename, 'r', encoding='utf-8') as file:
         for line in file:
             # Extract the count from each line
             parts = line.strip().split(':')
             count = int(parts[1].split()[0])  # Get the integer count
             counts.append(count)
-    
+
     return counts
 
-def KLDivergence(train, eval):
-    N_tot = sum(train)
-    Q_tot = sum(eval)
-    P = []
-    Q = []
-    D = []
+def kldivergence(train, evaluation):
+    """
+    Compute Kullback-Leibler divergence between two distributions
+    
+    :param train: Training distribution
+    :param eval: Evaluation distribution
+    """
+    n_tot = sum(train)
+    q_tot = sum(evaluation)
+    p_val = []
+    q_val = []
+    d_val = []
     eps = 1E-10
 
-    for p_val in train:
-        P.append(p_val / N_tot)
+    for p_value in train:
+        p_val.append(p_value / n_tot)
 
-    for q_val in eval:
-        Q.append(q_val / Q_tot)
+    for q_value in evaluation:
+        q_val.append(q_value / q_tot)
 
-    for item1, item2 in zip(P, Q):
+    for item1, item2 in zip(p_val, q_val):
         if item1 > 0:
-            D.append(item1 * np.log(item1 / (item2 + eps)))
-    return sum(D)
+            d_val.append(item1 * np.log(item1 / (item2 + eps)))
+    return sum(d_val)
 
-from PIL import Image
 def combinepng(image1, image2, filename):
-
+    """
+    Combine two PNG images vertically
+    
+    :param image1: First image path
+    :param image2: Second image path
+    :param filename: Output filename
+    """
     # Load PNG images
     img1 = Image.open(image1)
     img2 = Image.open(image2)

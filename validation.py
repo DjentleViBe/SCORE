@@ -1,13 +1,27 @@
+#pylint: disable=too-many-arguments, too-many-locals, too-many-positional-arguments, too-many-branches
+"""
+Validation loop
+"""
 import torch
 import config as cfg
 from masking import create_combined_mask
 from _loss.customloss import ValidationLoss
 
-def validation(loader, device, optimizer, embedding_layer, decoder, criterion, pos_enc):
+def validation(loader, device, optimizer, embedding_layer, decoder, pos_enc):
+    """
+    Run validation loop
+    
+    :param loader: validation data loader
+    :param device: device name
+    :param optimizer: optimizer
+    :param embedding_layer: embedding layer
+    :param decoder: decoder model
+    :param criterion: loss function
+    :param pos_enc: position encoding
+    """
     decoder.eval()
     epoch_loss = 0.0
     batch_count = 0
-    prev_sequence_embedding = None
     validation_criterion = ValidationLoss()
     with torch.no_grad():
         for batch_token_ids, batch_target in loader:
@@ -15,8 +29,9 @@ def validation(loader, device, optimizer, embedding_layer, decoder, criterion, p
             #    break
             batch_token_ids = batch_token_ids.to(device)
             batch_target = batch_target.to(device)
-            mask = create_combined_mask(batch_token_ids, device, seq_length=cfg.MAX_SEQ_LENGTH, num_heads=cfg.NUM_HEADS)
-                
+            mask = create_combined_mask(batch_token_ids, device,
+                                        seq_length=cfg.MAX_SEQ_LENGTH, num_heads=cfg.NUM_HEADS)
+
             optimizer.zero_grad()
             # Embeddings
             embeddings = embedding_layer(batch_token_ids)

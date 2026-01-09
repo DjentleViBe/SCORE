@@ -1,12 +1,13 @@
+#pylint: disable
 """Defines parameters required for training and inference"""
-TUNING              = [64, 59, 55, 50, 45, 40]
+TUNING              = [53, 48, 44, 39, 34, 27]
 ################################ transformers #################################
-# 0: train, 
+# 0: train,
 # 1 : eval
-# 2 : both 
+# 2 : both
 # 3 : load from file
 MODE                =   2
-BACKUP				 = "CB_Large_3"
+BACKUP				 = "CB_Large_5"
 SAVE				 = "CB_L"
 BOS_TRUE            =   0
 EOS_TRUE            =   1
@@ -14,7 +15,7 @@ EOS_TRUE            =   1
 # 1 - Disregard any note > BARRE_NOTE
 # 2 - n bars of generation, n = TEST_TRIES
 # 3 - Same as above + last note of every bar is fed to firt note of next bar
-# 4 - Same as above + loop until no repeatitive notes > BOS 
+# 4 - Same as above + loop until no repeatitive notes > BOS
 TEST_CRITERIA       =   3
 TEST_TRIES          =   12
 # Total number of start_id to try with testing
@@ -25,7 +26,7 @@ TEST_NUM            =   3
 # 4 - Multinomial Sampling - manual
 PREDICTION_CRITERIA =   3
 ########## Params ##############
-EPOCHS          =   50
+EPOCHS          =   125
 SAVE_EVERY      =   20
 VOCAB_SIZE      =   27076
 FFN_HIDDEN      =   1024
@@ -46,10 +47,11 @@ CONVERGENCE     =   0.0005
 TEMPERATURE		=   1.0
 BATCH           =   32
 OVERLAP         =   8
-LAMBDA          =   1.5
-ALPHA           =   0.1
-DELTA           =   1.0
-
+LAMBDA          =   1.5 # REPETITION PENALTY WEIGHT
+ALPHA           =   0.1 # KL BIAS WEIGHT
+DELTA           =   1.0 # SEQUENCE EMBEDDING PENALTY WEIGHT
+NGRAM_SIZE      =   3
+####################### TOKEN IDS ########################
 BAR             =   27049
 BOS             =   27050
 BARRE_NOTE      =   27051
@@ -80,3 +82,51 @@ EOS             =   27075
 #################################################################################
 MEASURE         =   8
 VERBOSE         =   0
+#################################################################################
+labelsnotes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+labelsbeats = ['Base',
+'Triplet',
+'Quintuplet',
+'Sextuplet',
+'Septuplet',
+'9_Tuplets',
+'11_Tuplets',
+'D - Base',
+'D - Triplet',
+'D - Quintuplet',
+'D - Sextuplet',
+'D - Septuplet',
+'D - 9_Tuplets',
+'D - 11_Tuplets']
+labelsbeattype = ['1', '2', '4', '8', '16', '32', '64']
+labelsaccents = ['BARRE_NOTE', 'BEND_NOTE_1', 'BEND_NOTE_2', 'BEND_NOTE_3', 'BEND_NOTE_4',
+                 'BEND_NOTE_5', 'BEND_NOTE_6', 'BEND_NOTE_7', 
+                    'TREM_BAR_1', 'TREM_BAR_2', 'TREM_BAR_3', 'TREM_BAR_4', 'TREM_BAR_5', 
+                    'SLIDE_NOTE_1', 'SLIDE_NOTE_2', 'SLIDE_NOTE_3', 'SLIDE_NOTE_4', 
+                    'SLIDE_NOTE_5', 'SLIDE_NOTE_6',
+                    'DEAD_NOTE', 'HAMMER', 'VIBRATO', 'HARMONIC_1', 'PALM_MUTE']
+DEMAPPING_BEAT_DETYPE = {
+    'Base---------------' : 1,
+    'Triplet------------' : 2,
+    'Quintuplet---------' : 3,
+    'Sextuplet----------' : 4,
+    'Septuplet----------' : 5,
+    '9_Tuplets----------' : 6,
+    '11_Tuplets---------' : 7,
+    'Dotted - Base------' : 8,
+    'Dotted - Triplet---' : 9,
+    'Dotted - Quintuplet' : 10,
+    'Dotted - Sextuplet-' : 11,
+    'Dotted - Septuplet-' : 12,
+    'Dotted - 9_Tuplets-' : 13,
+    'Dotted - 11_Tuplets' : 14,
+}
+PENALIZE_TOKENS = [BEND_NOTE_1, BEND_NOTE_2, BEND_NOTE_3,
+                    BEND_NOTE_4,
+                    BEND_NOTE_5, BEND_NOTE_6, BEND_NOTE_7,
+                    TREM_BAR_1, TREM_BAR_2, TREM_BAR_3,
+                    TREM_BAR_4, TREM_BAR_5,
+                    DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_2,
+                    SLIDE_NOTE_3,
+                    SLIDE_NOTE_4, SLIDE_NOTE_5, SLIDE_NOTE_6,
+                    BOS, VIBRATO, HAMMER, HARMONIC_1]
