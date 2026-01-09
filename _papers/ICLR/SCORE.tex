@@ -412,9 +412,9 @@ D_{\mathrm{KL}}(P \parallel Q) = \sum_{x \in X} P(x) \log \left( \frac{P(x)}{Q(x
 \end{align}
 \subsection{Grid search}
 To determine the optimal configuration, a grid search was performed over a predefined set of hyperparameter values. 
-The search included combinations of key parameters such as learning rate, sequence length, model dimensionality, 
-Each configuration was trained for 10 epochs, and performance was evaluated on a validation set using loss. 
-The best-performing set of hyperparameters was selected based on the lowest validation score.
+The search included combinations of key parameters such as learning rate, sequence length and model dimensionality. 
+Each configuration was trained for 10 epochs and performance was evaluated on a validation set using loss. 
+The best performing set of hyperparameters was selected based on the lowest validation loss.
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.8\linewidth]{Loss.pdf}
@@ -427,7 +427,7 @@ The best-performing set of hyperparameters was selected based on the lowest vali
 To quantitatively assess the model's generative quality, the predicted token distributions were compared with the true distributions using KL divergence.
 Figure~\ref{fig:klplots} visualizes the results.
 Given that the model is autoregressive and expects an initial token, selecting the start token based on the 
-distribution of starting notes of musical measures in the training data yields more consistent generation. The results were averaged over 10 generated phrases per prompt.
+distribution of starting notes of musical measures in the training data shown in Figure~\ref{fig:firstnote} yields more consistent generation. The results were averaged over 10 generated phrases per prompt.
 \begin{figure}[H]
   \centering
   \includegraphics[width=1.0\linewidth]{3_test_all_T_compareprobabilityquad.pdf}
