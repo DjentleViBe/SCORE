@@ -1,7 +1,7 @@
 <p align="center">
  <img width="400px" src="./Banner.jpg" align="center" alt="SCORE" />
-<h1 align="center">SCORE</h1>
-<p align="center" style="font-size: 18px;"><b>S</b>upervised <b>C</b>omp<b>O</b>sition and <b>R</b>iff <b>E</b>ngine</p>
+<h1 align="center" style="font-size: 32px;">SCORE</h1>
+<p align="center" style="font-size: 24px;"><b>S</b>upervised <b>C</b>omp<b>O</b>sition and <b>R</b>iff <b>E</b>ngine</p>
 
 <p align="center">Riff generation using Transformers Architecture</p>
 
