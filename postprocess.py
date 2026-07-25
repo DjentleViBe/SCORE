@@ -526,6 +526,8 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         # print("beatval", beatval[n]["tuplet"])
         dotted = False
         base_duration = 0
+        if tuplet_on:
+            beatval[n]["duration"] = last_beat_duration
         if note == BARRE_NOTE:
             if k_val != 0:
                 reuse_last_beat = True
@@ -625,13 +627,10 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     continue  # skip assignment for rests
                 current_beat = reused_beat
                 reuse_last_beat = False
-                if tuplet_on:
-                    beatval[n]["duration"] = last_beat_duration
             else:
                 # Duration comes from beatval[n]
                 if beatval[n].get("dotted") and not tuplet_on:
                     base_duration *= 1.5
-                current_beat = gp.Beat(voice=voice)
                 # logic to check if the subdivision condition is met
                 if tripletcount > 0:
                     beatval[n]["duration"] = last_beat_duration
@@ -691,6 +690,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 duration_sum += base_duration
                 k_val += 1
             print(enters, times, beatval[n]["duration"], last_beat_duration, n)
+            current_beat = gp.Beat(voice=voice)
             current_beat.status = gp.models.BeatStatus.normal
             beat_collect.append(current_beat)
             voice.beats.append(current_beat)
