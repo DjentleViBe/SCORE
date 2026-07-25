@@ -475,7 +475,6 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     song.tracks[0].measures[0].hasTimeSignature  = True
     song.tracks[0].measures[0].timeSignature.denominator.value = 4
     voice = song.tracks[0].measures[0].voices[0]
-
     k_val = 0
     l_val = 0
     beat_collect = []
@@ -503,6 +502,9 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             beatval[n]["times"] = 2
         if n == 1:
             note = BARRE_NOTE
+        #if n >= 15:
+        #    continue
+        # print(n, k_val, reuse_last_beat, note)
         if beatval[n]["tuplet"] == 3 and tripletcount == 0 and not tuplet_on:
             tripletcount = 1
             last_beat_duration = beatval[n]["duration"]
@@ -702,10 +704,10 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     # continue  # Skip this note if the tuplet combination is invalid
                 duration_sum += base_duration
                 k_val += 1
-            print(enters, times, beatval[n]["duration"], last_beat_duration, n, tuplet_on)
+                voice.beats.append(current_beat)
+                beat_collect.append(current_beat)
+            # print(enters, times, beatval[n]["duration"], last_beat_duration, n, tuplet_on)
             current_beat.status = gp.models.BeatStatus.normal
-            beat_collect.append(current_beat)
-            voice.beats.append(current_beat)
             # print(note,  max(stringnum[n], 1), k_val)
             note_collect.append(gp.Note(beat=current_beat))
             note_collect[l_val].type = gp.models.NoteType.normal
@@ -719,7 +721,6 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                 note_collect[l_val].beat.duration.tuplet.times = times
 
             current_beat.notes.append(note_collect[l_val])
-            
             if l_val != MAX_SEQ_LENGTH - 1:
                 l_val += 1
 
