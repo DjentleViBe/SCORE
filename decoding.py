@@ -26,6 +26,16 @@ TUPLET_REV = {
     6: 11
 }
 
+TIMES_REV = {
+    0: None,
+    1: 2,
+    2: 4,
+    3: 4,
+    4: 4,
+    5: 8,
+    6: 8
+}
+
 def demapping_beat(beatkind):
     """returns beat type"""
     dotted = False
@@ -33,7 +43,7 @@ def demapping_beat(beatkind):
         beatkind -= 7
         dotted = True
 
-    return TUPLET_REV.get(beatkind), dotted
+    return TUPLET_REV.get(beatkind), dotted, TIMES_REV.get(beatkind)
 
 def detokenizer_1(dummy):
     """Derive notes from token"""
@@ -43,6 +53,7 @@ def detokenizer_1(dummy):
     palm_mute = False
     beat_type = {"duration": 0,      # e.g., 4 for quarter
                 "tuplet": None,     # e.g., 3, 5, 6, etc.
+                "times": None,
                 "dotted": False}
     accent_type = 0
     beat_kind = 1
@@ -107,9 +118,10 @@ def detokenizer_1(dummy):
             base_beat = BASE_BEAT_START.get((dummy // (276 * 14)) % 7)
             if base_beat == 0:
                 print("caution")
-            bt_0, bt_1 = demapping_beat(beat_kind)
+            bt_0, bt_1, bt_2 = demapping_beat(beat_kind)
             beat_type = {"duration": base_beat,      # e.g., 4 for quarter
                         "tuplet": bt_0,     # e.g., 3, 5, 6, etc.
+                        "times": bt_2,
                         "dotted": bt_1}
 
             if note_type > 138:
