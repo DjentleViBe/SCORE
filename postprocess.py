@@ -490,6 +490,8 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     eleventupletcount = 0
     last_beat_duration = 0
     tuplet_on = False
+    enters = None
+    times = None
     for n, note in enumerate(noteval):
         if not tuplet_on:
             enters = None
@@ -499,6 +501,8 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         if n == 0:
             beatval[n]["tuplet"] = 3
             beatval[n]["times"] = 2
+        if n == 1:
+            note = BARRE_NOTE
         if beatval[n]["tuplet"] == 3 and tripletcount == 0 and not tuplet_on:
             tripletcount = 1
             last_beat_duration = beatval[n]["duration"]
@@ -526,6 +530,9 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
         # print("beatval", beatval[n]["tuplet"])
         dotted = False
         base_duration = 0
+        if beatval[n]["dotted"] == True and not tuplet_on:
+            note_collect[l_val].beat.duration.isDotted = True
+            dotted = True
         if tuplet_on:
             beatval[n]["duration"] = last_beat_duration
         if note == BARRE_NOTE:
@@ -626,9 +633,14 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     print("Current note:", noteval[n])
                     continue  # skip assignment for rests
                 current_beat = reused_beat
+                if tuplet_on:
+                    current_beat.duration.value = last_beat_duration
+                    current_beat.duration.tuplet.enters = enters
+                    current_beat.duration.tuplet.times = times
                 reuse_last_beat = False
             else:
                 # Duration comes from beatval[n]
+                current_beat = gp.Beat(voice=voice)
                 if beatval[n].get("dotted") and not tuplet_on:
                     base_duration *= 1.5
                 # logic to check if the subdivision condition is met
@@ -637,7 +649,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     enters = 3
                     times = 2
                     tripletcount += 1
-                    if tripletcount == 4 and not reuse_last_beat:
+                    if tripletcount == 4 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
                         tripletcount = 0
                         tuplet_on = False
                 elif quintupletcount > 0:
@@ -645,7 +657,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     enters = 5
                     times = 4
                     quintupletcount += 1
-                    if quintupletcount == 6 and not reuse_last_beat:
+                    if quintupletcount == 6 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
                         quintupletcount = 0
                         tuplet_on = False
                 elif sextupletcount > 0:
@@ -653,7 +665,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     enters = 6
                     times = 4
                     sextupletcount += 1
-                    if sextupletcount == 7 and not reuse_last_beat:
+                    if sextupletcount == 7 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
                         sextupletcount = 0
                         tuplet_on = False
                 elif septupletcount > 0:
@@ -661,7 +673,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     enters = 7
                     times = 4
                     septupletcount += 1
-                    if septupletcount == 8 and not reuse_last_beat:
+                    if septupletcount == 8 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
                         septupletcount = 0
                         tuplet_on = False
                 elif ninetupletcount > 0:
@@ -669,7 +681,7 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     enters = 9
                     times = 8
                     ninetupletcount += 1
-                    if ninetupletcount == 10 and not reuse_last_beat:
+                    if ninetupletcount == 10 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
                         ninetupletcount = 0
                         tuplet_on = False
                 elif eleventupletcount > 0:
@@ -677,20 +689,20 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     enters = 11
                     times = 8
                     eleventupletcount += 1
-                    if eleventupletcount == 12 and not reuse_last_beat:
+                    if eleventupletcount == 12 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
                         eleventupletcount = 0
                         tuplet_on = False
                 else:
-                    enters = None
-                    times = None
+                    if not tuplet_on:
+                        enters = None
+                        times = None
                 base_duration = 4.0 / beatval[n]["duration"]
                 if (enters, times) in valid_tuplets:
                     base_duration *= times / enters
                     # continue  # Skip this note if the tuplet combination is invalid
                 duration_sum += base_duration
                 k_val += 1
-            print(enters, times, beatval[n]["duration"], last_beat_duration, n)
-            current_beat = gp.Beat(voice=voice)
+            print(enters, times, beatval[n]["duration"], last_beat_duration, n, tuplet_on)
             current_beat.status = gp.models.BeatStatus.normal
             beat_collect.append(current_beat)
             voice.beats.append(current_beat)
@@ -701,10 +713,6 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
             note_collect[l_val].effect.palmMute = palmval[n]
             note_collect[l_val].string = max(stringnum[n], 1)
             note_collect[l_val].beat.duration.value = beatval[n]["duration"]
-
-            if beatval[n]["dotted"] == True and not tuplet_on:
-                note_collect[l_val].beat.duration.isDotted = True
-                dotted = True
 
             if (enters, times) in valid_tuplets:
                 note_collect[l_val].beat.duration.tuplet.enters = enters
