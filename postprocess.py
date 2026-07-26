@@ -651,49 +651,55 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
                     enters = 3
                     times = 2
                     tripletcount += 1
-                    if tripletcount == 4 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
-                        tripletcount = 0
-                        tuplet_on = False
+                    if n != MAX_SEQ_LENGTH:
+                        if tripletcount == 4 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
+                            tripletcount = 0
+                            tuplet_on = False
                 elif quintupletcount > 0:
                     beatval[n]["duration"] = last_beat_duration
                     enters = 5
                     times = 4
                     quintupletcount += 1
-                    if quintupletcount == 6 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
-                        quintupletcount = 0
-                        tuplet_on = False
+                    if n != MAX_SEQ_LENGTH:
+                        if quintupletcount == 6 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
+                            quintupletcount = 0
+                            tuplet_on = False
                 elif sextupletcount > 0:
                     beatval[n]["duration"] = last_beat_duration
                     enters = 6
                     times = 4
                     sextupletcount += 1
-                    if sextupletcount == 7 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
-                        sextupletcount = 0
-                        tuplet_on = False
+                    if n != MAX_SEQ_LENGTH:
+                        if sextupletcount == 7 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
+                            sextupletcount = 0
+                            tuplet_on = False
                 elif septupletcount > 0:
                     beatval[n]["duration"] = last_beat_duration
                     enters = 7
                     times = 4
                     septupletcount += 1
-                    if septupletcount == 8 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
-                        septupletcount = 0
-                        tuplet_on = False
+                    if n != MAX_SEQ_LENGTH:
+                        if septupletcount == 8 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
+                            septupletcount = 0
+                            tuplet_on = False
                 elif ninetupletcount > 0:
                     beatval[n]["duration"] = last_beat_duration
                     enters = 9
                     times = 8
                     ninetupletcount += 1
-                    if ninetupletcount == 10 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
-                        ninetupletcount = 0
-                        tuplet_on = False
+                    if n != MAX_SEQ_LENGTH:
+                        if ninetupletcount == 10 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
+                            ninetupletcount = 0
+                            tuplet_on = False
                 elif eleventupletcount > 0:
                     beatval[n]["duration"] = last_beat_duration
                     enters = 11
                     times = 8
                     eleventupletcount += 1
-                    if eleventupletcount == 12 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
-                        eleventupletcount = 0
-                        tuplet_on = False
+                    if n != MAX_SEQ_LENGTH:
+                        if eleventupletcount == 12 and not reuse_last_beat and noteval[n + 1] != BARRE_NOTE:
+                            eleventupletcount = 0
+                            tuplet_on = False
                 else:
                     if not tuplet_on:
                         enters = None
