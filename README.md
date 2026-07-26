@@ -74,3 +74,11 @@ To run random-seed test:
 ./runall.sh
 ```
 ```./_papers/findmin.py``` prints mean,  standard deviation values for test and best hyperparameter value based on validation loss.
+
+## Inference
+Two types of music phrases can be generated:
+
+1. Vanilla 
+2. Tuplet friendly - Upon encountering the first tuplet beat, consequent beats are adjusted accordingly.
+
+_BEATS_ONLY_ sets every note to 0 on the 0 string

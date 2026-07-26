@@ -25,6 +25,10 @@ TEST_NUM            =   3
 # 3 - Multinomial Sampling
 # 4 - Multinomial Sampling - manual
 PREDICTION_CRITERIA =   3
+INFERENCE_TYPE = 0
+# 0 - Vanilla
+# 1 - Tuplet friendly
+BEAT_ONLY = True
 ########## Params ##############
 EPOCHS          =   125
 SAVE_EVERY      =   20
