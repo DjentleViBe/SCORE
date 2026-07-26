@@ -409,7 +409,247 @@ def findnewstring(note, string):
     closest_index = min(range(len(TUNING)), key=lambda i: abs(TUNING[i] - notepos))
     return max(0, notepos - TUNING[closest_index]), closest_index
 
-def makegpro(titlename, noteval, stringnum, beatval, palmval):
+
+def makegpro_zero(titlename, noteval, stringnum, beatval, palmval):
+    """Generate gpro file"""
+    # read bend and tremolo templates
+    song_trem_1 = gp.parse('./gprofiles/gp5_templates/trem_1.gp5')
+    song_trem_2 = gp.parse('./gprofiles/gp5_templates/trem_2.gp5')
+    song_trem_4 = gp.parse('./gprofiles/gp5_templates/trem_4.gp5')
+    song_trem_3 = gp.parse('./gprofiles/gp5_templates/trem_3.gp5')
+    song_trem_5 = gp.parse('./gprofiles/gp5_templates/trem_5.gp5')
+    trem1_beat = song_trem_1.tracks[0].measures[0].voices[0].beats[0]
+    trem2_beat = song_trem_2.tracks[0].measures[0].voices[0].beats[0]
+    trem3_beat = song_trem_3.tracks[0].measures[0].voices[0].beats[0]
+    trem4_beat = song_trem_4.tracks[0].measures[0].voices[0].beats[0]
+    trem5_beat = song_trem_5.tracks[0].measures[0].voices[0].beats[0]
+
+    song_bend_1 = gp.parse('./gprofiles/gp5_templates/bend_1.gp5')
+    song_bend_2 = gp.parse('./gprofiles/gp5_templates/bend_2.gp5')
+    song_bend_3 = gp.parse('./gprofiles/gp5_templates/bend_3.gp5')
+    song_bend_4 = gp.parse('./gprofiles/gp5_templates/bend_4.gp5')
+    song_bend_5 = gp.parse('./gprofiles/gp5_templates/bend_5.gp5')
+    song_bend_6 = gp.parse('./gprofiles/gp5_templates/bend_6.gp5')
+    song_bend_7 = gp.parse('./gprofiles/gp5_templates/bend_7.gp5')
+    bend1_beat = song_bend_1.tracks[0].measures[0].voices[0].beats[0]
+    bend2_beat = song_bend_2.tracks[0].measures[0].voices[0].beats[0]
+    bend3_beat = song_bend_3.tracks[0].measures[0].voices[0].beats[0]
+    bend4_beat = song_bend_4.tracks[0].measures[0].voices[0].beats[0]
+    bend5_beat = song_bend_5.tracks[0].measures[0].voices[0].beats[0]
+    bend6_beat = song_bend_6.tracks[0].measures[0].voices[0].beats[0]
+    bend7_beat = song_bend_7.tracks[0].measures[0].voices[0].beats[0]
+
+    song_slide_1 = gp.parse('./gprofiles/gp5_templates/slide_1.gp5')
+    song_slide_2 = gp.parse('./gprofiles/gp5_templates/slide_2.gp5')
+    song_slide_3 = gp.parse('./gprofiles/gp5_templates/slide_3.gp5')
+    song_slide_4 = gp.parse('./gprofiles/gp5_templates/slide_4.gp5')
+    song_slide_5 = gp.parse('./gprofiles/gp5_templates/slide_5.gp5')
+    song_slide_6 = gp.parse('./gprofiles/gp5_templates/slide_6.gp5')
+    slide1_beat = song_slide_1.tracks[0].measures[0].voices[0].beats[0]
+    slide2_beat = song_slide_2.tracks[0].measures[0].voices[0].beats[0]
+    slide3_beat = song_slide_3.tracks[0].measures[0].voices[0].beats[0]
+    slide4_beat = song_slide_4.tracks[0].measures[0].voices[0].beats[0]
+    slide5_beat = song_slide_5.tracks[0].measures[0].voices[0].beats[0]
+    slide6_beat = song_slide_6.tracks[0].measures[0].voices[0].beats[0]
+
+    song_dead = gp.parse('./gprofiles/gp5_templates/dead.gp5')
+    dead_beat = song_dead.tracks[0].measures[0].voices[0].beats[0]
+
+    song_hammer = gp.parse('./gprofiles/gp5_templates/hammer.gp5')
+    hammer_beat = song_hammer.tracks[0].measures[0].voices[0].beats[0]
+
+    song_vibrato = gp.parse('./gprofiles/gp5_templates/vibrato.gp5')
+    vibrato_beat = song_vibrato.tracks[0].measures[0].voices[0].beats[0]
+
+    song_harmonic_1 = gp.parse('./gprofiles/gp5_templates/harmonic_1.gp5')
+    harmonic_1_beat = song_harmonic_1.tracks[0].measures[0].voices[0].beats[0]
+    # Create a new Guitar Pro song
+    song = gp.models.Song()
+
+    # Set the song's information
+    song.title = titlename
+    song.artist = "DjentleViBe"
+    song.tempo = 120  # Set the tempo
+    song.tracks[0].name = "Guitar"
+    song.tracks[0].channel.instrument = 30
+
+    song.tracks[0].measures[0].hasTimeSignature  = True
+    song.tracks[0].measures[0].timeSignature.denominator.value = 4
+    voice = song.tracks[0].measures[0].voices[0]
+
+    k_val = 0
+    l_val = 0
+    beat_collect = []
+    note_collect = []
+    duration_sum = 0
+    reuse_last_beat = False
+    for n, note in enumerate(noteval):
+        
+        dotted = False
+        base_duration = 0
+        if note == EOS:
+            reuse_last_beat = False
+            # print("-----EOS-----")
+            continue
+        elif note == BOS:
+            reuse_last_beat = False
+            # print("-----BOS-----")
+            continue
+        elif note == BAR:
+            reuse_last_beat = False
+            continue
+        elif note == BARRE_NOTE:
+            if k_val != 0:
+                reuse_last_beat = True
+                reused_beat = beat_collect[k_val - 1]
+            continue
+        elif note == DEAD_NOTE:
+            reuse_last_beat = False
+            if note_collect and noteval[n - 1] < BAR:
+                note_collect[l_val - 1].type = dead_beat.notes[0].type
+                continue
+        elif note == HAMMER:
+            reuse_last_beat = False
+            if note_collect and noteval[n - 1] < BAR:
+                note_collect[l_val - 1].effect.hammer = hammer_beat.notes[0].effect.hammer
+                continue
+        elif note == VIBRATO:
+            reuse_last_beat = False
+            if note_collect and noteval[n - 1] < BAR:
+                note_collect[l_val - 1].effect.vibrato = vibrato_beat.notes[0].effect.vibrato
+                continue
+        elif note == HARMONIC_1:
+            reuse_last_beat = False
+            if note_collect and noteval[n - 1] < BAR:
+                note_collect[l_val - 1].effect.harmonic = harmonic_1_beat.notes[0].effect.harmonic
+                continue
+        elif TREM_BAR_1 <= note <= TREM_BAR_5:
+            reuse_last_beat = False
+            if note_collect and noteval[n - 1] < BAR:
+                if note == TREM_BAR_1:
+                    beat_collect[k_val - 1].effect.tremoloBar = trem1_beat.notes[0].beat.effect.tremoloBar
+                elif note == TREM_BAR_2:
+                    beat_collect[k_val - 1].effect.tremoloBar = trem2_beat.notes[0].beat.effect.tremoloBar
+                elif note == TREM_BAR_3:
+                    beat_collect[k_val - 1].effect.tremoloBar = trem3_beat.notes[0].beat.effect.tremoloBar
+                elif note == TREM_BAR_4:
+                    beat_collect[k_val - 1].effect.tremoloBar = trem4_beat.notes[0].beat.effect.tremoloBar
+                elif note == TREM_BAR_5:
+                    beat_collect[k_val - 1].effect.tremoloBar = trem5_beat.notes[0].beat.effect.tremoloBar
+                note_collect[l_val - 1].effect.isTremoloBar = True
+                continue
+            
+        elif BEND_NOTE_1 <= note <= BEND_NOTE_7:
+            reuse_last_beat = False
+            if note_collect and noteval[n - 1] < BAR:
+                if k_val != 0:
+                    beat_collect[k_val - 1].effect.isBend = True
+                if note == BEND_NOTE_1:
+                    note_collect[l_val - 1].effect.bend = bend1_beat.notes[0].effect.bend
+                elif note == BEND_NOTE_2:
+                    note_collect[l_val - 1].effect.bend = bend2_beat.notes[0].effect.bend
+                elif note == BEND_NOTE_3:
+                    note_collect[l_val - 1].effect.bend = bend3_beat.notes[0].effect.bend
+                elif note == BEND_NOTE_4:
+                    note_collect[l_val - 1].effect.bend = bend4_beat.notes[0].effect.bend
+                elif note == BEND_NOTE_5:
+                    note_collect[l_val - 1].effect.bend = bend5_beat.notes[0].effect.bend
+                elif note == BEND_NOTE_6:
+                    note_collect[l_val - 1].effect.bend = bend6_beat.notes[0].effect.bend
+                elif note == BEND_NOTE_7:
+                    note_collect[l_val - 1].effect.bend = bend7_beat.notes[0].effect.bend
+                continue
+
+        elif SLIDE_NOTE_1 <= note <= SLIDE_NOTE_6:
+            reuse_last_beat = False
+            if note_collect and noteval[n - 1] < BAR:
+                if note == SLIDE_NOTE_1:
+                    note_collect[l_val - 1].effect.slides = slide1_beat.notes[0].effect.slides
+                elif note == SLIDE_NOTE_2:
+                    note_collect[l_val - 1].effect.slides = slide2_beat.notes[0].effect.slides
+                elif note == SLIDE_NOTE_3:
+                    note_collect[l_val - 1].effect.slides = slide3_beat.notes[0].effect.slides
+                elif note == SLIDE_NOTE_4:
+                    note_collect[l_val - 1].effect.slides = slide4_beat.notes[0].effect.slides
+                elif note == SLIDE_NOTE_5:
+                    note_collect[l_val - 1].effect.slides = slide5_beat.notes[0].effect.slides
+                elif note == SLIDE_NOTE_6:
+                    note_collect[l_val - 1].effect.slides = slide6_beat.notes[0].effect.slides
+                continue
+        else:
+            if reuse_last_beat:  # e.g. from BARRE_NOTE
+                # check if the note is the same
+                if VERBOSE == 1:
+                    print("chord", note, stringnum[n])
+                used_strings = {note.string for note in reused_beat.notes}
+                # Collect all strings already used in the reused beat
+                # If the current string is already used in this chord, find a new one
+                if stringnum[n] in used_strings:
+                    if VERBOSE == 1:
+                        print(f"String {stringnum[n]} already used in chord — finding alternate for note {noteval[n]}")
+                    noteval[n], stringnum[n] = findnewstring(noteval[n], stringnum[n])
+
+                # Re-check after changing to avoid accidental collisions again (optional safeguard)
+                if stringnum[n] in used_strings:
+                    print("Used strings:", used_strings)
+                    print("All candidate strings:", stringnum)
+                    print("Current note:", noteval[n])
+                    continue  # skip assignment for rests
+                current_beat = reused_beat
+                current_beat.status = gp.models.BeatStatus.normal
+                reuse_last_beat = False
+                
+            else:
+                current_beat = gp.Beat(voice=voice)
+                current_beat.status = gp.models.BeatStatus.normal
+                beat_collect.append(current_beat)
+                voice.beats.append(current_beat)
+                
+                # Duration comes from beatval[n]
+                base_duration = 4.0 / beatval[n].get("duration")
+                
+                if beatval[n].get("dotted"):
+                    base_duration *= 1.5
+                
+                enters = beatval[n].get("tuplet")
+                times = beatval[n].get("duration")
+                if (enters, times) in valid_tuplets:
+                    base_duration *= times / enters
+                duration_sum += base_duration
+                k_val += 1
+            # print(note,  max(stringnum[n], 1), k_val)
+            note_collect.append(gp.Note(beat=current_beat))
+            note_collect[l_val].type = gp.models.NoteType.normal
+            note_collect[l_val].value = note
+            note_collect[l_val].effect.palmMute = palmval[n]
+            note_collect[l_val].string = max(stringnum[n], 1)
+            note_collect[l_val].beat.duration.value = beatval[n].get("duration")
+            
+            if beatval[n].get("dotted") == True:
+                note_collect[l_val].beat.duration.isDotted = True
+                dotted = True
+
+            enters = beatval[n].get("tuplet")
+            times = beatval[n].get("duration")
+            if (enters, times) in valid_tuplets:
+                note_collect[l_val].beat.duration.tuplet.enters = enters
+                note_collect[l_val].beat.duration.tuplet.times = times
+
+            current_beat.notes.append(note_collect[l_val])
+            
+            if l_val != MAX_SEQ_LENGTH - 1:
+                l_val += 1
+
+            if check_measure(duration_sum, n):
+                song.tracks[0].measures[0].timeSignature.numerator = min(32, math.ceil(duration_sum))
+                return song
+        if VERBOSE == 1:
+            print(f"Beat : {beatval[n].get("duration")}, Tuplet : {enters}, Dotted : {dotted}, Duration_sum : {round(duration_sum, 2)}")
+    # print("total duration : ", math.ceil(duration_sum))
+    song.tracks[0].measures[0].timeSignature.numerator = min(32, math.ceil(duration_sum))
+    return song
+
+def makegpro_one(titlename, noteval, stringnum, beatval, palmval):
     """Generate gpro file"""
     # read bend and tremolo templates
     song_trem_1 = gp.parse('./gprofiles/gp5_templates/trem_1.gp5')

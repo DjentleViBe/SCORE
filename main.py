@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import config as cfg
 from preprocess import readgpro, guitarinfo, get_positional_encoding, create_dir
 from postprocess import plot_multiple, plotbar, plotbarlog, plotbar_dual, \
-                makegpro, writegpro, writebincount, writebincount2, readbincount, kldivergence,\
+                makegpro_zero, makegpro_one, writegpro, writebincount, writebincount2, readbincount, kldivergence,\
                 plotbar_quad
 from encoding import tokenizer_1, note_prob, beat_prob, beattype_prob
 from decoding import detokenizer_1
@@ -591,7 +591,10 @@ if __name__ == '__main__':
                     song_notes.append(note_prob(note, string))
                     song_beats.append(beatnum)
                     song_beattype.append(beattype_prob(beat["duration"]))
-                song_collect.append(makegpro(cfg.SAVE, noteval, stringnum, beatval, palmval))
+                if cfg.INFERENCE_TYPE == 0:
+                    song_collect.append(makegpro_zero(cfg.SAVE, noteval, stringnum, beatval, palmval))
+                else:
+                    song_collect.append(makegpro_one(cfg.SAVE, noteval, stringnum, beatval, palmval))
                 song.tracks[0].measures.append(song_collect[m].tracks[0].measures[0])
                 song.tracks[0].strings[0].value = cfg.TUNING[0]
                 song.tracks[0].strings[1].value = cfg.TUNING[1]
