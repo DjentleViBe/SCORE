@@ -10,7 +10,7 @@ import numpy as np
 from matplotlib.patches import Patch
 from PIL import Image
 from inference import multinomial_sample, create_causal_mask
-from config import (BACKUP, MAX_SEQ_LENGTH, EOS, BOS, BARRE_NOTE,
+from config import (BACKUP, MAX_SEQ_LENGTH, EOS, BOS, BEAT_ONLY, BARRE_NOTE,
                     BEND_NOTE_1, BEND_NOTE_2, BEND_NOTE_3,
                     BEND_NOTE_4, BEND_NOTE_5, BEND_NOTE_6,
                     BEND_NOTE_7, TREM_BAR_1, TREM_BAR_2, TREM_BAR_3,
@@ -494,6 +494,11 @@ def makegpro(titlename, noteval, stringnum, beatval, palmval):
     dotted = False
     base_duration = 0
     for n, note in enumerate(noteval):
+        if BEAT_ONLY:
+            if note <= BAR:
+                note = 0
+            noteval[0] = 0
+            stringnum[n] = 6
         if not tuplet_on:
             enters = None
             times = None
