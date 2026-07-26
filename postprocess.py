@@ -484,7 +484,11 @@ def makegpro_zero(titlename, noteval, stringnum, beatval, palmval):
     duration_sum = 0
     reuse_last_beat = False
     for n, note in enumerate(noteval):
-        
+        if BEAT_ONLY:
+            if note <= BAR:
+                note = 0
+                noteval[0] = 0
+                stringnum[n] = 6
         dotted = False
         base_duration = 0
         if note == EOS:
@@ -737,8 +741,8 @@ def makegpro_one(titlename, noteval, stringnum, beatval, palmval):
         if BEAT_ONLY:
             if note <= BAR:
                 note = 0
-            noteval[0] = 0
-            stringnum[n] = 6
+                noteval[0] = 0
+                stringnum[n] = 6
         if not tuplet_on:
             enters = None
             times = None
