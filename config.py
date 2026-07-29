@@ -7,7 +7,7 @@ TUNING              = [53, 48, 44, 39, 34, 27]
 # 2 : both
 # 3 : load from file
 MODE                =   2
-BACKUP				 = "CB_Large_5"
+BACKUP				 = "CB_Large_9"
 SAVE				 = "CB_L"
 BOS_TRUE            =   0
 EOS_TRUE            =   1
@@ -17,7 +17,7 @@ EOS_TRUE            =   1
 # 3 - Same as above + last note of every bar is fed to firt note of next bar
 # 4 - Same as above + loop until no repeatitive notes > BOS
 TEST_CRITERIA       =   3
-TEST_TRIES          =   12
+TEST_TRIES          =   15
 # Total number of start_id to try with testing
 TEST_NUM            =   3
 # 1 - Greedy Search
@@ -25,10 +25,11 @@ TEST_NUM            =   3
 # 3 - Multinomial Sampling
 # 4 - Multinomial Sampling - manual
 PREDICTION_CRITERIA =   3
-INFERENCE_TYPE = 0
+INFERENCE_TYPE = 1
 # 0 - Vanilla
 # 1 - Tuplet friendly
-BEAT_ONLY = True
+BEAT_ONLY = False
+BEAT_CAP = True
 ########## Params ##############
 EPOCHS          =   125
 SAVE_EVERY      =   20
@@ -48,7 +49,7 @@ STRIDE          =   1
 TRAINING        =   ["CB"]
 NUM_SEQUENCE    =   6208
 CONVERGENCE     =   0.0005
-TEMPERATURE		=   1.0
+TEMPERATURE		=   0.9
 BATCH           =   32
 OVERLAP         =   8
 LAMBDA          =   1.5 # REPETITION PENALTY WEIGHT

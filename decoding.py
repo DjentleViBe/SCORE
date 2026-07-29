@@ -4,7 +4,7 @@
 import numpy as np
 from config import EOS, BOS, BARRE_NOTE, BEND_NOTE_1, BEND_NOTE_7, \
                     TREM_BAR_1, TREM_BAR_5, DEAD_NOTE, SLIDE_NOTE_1, SLIDE_NOTE_6, \
-                    HAMMER, VIBRATO, HARMONIC_1, VERBOSE, BAR
+                    HAMMER, VIBRATO, HARMONIC_1, VERBOSE, BAR, BEAT_CAP
 
 BASE_BEAT_START = {
     0 : 64,
@@ -115,7 +115,10 @@ def detokenizer_1(dummy):
             note_type = dummy % 276
 
             beat_kind = (dummy // 276) % 14
-            base_beat = BASE_BEAT_START.get((dummy // (276 * 14)) % 7)
+            if BEAT_CAP:
+                base_beat = max(4, min(16, BASE_BEAT_START.get((dummy // (276 * 14)) % 7)))
+            else:
+                base_beat = BASE_BEAT_START.get((dummy // (276 * 14)) % 7)
             if base_beat == 0:
                 print("caution")
             bt_0, bt_1, bt_2 = demapping_beat(beat_kind)
